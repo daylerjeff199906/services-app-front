@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "next/navigation": ["./src/lib/next-compat.tsx"],
+      "next/link": ["./src/lib/next-compat.tsx"]
+    }
+  }
+}

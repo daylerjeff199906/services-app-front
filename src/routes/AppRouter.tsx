@@ -13,6 +13,7 @@ import { TodosPage } from "@/pages/TodosPage"
 import { ProfileOnboardingPage } from "@/pages/ProfileOnboardingPage"
 import { ProfileSettingsPage } from "@/pages/ProfileSettingsPage"
 import { BusinessesPage } from "@/pages/BusinessesPage"
+import { CreateBusinessPage } from "@/pages/CreateBusinessPage"
 
 export function AppRouter() {
   return (
@@ -43,6 +44,15 @@ export function AppRouter() {
           element={
             <AuthGuard>
               <BusinessesPage />
+            </AuthGuard>
+          }
+        />
+
+        <Route
+          path="/intranet/businesses/new"
+          element={
+            <AuthGuard>
+              <CreateBusinessPage />
             </AuthGuard>
           }
         />

@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { z } from "zod"
 import { useAuthStore } from "@/store/auth.store"
 import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { ThemeSwitch } from "@/components/ui/theme-switch"
 import { PageHeader } from "@/components/page-header"
 import {
@@ -17,37 +15,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ChevronsUpDown, LogOut, BadgeCheck } from "lucide-react"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
-
-// Zod validation schema for Business/Workspace creation
-const businessSchema = z.object({
-  name: z.string().min(3, "El nombre del negocio debe tener al menos 3 caracteres"),
-  slug: z.string()
-    .min(3, "El slug debe tener al menos 3 caracteres")
-    .regex(/^[a-z0-9-]+$/, "El slug solo debe contener letras minúsculas, números y guiones"),
-  description: z.string().optional(),
-})
-
-type BusinessInput = z.infer<typeof businessSchema>
 
 export function BusinessesPage() {
   const navigate = useNavigate()
   const { user, services, setServices, selectService, logout } = useAuthStore()
 
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoadingList, setIsLoadingList] = useState(true)
-
-  // Form state
-  const [name, setName] = useState("")
-  const [slug, setSlug] = useState("")
-  const [description, setDescription] = useState("")
-  const [errors, setErrors] = useState<Partial<Record<keyof BusinessInput, string>>>({})
-  const [formError, setFormError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Fetch businesses from database
   const fetchBusinesses = async () => {
@@ -89,82 +62,6 @@ export function BusinessesPage() {
     fetchBusinesses()
   }, [user])
 
-  // Auto-generate slug from name
-  useEffect(() => {
-    const generatedSlug = name
-      .toLowerCase()
-      .trim()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Remove accents
-      .replace(/[^a-z0-9\s-]/g, "")     // Keep only alphanumeric, spaces, and hyphens
-      .replace(/\s+/g, "-")            // Replace spaces with hyphens
-      .replace(/-+/g, "-")             // Deduplicate hyphens
-
-    setSlug(generatedSlug)
-  }, [name])
-
-  const handleCreateBusiness = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrors({})
-    setFormError(null)
-    setIsSubmitting(true)
-
-    const result = businessSchema.safeParse({ name, slug, description })
-
-    if (!result.success) {
-      const fieldErrors: Partial<Record<keyof BusinessInput, string>> = {}
-      result.error.issues.forEach((err) => {
-        if (err.path[0]) {
-          fieldErrors[err.path[0] as keyof BusinessInput] = err.message
-        }
-      })
-      setErrors(fieldErrors)
-      setIsSubmitting(false)
-      return
-    }
-
-    try {
-      if (!user?.id) throw new Error("Sesión de usuario no válida.")
-
-      // Insert new business row
-      const { data: bizData, error: insertError } = await supabase
-        .from("businesses")
-        .insert([{
-          name,
-          description
-        }])
-        .select()
-        .single()
-
-      if (insertError) throw insertError
-
-      // Assign user role to the newly created business
-      const { error: roleError } = await supabase
-        .from("business_user_roles")
-        .insert([{
-          business_id: bizData.id,
-          user_id: user.id,
-          role: user.role || 'SERVICE_OWNER'
-        }])
-
-      if (roleError) throw roleError
-
-      // Reset form and close modal
-      setName("")
-      setSlug("")
-      setDescription("")
-      setIsModalOpen(false)
-
-      // Refresh list
-      await fetchBusinesses()
-    } catch (err: any) {
-      console.error(err)
-      setFormError(err.message || "Error al crear el negocio. Inténtalo de nuevo.")
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   const handleSelectBusiness = (biz: any) => {
     selectService(biz)
     navigate("/dashboard", { replace: true })
@@ -189,7 +86,7 @@ export function BusinessesPage() {
 
         <div className="flex items-center gap-6 text-sm">
           <ThemeSwitch />
-
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 outline-none p-1.5 rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border">
@@ -218,7 +115,7 @@ export function BusinessesPage() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
+              <DropdownMenuItem 
                 onClick={() => navigate("/profile/settings")}
                 className="gap-2 p-2 cursor-pointer"
               >
@@ -226,7 +123,7 @@ export function BusinessesPage() {
                 Mi Cuenta / Perfil
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
+              <DropdownMenuItem 
                 onClick={handleLogout}
                 className="gap-2 p-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
               >
@@ -241,13 +138,13 @@ export function BusinessesPage() {
       {/* Main Content Area */}
       <main className="container mx-auto px-6 py-10">
 
-        <PageHeader
+        <PageHeader 
           title="Mis Espacios de Trabajo"
           description="Selecciona o crea un negocio para administrar tus servicios y agenda."
           actionButton={
             services.length > 0 ? (
-              <Button
-                onClick={() => setIsModalOpen(true)}
+              <Button 
+                onClick={() => navigate("/intranet/businesses/new")}
                 className="w-full sm:w-auto flex items-center justify-center gap-1.5"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -290,8 +187,8 @@ export function BusinessesPage() {
             <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2 mb-8 leading-relaxed">
               Comienza creando tu primer espacio de trabajo para configurar tus servicios y empezar a recibir clientes.
             </p>
-            <Button
-              onClick={() => setIsModalOpen(true)}
+            <Button 
+              onClick={() => navigate("/intranet/businesses/new")}
               className="flex items-center gap-1.5 px-6 font-semibold"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -337,112 +234,6 @@ export function BusinessesPage() {
           </div>
         )}
       </main>
-
-      {/* Creation Modal (pure CSS-like logic, no shadows) */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="bg-card border border-border rounded-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-
-            {/* Modal Title */}
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h3 className="text-lg font-bold tracking-tight">Crear Nuevo Negocio</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Define los detalles de tu nuevo espacio de trabajo.</p>
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-muted-foreground hover:text-foreground text-xl p-1 font-mono transition-colors"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Modal Error Banner */}
-            {formError && (
-              <div className="mb-4 p-3 text-xs font-semibold text-destructive bg-destructive/10 border border-destructive/20 rounded-md text-center">
-                {formError}
-              </div>
-            )}
-
-            {/* Form Fields */}
-            <form onSubmit={handleCreateBusiness} className="space-y-4">
-              <FieldGroup className="gap-4">
-                <Field>
-                  <FieldLabel htmlFor="biz-name">Nombre del Negocio</FieldLabel>
-                  <Input
-                    id="biz-name"
-                    type="text"
-                    placeholder="Clínica dental DentalSmile"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className={errors.name ? "border-destructive" : ""}
-                    disabled={isSubmitting}
-                  />
-                  {errors.name && (
-                    <p className="text-xs text-destructive mt-1 font-semibold">{errors.name}</p>
-                  )}
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="biz-slug">Identificador URL (Slug)</FieldLabel>
-                  <div className="flex items-stretch rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring/50">
-                    <span className="bg-muted px-3 border-r border-border text-xs text-muted-foreground flex items-center font-mono select-none">
-                      /
-                    </span>
-                    <input
-                      id="biz-slug"
-                      type="text"
-                      placeholder="dentalsmile"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
-                      className="flex-1 px-3 py-2 text-sm bg-transparent border-0 outline-none"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  {errors.slug ? (
-                    <p className="text-xs text-destructive mt-1 font-semibold">{errors.slug}</p>
-                  ) : (
-                    <p className="text-[10px] text-muted-foreground mt-1">Este identificador único formará parte de la dirección de acceso a tu negocio.</p>
-                  )}
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="biz-desc">Descripción (Opcional)</FieldLabel>
-                  <textarea
-                    id="biz-desc"
-                    rows={3}
-                    placeholder="Describe los servicios que ofrece tu espacio de trabajo..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-background border border-input rounded-md outline-none focus:ring-2 focus:ring-ring/50"
-                    disabled={isSubmitting}
-                  />
-                </Field>
-              </FieldGroup>
-
-              {/* Modal Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-border text-sm font-semibold rounded-md hover:bg-muted transition-colors"
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex items-center justify-center"
-                >
-                  {isSubmitting ? "Creando..." : "Crear Negocio"}
-                </Button>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      )}
 
     </div>
   )

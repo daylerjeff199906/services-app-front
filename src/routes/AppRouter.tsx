@@ -9,6 +9,7 @@ import { PrivateLayout } from "@/layouts/PrivateLayout"
 import { OfferServicesPage } from "@/pages/OfferServicesPage"
 import { SearchPage } from "@/pages/SearchPage"
 import { ServiceDetailPage } from "@/pages/ServiceDetailPage"
+import { TodosPage } from "@/pages/TodosPage"
 
 export function AppRouter() {
   return (
@@ -21,6 +22,7 @@ export function AppRouter() {
         <Route path="/servicio/:id" element={<ServiceDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/todos" element={<TodosPage />} />
 
         {/* Auth Required, but No Selected Service Needed yet */}
         <Route

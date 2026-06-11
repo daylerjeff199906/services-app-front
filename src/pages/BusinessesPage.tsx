@@ -13,16 +13,20 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChevronsUpDown, LogOut, BadgeCheck, Search, LayoutGrid, List, Plus, ChevronDown } from "lucide-react"
+import { ChevronsUpDown, LogOut, BadgeCheck, Search, Plus, ChevronDown } from "lucide-react"
 
 const BusinessCardSkeleton = () => (
-  <div className="bg-card border border-border rounded-lg p-6 h-[140px] animate-pulse flex flex-col justify-between">
-    <div className="space-y-2">
+  <div className="bg-card border border-border rounded-lg p-6 h-[170px] animate-pulse flex flex-col justify-between">
+    <div className="space-y-2.5">
       <div className="flex justify-between items-center">
         <div className="h-4 bg-muted rounded w-1/3" />
         <div className="h-4 bg-muted rounded w-4" />
       </div>
       <div className="h-3.5 bg-muted rounded w-1/2" />
+      <div className="space-y-1 mt-1">
+        <div className="h-3 bg-muted/60 rounded w-full" />
+        <div className="h-3 bg-muted/60 rounded w-4/5" />
+      </div>
     </div>
     <div className="h-5 bg-muted rounded w-12" />
   </div>
@@ -34,6 +38,7 @@ export function BusinessesPage() {
 
   const [isLoadingList, setIsLoadingList] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
 
   // Fetch businesses from database
   const fetchBusinesses = async () => {
@@ -88,11 +93,19 @@ export function BusinessesPage() {
     navigate("/login", { replace: true })
   }
 
-  // Filter businesses locally based on search
-  const filteredBusinesses = services.filter((biz) =>
-    biz.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (biz.description || "").toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Filter businesses locally based on search & status filter
+  const filteredBusinesses = services.filter((biz) => {
+    const matchesSearch =
+      biz.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (biz.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+
+    const matchesStatus =
+      statusFilter === "all" ? true :
+        statusFilter === "active" ? biz.isActive === true :
+          biz.isActive === false
+
+    return matchesSearch && matchesStatus
+  })
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
@@ -173,40 +186,39 @@ export function BusinessesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search for a project"
+                placeholder="Buscar un proyecto..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-background border border-border rounded-md pl-9 pr-4 py-1.5 text-sm outline-none focus:border-foreground/30 transition-colors placeholder:text-muted-foreground/60"
               />
             </div>
 
-            {/* Status Select */}
+            {/* Status Select dropdown filter */}
             <div className="flex items-center gap-2">
-              <button className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-md text-xs font-medium bg-card hover:bg-muted transition-colors text-muted-foreground">
-                Status
-                <ChevronDown className="size-3" />
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-md text-xs font-medium bg-card hover:bg-muted transition-colors text-muted-foreground outline-none">
+                    Estado: {statusFilter === "all" ? "Todos" : statusFilter === "active" ? "Activos" : "No públicos"}
+                    <ChevronDown className="size-3" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-40">
+                  <DropdownMenuItem onClick={() => setStatusFilter("all")} className="cursor-pointer">Todos</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter("active")} className="cursor-pointer">Activos</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setStatusFilter("inactive")} className="cursor-pointer">No públicos</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 justify-between md:justify-end">
-            {/* View Switchers */}
-            <div className="flex items-center border border-border rounded-md p-0.5 bg-muted/20">
-              <button className="p-1 rounded bg-card text-foreground shadow-sm">
-                <LayoutGrid className="size-3.5" />
-              </button>
-              <button className="p-1 rounded text-muted-foreground hover:text-foreground">
-                <List className="size-3.5" />
-              </button>
-            </div>
-
+          <div className="flex items-center gap-3 justify-end">
             {/* Add Project Button */}
             <button
               onClick={() => navigate("/intranet/businesses/new")}
               className="flex items-center justify-center gap-1.5 bg-[#10b981] hover:bg-[#059669] text-white text-xs font-medium px-4 py-2 rounded-md transition-colors border-0 shadow-none cursor-pointer"
             >
               <Plus className="size-4" />
-              New project
+              Nuevo proyecto
             </button>
           </div>
         </div>
@@ -224,16 +236,16 @@ export function BusinessesPage() {
             <div className="size-16 rounded-full bg-muted border border-border flex items-center justify-center mb-6">
               <Search className="size-8 text-muted-foreground" />
             </div>
-            <h2 className="text-xl font-medium tracking-tight">No projects found</h2>
+            <h2 className="text-xl font-medium tracking-tight">No se encontraron negocios</h2>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2 mb-8 leading-relaxed">
-              There are no workspaces that match your search.
+              No hay espacios de trabajo que coincidan con tu búsqueda.
             </p>
             <button
               onClick={() => navigate("/intranet/businesses/new")}
               className="flex items-center justify-center gap-1.5 bg-[#10b981] hover:bg-[#059669] text-white text-xs font-medium px-4 py-2 rounded-md transition-colors cursor-pointer"
             >
               <Plus className="size-4" />
-              Create a new project
+              Crear nuevo proyecto
             </button>
           </div>
         ) : (
@@ -243,17 +255,18 @@ export function BusinessesPage() {
               <div
                 key={biz.id}
                 onClick={() => handleSelectBusiness(biz)}
-                className="bg-card border border-border rounded-md p-6 h-[140px] flex flex-col justify-between hover:border-foreground/30 transition-all cursor-pointer relative group animate-fade-in"
+                className="bg-card border border-border rounded-md p-6 h-[170px] flex flex-col justify-between hover:border-foreground/30 transition-all cursor-pointer relative group animate-fade-in"
               >
                 <div>
                   <h3 className="font-medium text-sm tracking-tight text-foreground truncate">
                     {biz.name}
                   </h3>
-
-                  {/* Secondary info text */}
-                  <p className="text-xs text-muted-foreground font-medium mt-1">
-                    AWS | us-east-2
-                  </p>
+                  {/* description summary with line-clamp-2 */}
+                  {biz.description && (
+                    <p className="text-xs text-muted-foreground font-medium mt-1 line-clamp-2">
+                      {biz.description}
+                    </p>
+                  )}
                 </div>
 
                 {/* Flat badge in bottom left indicating active or not public status from DB */}

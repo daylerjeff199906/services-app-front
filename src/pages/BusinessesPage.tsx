@@ -5,6 +5,17 @@ import { useAuthStore } from "@/store/auth.store"
 import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ThemeSwitch } from "@/components/ui/theme-switch"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ChevronsUpDown, LogOut, BadgeCheck } from "lucide-react"
 import {
   Field,
   FieldGroup,
@@ -168,28 +179,61 @@ export function BusinessesPage() {
     <div className="min-h-screen bg-background text-foreground font-sans">
       
       {/* Top Navigation Header */}
-      <header className="border-b border-border bg-card">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="font-extrabold text-xl text-[#059669] tracking-tighter">
-              Gesti
-            </span>
-            <span className="text-xs px-2.5 py-1 bg-muted text-muted-foreground border border-border font-medium rounded-full">
-              SaaS Intranet
-            </span>
-          </div>
+      <header className="h-16 bg-card border-b border-border flex items-center justify-between px-8 flex-shrink-0">
+        <div className="flex items-center gap-6">
+          <span className="font-extrabold text-xl text-[#059669] tracking-tighter flex items-center gap-1.5">
+            Gesti
+          </span>
+        </div>
 
-          <div className="flex items-center gap-4 text-sm">
-            <span className="hidden md:inline text-muted-foreground">
-              Hola, <strong className="text-foreground">{user?.full_name || user?.email}</strong>
-            </span>
-            <button
-              onClick={handleLogout}
-              className="text-xs font-semibold py-1.5 px-3 border border-border hover:bg-muted transition-colors rounded-md text-destructive"
-            >
-              Cerrar Sesión
-            </button>
-          </div>
+        <div className="flex items-center gap-6 text-sm">
+          <ThemeSwitch />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 outline-none p-1.5 rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border">
+                <Avatar className="h-8 w-8 rounded-lg border border-border">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.full_name || user?.email || "G")}`} alt={user?.full_name || ""} />
+                  <AvatarFallback className="rounded-lg">US</AvatarFallback>
+                </Avatar>
+                <div className="hidden md:grid text-left text-xs leading-tight">
+                  <span className="truncate font-semibold text-sm text-foreground">{user?.full_name || "Usuario"}</span>
+                  <span className="truncate text-[10px] text-muted-foreground">{user?.email}</span>
+                </div>
+                <ChevronsUpDown className="ml-1 size-3.5 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" sideOffset={4}>
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                  <Avatar className="h-8 w-8 rounded-lg border border-border">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user?.full_name || user?.email || "G")}`} alt={user?.full_name || ""} />
+                    <AvatarFallback className="rounded-lg">US</AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">{user?.full_name || "Usuario"}</span>
+                    <span className="truncate text-xs text-muted-foreground">{user?.email}</span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => navigate("/profile/settings")}
+                className="gap-2 p-2 cursor-pointer"
+              >
+                <BadgeCheck className="size-4" />
+                Mi Cuenta / Perfil
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="gap-2 p-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+              >
+                <LogOut className="size-4" />
+                Cerrar Sesión
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

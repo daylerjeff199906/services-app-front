@@ -1,6 +1,51 @@
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { persist, createJSONStorage } from "zustand/middleware"
+import type { StateStorage } from "zustand/middleware"
 import type { AuthState, User, TenantService } from "../types/auth.types"
+
+// Simple XOR + Base64 encryption/decryption for client-side storage obfuscation
+const ENCRYPTION_KEY = "gesti-secure-key"
+
+function encrypt(text: string): string {
+  let result = ""
+  for (let i = 0; i < text.length; i++) {
+    result += String.fromCharCode(text.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length))
+  }
+  return btoa(unescape(encodeURIComponent(result)))
+}
+
+function decrypt(encoded: string): string {
+  try {
+    const text = decodeURIComponent(escape(atob(encoded)))
+    let result = ""
+    for (let i = 0; i < text.length; i++) {
+      result += String.fromCharCode(text.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length))
+    }
+    return result
+  } catch (e) {
+    return ""
+  }
+}
+
+// Custom cookie storage for Zustand
+const cookieStorage: StateStorage = {
+  getItem: (name): string | null => {
+    const cookies = document.cookie.split("; ")
+    const cookie = cookies.find((row) => row.startsWith(`${name}=`))
+    if (!cookie) return null
+    const val = cookie.split("=")[1]
+    return decrypt(val) || null
+  },
+  setItem: (name, value): void => {
+    const encrypted = encrypt(value)
+    const date = new Date()
+    date.setTime(date.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days expiration
+    document.cookie = `${name}=${encrypted}; expires=${date.toUTCString()}; path=/; SameSite=Strict; Secure`
+  },
+  removeItem: (name): void => {
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict; Secure`
+  }
+}
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -64,6 +109,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "saas-auth-storage",
+      storage: createJSONStorage(() => cookieStorage),
       partialize: (state) => ({
         user: state.user,
         services: state.services,

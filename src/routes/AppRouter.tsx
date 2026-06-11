@@ -11,6 +11,7 @@ import { SearchPage } from "@/pages/SearchPage"
 import { ServiceDetailPage } from "@/pages/ServiceDetailPage"
 import { TodosPage } from "@/pages/TodosPage"
 import { ProfileOnboardingPage } from "@/pages/ProfileOnboardingPage"
+import { ProfileSettingsPage } from "@/pages/ProfileSettingsPage"
 import { BusinessesPage } from "@/pages/BusinessesPage"
 
 export function AppRouter() {
@@ -42,6 +43,16 @@ export function AppRouter() {
           element={
             <AuthGuard>
               <BusinessesPage />
+            </AuthGuard>
+          }
+        />
+
+        {/* Profile Settings (Requires Auth & Complete Profile, but NO Selected Service Needed) */}
+        <Route
+          path="/profile/settings"
+          element={
+            <AuthGuard requireSelectedService={false}>
+              <ProfileSettingsPage />
             </AuthGuard>
           }
         />

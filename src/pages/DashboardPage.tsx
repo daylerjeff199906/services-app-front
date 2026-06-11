@@ -1,5 +1,6 @@
 import { useAuthStore } from "../store/auth.store"
 import { LayoutWrapper } from "@/components/layout-wrapper"
+import { PageHeader } from "@/components/page-header"
 
 export function DashboardPage() {
   const { selectedService } = useAuthStore()
@@ -21,23 +22,21 @@ export function DashboardPage() {
   return (
     <LayoutWrapper sectionTitle="Inicio">
       <div className="space-y-6 text-foreground">
-        {/* Welcome Banner */}
-        <div className="bg-card border border-border p-6 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Bienvenido a la consola de {selectedService?.name}</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Aquí puedes configurar tu cartera de ofertas, interactuar con clientes y revisar métricas de negocio.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button className="py-2 px-4 bg-primary text-primary-foreground hover:bg-primary/95 rounded-md text-sm font-semibold transition-colors">
-              Nueva Oferta
-            </button>
-            <button className="py-2 px-4 border border-input hover:bg-muted rounded-md text-sm font-semibold transition-colors">
-              Ajustes de Servicio
-            </button>
-          </div>
-        </div>
+        
+        <PageHeader 
+          title={`Bienvenido a la consola de ${selectedService?.name || ""}`}
+          description="Aquí puedes configurar tu cartera de ofertas, interactuar con clientes y revisar métricas de negocio."
+          actionButton={
+            <div className="flex gap-2">
+              <button className="py-2 px-4 bg-primary text-primary-foreground hover:bg-primary/95 rounded-md text-sm font-semibold transition-colors">
+                Nueva Oferta
+              </button>
+              <button className="py-2 px-4 border border-input hover:bg-muted rounded-md text-sm font-semibold transition-colors">
+                Ajustes de Servicio
+              </button>
+            </div>
+          }
+        />
 
         {/* Grid Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

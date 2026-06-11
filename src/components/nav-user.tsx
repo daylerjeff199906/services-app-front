@@ -1,3 +1,6 @@
+import { useNavigate } from "react-router-dom"
+import { useAuthStore } from "@/store/auth.store"
+import { supabase } from "@/utils/supabase"
 import {
   Avatar,
   AvatarFallback,
@@ -18,7 +21,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { ChevronsUpDownIcon, SparklesIcon, BadgeCheckIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
+import { ChevronsUpDownIcon, BadgeCheckIcon, LogOutIcon } from "lucide-react"
 
 export function NavUser({
   user,
@@ -30,6 +33,14 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const navigate = useNavigate()
+  const { logout } = useAuthStore()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    logout()
+    navigate("/login", { replace: true })
+  }
 
   return (
     <SidebarMenu>
@@ -42,7 +53,7 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg">US</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -52,7 +63,7 @@ export function NavUser({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-fit"
+            className="w-56"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
@@ -61,7 +72,7 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">US</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -71,35 +82,21 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <SparklesIcon
-                />
-                Upgrade to Pro
+              <DropdownMenuItem 
+                onClick={() => navigate("/profile/settings")}
+                className="gap-2 p-2 cursor-pointer"
+              >
+                <BadgeCheckIcon className="size-4" />
+                Mi Cuenta / Perfil
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheckIcon
-                />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon
-                />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon
-                />
-                Notifications
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOutIcon
-              />
-              Log out
+            <DropdownMenuItem 
+              onClick={handleLogout}
+              className="gap-2 p-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              <LogOutIcon className="size-4" />
+              Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

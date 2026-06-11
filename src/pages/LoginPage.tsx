@@ -1,7 +1,20 @@
-import { Link } from "react-router-dom"
+import { useEffect } from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { useAuthStore } from "@/store/auth.store"
 import { LoginForm } from "@/components/login-form"
 
 export function LoginPage() {
+  const { isAuthenticated } = useAuthStore()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = (location.state as any)?.from?.pathname || "/intranet/businesses"
+      navigate(from, { replace: true })
+    }
+  }, [isAuthenticated, navigate, location])
+
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row text-foreground">
       {/* Left side: LoginForm and header branding */}

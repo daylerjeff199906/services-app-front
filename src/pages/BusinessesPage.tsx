@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthStore } from "@/store/auth.store"
 import { supabase } from "@/utils/supabase"
-import { Button } from "@/components/ui/button"
 import { ThemeSwitch } from "@/components/ui/theme-switch"
 import { PageHeader } from "@/components/page-header"
 import {
@@ -14,13 +13,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChevronsUpDown, LogOut, BadgeCheck } from "lucide-react"
+import { ChevronsUpDown, LogOut, BadgeCheck, Search, LayoutGrid, List, Plus, ChevronDown } from "lucide-react"
+
+const BusinessCardSkeleton = () => (
+  <div className="bg-card border border-border rounded-lg p-6 h-[140px] animate-pulse flex flex-col justify-between">
+    <div className="space-y-2">
+      <div className="flex justify-between items-center">
+        <div className="h-4 bg-muted rounded w-1/3" />
+        <div className="h-4 bg-muted rounded w-4" />
+      </div>
+      <div className="h-3.5 bg-muted rounded w-1/2" />
+    </div>
+    <div className="h-5 bg-muted rounded w-12" />
+  </div>
+)
 
 export function BusinessesPage() {
   const navigate = useNavigate()
   const { user, services, setServices, selectService, logout } = useAuthStore()
 
   const [isLoadingList, setIsLoadingList] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
 
   // Fetch businesses from database
   const fetchBusinesses = async () => {
@@ -34,7 +47,8 @@ export function BusinessesPage() {
           businesses:business_id (
             id,
             name,
-            description
+            description,
+            is_active
           )
         `)
         .eq("user_id", user.id)
@@ -49,6 +63,7 @@ export function BusinessesPage() {
           name: b.name,
           slug: b.name.toLowerCase().replace(/\s+/g, "-"),
           description: b.description || "",
+          isActive: b.is_active ?? true,
         }))
       setServices(formatted)
     } catch (err) {
@@ -73,6 +88,12 @@ export function BusinessesPage() {
     navigate("/login", { replace: true })
   }
 
+  // Filter businesses locally based on search
+  const filteredBusinesses = services.filter((biz) =>
+    biz.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (biz.description || "").toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
 
@@ -86,7 +107,7 @@ export function BusinessesPage() {
 
         <div className="flex items-center gap-6 text-sm">
           <ThemeSwitch />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 outline-none p-1.5 rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border">
@@ -115,7 +136,7 @@ export function BusinessesPage() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => navigate("/profile/settings")}
                 className="gap-2 p-2 cursor-pointer"
               >
@@ -123,7 +144,7 @@ export function BusinessesPage() {
                 Mi Cuenta / Perfil
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={handleLogout}
                 className="gap-2 p-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
               >
@@ -136,99 +157,117 @@ export function BusinessesPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="container mx-auto px-6 py-10">
+      <main className="container mx-auto px-6 py-10 max-w-7xl">
 
-        <PageHeader 
-          title="Mis Espacios de Trabajo"
+        <PageHeader
+          title="Hola, estos son tus negocios"
           description="Selecciona o crea un negocio para administrar tus servicios y agenda."
-          actionButton={
-            services.length > 0 ? (
-              <Button 
-                onClick={() => navigate("/intranet/businesses/new")}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Crear Negocio
-              </Button>
-            ) : undefined
-          }
         />
         <div className="mb-8" />
 
-        {/* Loading Spinner */}
-        {isLoadingList ? (
-          <div className="py-20 flex flex-col items-center justify-center">
-            <svg
-              className="animate-spin h-8 w-8 text-primary"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-            <span className="text-xs text-muted-foreground mt-3 font-medium">Cargando negocios...</span>
-          </div>
-        ) : services.length === 0 ? (
+        {/* Supabase-style Control Bar */}
+        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row flex-1 items-stretch sm:items-center gap-2">
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search for a project"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-background border border-border rounded-md pl-9 pr-4 py-1.5 text-sm outline-none focus:border-foreground/30 transition-colors placeholder:text-muted-foreground/60"
+              />
+            </div>
 
-          /* Visual Flat Empty State */
+            {/* Status Select */}
+            <div className="flex items-center gap-2">
+              <button className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-md text-xs font-medium bg-card hover:bg-muted transition-colors text-muted-foreground">
+                Status
+                <ChevronDown className="size-3" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 justify-between md:justify-end">
+            {/* View Switchers */}
+            <div className="flex items-center border border-border rounded-md p-0.5 bg-muted/20">
+              <button className="p-1 rounded bg-card text-foreground shadow-sm">
+                <LayoutGrid className="size-3.5" />
+              </button>
+              <button className="p-1 rounded text-muted-foreground hover:text-foreground">
+                <List className="size-3.5" />
+              </button>
+            </div>
+
+            {/* Add Project Button */}
+            <button
+              onClick={() => navigate("/intranet/businesses/new")}
+              className="flex items-center justify-center gap-1.5 bg-[#10b981] hover:bg-[#059669] text-white text-xs font-medium px-4 py-2 rounded-md transition-colors border-0 shadow-none cursor-pointer"
+            >
+              <Plus className="size-4" />
+              New project
+            </button>
+          </div>
+        </div>
+
+        {/* Content Render (Skeleton/Empty/List) */}
+        {isLoadingList ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <BusinessCardSkeleton />
+            <BusinessCardSkeleton />
+            <BusinessCardSkeleton />
+            <BusinessCardSkeleton />
+          </div>
+        ) : filteredBusinesses.length === 0 ? (
           <div className="w-full border-2 border-dashed border-border rounded-xl p-12 text-center bg-card flex flex-col items-center mx-auto animate-fade-in">
             <div className="size-16 rounded-full bg-muted border border-border flex items-center justify-center mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" className="size-8 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-                <line x1="12" y1="11" x2="12" y2="17"></line>
-                <line x1="9" y1="14" x2="15" y2="14"></line>
-              </svg>
+              <Search className="size-8 text-muted-foreground" />
             </div>
-            <h2 className="text-xl font-bold tracking-tight">Aún no tienes negocios registrados</h2>
+            <h2 className="text-xl font-medium tracking-tight">No projects found</h2>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2 mb-8 leading-relaxed">
-              Comienza creando tu primer espacio de trabajo para configurar tus servicios y empezar a recibir clientes.
+              There are no workspaces that match your search.
             </p>
-            <Button 
+            <button
               onClick={() => navigate("/intranet/businesses/new")}
-              className="flex items-center gap-1.5 px-6 font-semibold"
+              className="flex items-center justify-center gap-1.5 bg-[#10b981] hover:bg-[#059669] text-white text-xs font-medium px-4 py-2 rounded-md transition-colors cursor-pointer"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              Crear mi primer negocio
-            </Button>
+              <Plus className="size-4" />
+              Create a new project
+            </button>
           </div>
         ) : (
-
-          /* Businesses grid layout using simple flat borders, no shadows */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
-            {services.map((biz) => (
+          /* Projects grid using Supabase-like flat border cards */
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-fade-in">
+            {filteredBusinesses.map((biz) => (
               <div
                 key={biz.id}
-                className="bg-card border border-border rounded-xl p-6 flex flex-col justify-between hover:border-primary/50 transition-colors"
+                onClick={() => handleSelectBusiness(biz)}
+                className="bg-card border border-border rounded-md p-6 h-[140px] flex flex-col justify-between hover:border-foreground/30 transition-all cursor-pointer relative group animate-fade-in"
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <h3 className="font-bold text-lg tracking-tight truncate">{biz.name}</h3>
-                    <span className="text-xs px-2 py-0.5 border border-border bg-muted text-muted-foreground font-mono rounded-md truncate max-w-[120px]">
-                      /{biz.slug}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-3 mb-6 min-h-[60px]">
-                    {biz.description || "Sin descripción disponible."}
+                  <h3 className="font-medium text-sm tracking-tight text-foreground truncate">
+                    {biz.name}
+                  </h3>
+
+                  {/* Secondary info text */}
+                  <p className="text-xs text-muted-foreground font-medium mt-1">
+                    AWS | us-east-2
                   </p>
                 </div>
 
-                <button
-                  onClick={() => handleSelectBusiness(biz)}
-                  className="w-full py-2 border border-primary hover:bg-primary/5 text-primary text-sm font-semibold rounded-md transition-colors flex items-center justify-center gap-1.5"
-                >
-                  Administrar
-                  <svg xmlns="http://www.w3.org/2000/svg" className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
-                </button>
+                {/* Flat badge in bottom left indicating active or not public status from DB */}
+                <div>
+                  {biz.isActive ? (
+                    <span className="text-[10px] px-1.5 py-0.5 border border-emerald-500/20 bg-emerald-500/5 rounded text-emerald-600 dark:text-emerald-400 font-mono font-medium uppercase tracking-wider">
+                      Activo
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-1.5 py-0.5 border border-destructive/20 bg-destructive/5 rounded text-destructive font-mono font-medium uppercase tracking-wider">
+                      No público
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>

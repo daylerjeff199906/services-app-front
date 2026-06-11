@@ -18,6 +18,7 @@ export interface TenantService {
   name: string
   slug: string
   description?: string
+  isActive?: boolean
 }
 
 export interface AuthState {

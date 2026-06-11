@@ -29,7 +29,7 @@ type BusinessInput = z.infer<typeof businessSchema>
 
 export function CreateBusinessPage() {
   const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
+  const { user, logout, selectService } = useAuthStore()
 
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
@@ -101,8 +101,20 @@ export function CreateBusinessPage() {
 
       if (roleError) throw roleError
 
-      // Redirect back to businesses index
-      navigate("/intranet/businesses", { replace: true })
+      // Format the business for selection in store
+      const formattedBiz = {
+        id: bizData.id,
+        name: bizData.name,
+        slug: bizData.name.toLowerCase().replace(/\s+/g, "-"),
+        description: bizData.description || "",
+        isActive: bizData.is_active ?? true,
+      }
+
+      // Auto-select the newly created workspace
+      selectService(formattedBiz)
+
+      // Redirect directly to the dashboard
+      navigate("/dashboard", { replace: true })
     } catch (err: any) {
       console.error(err)
       setFormError(err.message || "Error al crear el negocio. Inténtalo de nuevo.")

@@ -2,47 +2,57 @@ import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 import type { StateStorage } from "zustand/middleware"
 import type { AuthState, User, TenantService } from "../types/auth.types"
+import * as jose from "jose"
 
-// Simple XOR + Base64 encryption/decryption for client-side storage obfuscation
-const ENCRYPTION_KEY = "gesti-secure-key"
+let keyUint8: Uint8Array | null = null
 
-function encrypt(text: string): string {
-  let result = ""
-  for (let i = 0; i < text.length; i++) {
-    result += String.fromCharCode(text.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length))
-  }
-  return btoa(unescape(encodeURIComponent(result)))
+async function getEncryptionKey(): Promise<Uint8Array> {
+  if (keyUint8) return keyUint8
+  const secret = new TextEncoder().encode(
+    (import.meta.env.VITE_COOKIE_SECRET as string) || "fallback_gesti_secret_key_32_bytes"
+  )
+  const hashed = await crypto.subtle.digest("SHA-256", secret)
+  keyUint8 = new Uint8Array(hashed)
+  return keyUint8
 }
 
-function decrypt(encoded: string): string {
+async function encrypt(text: string): Promise<string> {
+  const key = await getEncryptionKey()
+  const data = new TextEncoder().encode(text)
+  const jwe = await new jose.CompactEncrypt(data)
+    .setProtectedHeader({ alg: "dir", enc: "A256GCM" })
+    .encrypt(key)
+  return jwe
+}
+
+async function decrypt(jwe: string): Promise<string> {
   try {
-    const text = decodeURIComponent(escape(atob(encoded)))
-    let result = ""
-    for (let i = 0; i < text.length; i++) {
-      result += String.fromCharCode(text.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length))
-    }
-    return result
+    const key = await getEncryptionKey()
+    const { plaintext } = await jose.compactDecrypt(jwe, key)
+    return new TextDecoder().decode(plaintext)
   } catch (e) {
+    console.error("Error decrypting cookie:", e)
     return ""
   }
 }
 
-// Custom cookie storage for Zustand
+// Custom cookie storage for Zustand using Jose JWE
 const cookieStorage: StateStorage = {
-  getItem: (name): string | null => {
+  getItem: async (name): Promise<string | null> => {
     const cookies = document.cookie.split("; ")
     const cookie = cookies.find((row) => row.startsWith(`${name}=`))
     if (!cookie) return null
     const val = cookie.split("=")[1]
-    return decrypt(val) || null
+    const decrypted = await decrypt(val)
+    return decrypted || null
   },
-  setItem: (name, value): void => {
-    const encrypted = encrypt(value)
+  setItem: async (name, value): Promise<void> => {
+    const encrypted = await encrypt(value)
     const date = new Date()
     date.setTime(date.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days expiration
     document.cookie = `${name}=${encrypted}; expires=${date.toUTCString()}; path=/; SameSite=Strict; Secure`
   },
-  removeItem: (name): void => {
+  removeItem: async (name): Promise<void> => {
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict; Secure`
   }
 }

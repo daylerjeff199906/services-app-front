@@ -6,6 +6,7 @@ import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ThemeSwitch } from "@/components/ui/theme-switch"
+import { PageHeader } from "@/components/page-header"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -240,28 +241,25 @@ export function BusinessesPage() {
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-6 py-10">
         
-        {/* Header Title + Action */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Mis Espacios de Trabajo</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Selecciona o crea un negocio para administrar tus servicios y agenda.
-            </p>
-          </div>
-
-          {services.length > 0 && (
-            <Button 
-              onClick={() => setIsModalOpen(true)}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              Crear Negocio
-            </Button>
-          )}
-        </div>
+        <PageHeader 
+          title="Mis Espacios de Trabajo"
+          description="Selecciona o crea un negocio para administrar tus servicios y agenda."
+          actionButton={
+            services.length > 0 ? (
+              <Button 
+                onClick={() => setIsModalOpen(true)}
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Crear Negocio
+              </Button>
+            ) : undefined
+          }
+        />
+        <div className="mb-8" />
 
         {/* Loading Spinner */}
         {isLoadingList ? (

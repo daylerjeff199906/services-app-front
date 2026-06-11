@@ -17,7 +17,7 @@ export function PageHeader({
   onBackClick,
 }: PageHeaderProps) {
   return (
-    <div className="bg-card border border-border p-6 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div className="flex items-start gap-4">
         {showBackButton && (
           <button
@@ -28,7 +28,7 @@ export function PageHeader({
             <ArrowLeft className="size-4" />
           </button>
         )}
-        
+
         <div className="space-y-1">
           <h2 className="text-2xl font-medium tracking-tight text-foreground">
             {title}

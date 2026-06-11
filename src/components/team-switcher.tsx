@@ -1,7 +1,5 @@
-"use client"
-
-import * as React from "react"
-
+import { useAuthStore } from "@/store/auth.store"
+import { useNavigate } from "react-router-dom"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,37 +17,12 @@ import {
 } from "@/components/ui/sidebar"
 import { ChevronsUpDownIcon, PlusIcon } from "lucide-react"
 
-export function TeamSwitcher({
-  teams,
-  activeTeam: propActiveTeam,
-  onSelect,
-}: {
-  teams: {
-    name: string
-    logo: React.ReactNode
-    plan: string
-  }[]
-  activeTeam?: {
-    name: string
-    logo: React.ReactNode
-    plan: string
-  }
-  onSelect?: (team: any) => void
-}) {
+export function TeamSwitcher() {
+  const { services, selectedService, selectService } = useAuthStore()
   const { isMobile } = useSidebar()
-  const [internalActiveTeam, setInternalActiveTeam] = React.useState(teams[0])
-  
-  const activeTeam = propActiveTeam || internalActiveTeam
+  const navigate = useNavigate()
 
-  const handleSelect = (team: any) => {
-    if (onSelect) {
-      onSelect(team)
-    } else {
-      setInternalActiveTeam(team)
-    }
-  }
-
-  if (!activeTeam) {
+  if (!selectedService) {
     return null
   }
 
@@ -62,44 +35,47 @@ export function TeamSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {activeTeam.logo}
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-sm">
+                {selectedService.name.charAt(0).toUpperCase()}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeTeam.name}</span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
+                <span className="truncate font-semibold">{selectedService.name}</span>
+                <span className="truncate text-xs text-muted-foreground">Negocio Activo</span>
               </div>
-              <ChevronsUpDownIcon className="ml-auto" />
+              <ChevronsUpDownIcon className="ml-auto size-4 text-muted-foreground" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-fit"
+            className="w-56"
             align="start"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Teams
+            <DropdownMenuLabel className="text-xs text-muted-foreground px-2 py-1.5">
+              Mis Negocios
             </DropdownMenuLabel>
-            {teams.map((team, index) => (
+            {services.map((biz, index) => (
               <DropdownMenuItem
-                key={team.name}
-                onClick={() => handleSelect(team)}
-                className="gap-2 p-2"
+                key={biz.id}
+                onClick={() => selectService(biz)}
+                className="gap-2 p-2 focus:bg-accent cursor-pointer"
               >
-                <div className="flex size-6 items-center justify-center rounded-md border">
-                  {team.logo}
+                <div className="flex size-6 items-center justify-center rounded-md border border-border bg-muted text-xs font-bold">
+                  {biz.name.charAt(0).toUpperCase()}
                 </div>
-                {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                <span className="flex-1 truncate text-sm font-medium">{biz.name}</span>
+                <DropdownMenuShortcut className="text-[10px] font-mono">⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
+            <DropdownMenuItem 
+              className="gap-2 p-2 cursor-pointer focus:bg-accent text-muted-foreground hover:text-foreground"
+              onClick={() => navigate("/intranet/businesses")}
+            >
+              <div className="flex size-6 items-center justify-center rounded-md border border-border bg-transparent">
                 <PlusIcon className="size-4" />
               </div>
-              <div className="font-medium text-muted-foreground">Add team</div>
+              <div className="font-semibold text-xs">Gestionar Negocios</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

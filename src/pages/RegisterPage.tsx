@@ -9,7 +9,7 @@ export function RegisterPage() {
         {/* Top Header Branding */}
         <div>
           <Link to="/" className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
-            ServiceX
+            Gesti
           </Link>
         </div>
 
@@ -20,7 +20,7 @@ export function RegisterPage() {
 
         {/* Footer info */}
         <div className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} ServiceX. Todos los derechos reservados.
+          © {new Date().getFullYear()} Gesti. Todos los derechos reservados.
         </div>
       </div>
 
@@ -35,7 +35,7 @@ export function RegisterPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex flex-col justify-end p-12 text-white">
           <blockquote className="space-y-2">
             <p className="text-lg font-medium leading-relaxed">
-              "Crear mi cuenta en ServiceX me tomó menos de un minuto. En solo una semana ya tenía mis primeros clientes agendados sin comisiones."
+              "Crear mi cuenta en Gesti me tomó menos de un minuto. En solo una semana ya tenía mis primeros clientes agendados sin comisiones."
             </p>
             <footer className="text-sm font-semibold text-white/80">
               — Lucía Gómez, Terapeuta Holística

@@ -22,14 +22,12 @@ import { ChevronsUpDownIcon, SparklesIcon, BadgeCheckIcon, CreditCardIcon, BellI
 
 export function NavUser({
   user,
-  onLogout,
 }: {
   user: {
     name: string
     email: string
     avatar: string
   }
-  onLogout?: () => void
 }) {
   const { isMobile } = useSidebar()
 
@@ -98,9 +96,10 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onLogout}>
-              <LogOutIcon />
-              Cerrar Sesión
+            <DropdownMenuItem>
+              <LogOutIcon
+              />
+              Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

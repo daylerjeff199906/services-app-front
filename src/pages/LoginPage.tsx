@@ -9,7 +9,7 @@ export function LoginPage() {
         {/* Top Header Branding */}
         <div>
           <Link to="/" className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
-            ServiceX
+            Gesti
           </Link>
         </div>
 
@@ -20,7 +20,7 @@ export function LoginPage() {
 
         {/* Footer info */}
         <div className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} ServiceX. Todos los derechos reservados.
+          © {new Date().getFullYear()} Gesti. Todos los derechos reservados.
         </div>
       </div>
 
@@ -35,7 +35,7 @@ export function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent flex flex-col justify-end p-12 text-white">
           <blockquote className="space-y-2">
             <p className="text-lg font-medium leading-relaxed">
-              "ServiceX ha transformado la manera en que gestionamos nuestras citas y clientes. La plataforma es rápida, intuitiva y sumamente profesional."
+              "Gesti ha transformado la manera en que gestionamos nuestras citas y clientes. La plataforma es rápida, intuitiva y sumamente profesional."
             </p>
             <footer className="text-sm font-semibold text-white/80">
               — Carlos Mendoza, Socio Fundador

@@ -45,7 +45,10 @@ export function LoginForm() {
       const dummyUser = {
         id: "usr_1",
         email: email,
-        name: "Director General",
+        full_name: "Director General",
+        phone: null,
+        bio: null,
+        specialty: null,
         role: "SAAS_ADMIN" as const, 
       }
 

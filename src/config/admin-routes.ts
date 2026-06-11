@@ -1,4 +1,4 @@
-import { LayoutDashboard, Layers, Map, ClipboardList, AudioLines } from "lucide-react"
+import { LayoutDashboard, Layers, Map, ClipboardList, AudioLines, Settings2 } from "lucide-react"
 
 export interface AdminRouteItem {
   title: string
@@ -18,71 +18,59 @@ export const getAdminRoutes = (_locale?: string): AdminRouteItem[] => {
       icon: LayoutDashboard,
     },
     {
-      title: "Taxonomía",
+      title: "Servicios",
       url: "#",
       icon: Layers,
       items: [
         {
-          title: "Clases",
-          url: `/dashboard/taxa/classes`,
+          title: "Catálogo de Servicios",
+          url: `/dashboard/services`,
         },
         {
-          title: "Órdenes",
-          url: `/dashboard/taxa/orders`,
+          title: "Categorías",
+          url: `/dashboard/services/categories`,
         },
         {
-          title: "Familias",
-          url: `/dashboard/taxa/families`,
-        },
-        {
-          title: "Géneros",
-          url: `/dashboard/taxa/genera`,
-        },
-        {
-          title: "Catálogo de Especies",
-          url: `/dashboard/taxa`,
+          title: "Descuentos y Ofertas",
+          url: `/dashboard/services/promotions`,
         },
       ],
     },
     {
-      title: "Geografía",
+      title: "Agenda y Horarios",
       url: "#",
       icon: Map,
       items: [
         {
-          title: "Instituciones",
-          url: `/dashboard/geography/institutions`,
+          title: "Calendario",
+          url: `/dashboard/agenda/calendar`,
         },
         {
-          title: "Regiones Naturales",
-          url: `/dashboard/geography/natural-regions`,
+          title: "Horarios de Atención",
+          url: `/dashboard/agenda/hours`,
         },
         {
-          title: "Hábitats",
-          url: `/dashboard/geography/ecosystems`,
-        },
-        {
-          title: "Ubicaciones",
-          url: `/dashboard/locations`,
+          title: "Ubicaciones de Atención",
+          url: `/dashboard/agenda/locations`,
         },
       ],
     },
     {
-      title: "Monitoreo",
+      title: "Reservas",
       url: "#",
       icon: ClipboardList,
       items: [
         {
-          title: "Registrar Colección",
-          url: `/dashboard/collections/new`,
+          title: "Nueva Reserva",
+          url: `/dashboard/bookings/new`,
         },
         {
-          title: "Lista de Ocurrencias",
-          url: `/dashboard/occurrences`,
+          title: "Historial de Reservas",
+          url: `/dashboard/bookings`,
         },
         {
-          title: "Eventos de Muestreo",
-          url: `/dashboard/events`,
+          title: "Lista de Clientes",
+          url: `/dashboard/bookings/clients`,
         },
       ],
     },
@@ -98,17 +86,17 @@ export const getAdminRoutes = (_locale?: string): AdminRouteItem[] => {
       ],
     },
     {
-      title: "Configuración",
+      title: "Ajustes",
       url: "#",
-      icon: ClipboardList,
+      icon: Settings2,
       items: [
         {
-          title: "Operaciones Masivas",
-          url: `/dashboard/bulk`,
+          title: "Mi Negocio",
+          url: `/dashboard/settings/business`,
         },
         {
-          title: "Usuarios",
-          url: `/dashboard/users`,
+          title: "Facturación y Planes",
+          url: `/dashboard/settings/billing`,
         },
       ],
     },

@@ -221,7 +221,7 @@ export function SearchPage() {
         <div className="h-20 px-8 flex items-center justify-between gap-6 container mx-auto">
           {/* Logo */}
           <Link to="/" className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 flex-shrink-0">
-            ServiceX
+            Gesti
           </Link>
 
           {/* Airbnb-style Advanced Search Pill Widget */}
@@ -292,7 +292,7 @@ export function SearchPage() {
                   to="/services"
                   className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all shadow-sm"
                 >
-                  {user?.name || "Panel"}
+                  {user?.full_name || "Panel"}
                 </Link>
               ) : (
                 <>
@@ -473,14 +473,14 @@ export function SearchPage() {
       {/* Footer */}
       <footer className="bg-muted/40 border-t border-border py-8 text-xs text-muted-foreground mt-12 transition-colors">
         <div className="container mx-auto px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="font-bold text-foreground">ServiceX Marketplace</span>
+          <span className="font-bold text-foreground">Gesti Marketplace</span>
           <div className="flex gap-6 font-semibold">
             <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>
             <Link to="/ofrecer" className="hover:text-foreground transition-colors">Ofrecer Servicios</Link>
             <a href="#" className="hover:text-foreground transition-colors">Términos de Uso</a>
             <a href="#" className="hover:text-foreground transition-colors">Privacidad</a>
           </div>
-          <span>© 2026 ServiceX Inc. Todos los derechos reservados.</span>
+          <span>© 2026 Gesti Inc. Todos los derechos reservados.</span>
         </div>
       </footer>
     </div>

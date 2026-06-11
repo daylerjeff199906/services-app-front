@@ -42,7 +42,7 @@ export function LandingPage() {
   const slides = [
     {
       id: 0,
-      badge: "Garantía ServiceX",
+      badge: "Garantía Gesti",
       title: "100% de Protección en tu Primer Servicio",
       desc: "Agenda con profesionales de confianza y asegura el éxito de tus requerimientos de salud, asesorías y tecnología.",
       bgClass: "bg-[#006341]",
@@ -286,7 +286,7 @@ export function LandingPage() {
         <div className="h-20 px-8 flex items-center justify-between gap-6 container mx-auto">
           {/* Logo */}
           <Link to="/" className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 flex-shrink-0">
-            ServiceX
+            Gesti
           </Link>
 
           {/* Airbnb-style Advanced Search Pill Widget */}
@@ -360,7 +360,7 @@ export function LandingPage() {
                   to="/services"
                   className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all shadow-sm"
                 >
-                  {user?.name || "Panel"}
+                  {user?.full_name || "Panel"}
                 </Link>
               ) : (
                 <>
@@ -687,7 +687,7 @@ export function LandingPage() {
       <footer className="bg-muted/40 border-t border-border py-10 text-xs text-muted-foreground transition-colors">
         <div className="container mx-auto px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col items-center md:items-start gap-1">
-            <span className="font-bold text-foreground text-sm">ServiceX Marketplace</span>
+            <span className="font-bold text-foreground text-sm">Gesti Marketplace</span>
             <span>Conectando talento certificado con proyectos independientes.</span>
           </div>
           <div className="flex gap-6 font-semibold">
@@ -696,7 +696,7 @@ export function LandingPage() {
             <a href="#" className="hover:text-foreground transition-colors">Privacidad</a>
             <a href="#" className="hover:text-foreground transition-colors">Portal de Soporte</a>
           </div>
-          <span>© 2026 ServiceX Inc. Todos los derechos reservados.</span>
+          <span>© 2026 Gesti Inc. Todos los derechos reservados.</span>
         </div>
       </footer>
     </div>

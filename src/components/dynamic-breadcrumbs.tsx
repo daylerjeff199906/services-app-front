@@ -1,6 +1,6 @@
 "use client"
 
-import { usePathname } from "next/navigation";
+import { useLocation, Link } from "react-router-dom";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,22 +9,27 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import Link from "next/link";
 import React from "react";
 
 const routeMap: Record<string, string> = {
   dashboard: "Inicio",
-  occurrences: "Monitoreo",
-  multimedia: "Multimedia",
-  taxa: "Taxonomía",
+  services: "Servicios",
+  agenda: "Agenda",
+  bookings: "Reservas",
+  multimedia: "Mediateca",
+  settings: "Ajustes",
+  business: "Negocio",
+  billing: "Facturación",
+  categories: "Categorías",
+  promotions: "Promociones",
+  hours: "Horarios",
   locations: "Ubicaciones",
-  events: "Eventos",
-  edit: "Editar",
-  create: "Nuevo",
+  new: "Nuevo",
+  clients: "Clientes",
 };
 
 export function DynamicBreadcrumbs() {
-  const pathname = usePathname();
+  const { pathname } = useLocation();
   const pathSegments = pathname.split("/").filter((v) => v);
 
   return (
@@ -44,7 +49,7 @@ export function DynamicBreadcrumbs() {
                   </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
-                    <Link href={href} className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors capitalize">
+                    <Link to={href} className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors capitalize">
                       {label}
                     </Link>
                   </BreadcrumbLink>

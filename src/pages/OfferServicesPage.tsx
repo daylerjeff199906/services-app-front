@@ -28,7 +28,7 @@ export function OfferServicesPage() {
   // Calculations
   const totalRevenue = servicePrice * monthlyJobs
   const standardCommission = Math.round(totalRevenue * 0.20)
-  const servicexEarnings = totalRevenue // 0% commission
+  const GestiEarnings = totalRevenue // 0% commission
   const monthlySavings = standardCommission
 
   const toggleFaq = (index: number) => {
@@ -37,12 +37,12 @@ export function OfferServicesPage() {
 
   const faqs = [
     {
-      q: "¿Cuánto cuesta usar ServiceX para ofrecer servicios?",
+      q: "¿Cuánto cuesta usar Gesti para ofrecer servicios?",
       a: "Crear tu cuenta y registrar tu primer servicio es gratis. Durante el primer mes no cobramos ninguna comisión de intermediación (0%). Posteriormente, puedes elegir planes mensuales muy económicos según el volumen de tu negocio."
     },
     {
       q: "¿Cómo recibo los pagos de mis clientes?",
-      a: "ServiceX integra una pasarela de pago segura. El cliente paga al reservar o confirmar la oferta, el dinero se retiene de forma segura y se libera directamente a tu cuenta bancaria una vez completado el servicio."
+      a: "Gesti integra una pasarela de pago segura. El cliente paga al reservar o confirmar la oferta, el dinero se retiene de forma segura y se libera directamente a tu cuenta bancaria una vez completado el servicio."
     },
     {
       q: "¿Puedo configurar múltiples servicios o sucursales?",
@@ -61,7 +61,7 @@ export function OfferServicesPage() {
         <div className="h-16 px-8 flex items-center justify-between gap-6 container mx-auto">
           {/* Logo */}
           <Link to="/" className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 flex-shrink-0">
-            ServiceX <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#059669]/10 text-[#059669]">Pro</span>
+            Gesti <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#059669]/10 text-[#059669]">Pro</span>
           </Link>
 
           {/* Navigation Links */}
@@ -217,7 +217,7 @@ export function OfferServicesPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-[#059669]">Calculadora de Ahorro</span>
                 <h2 className="text-3xl font-extrabold tracking-tight">Simula tus Ingresos y Ahorros</h2>
                 <p className="text-sm text-muted-foreground">
-                  Compara cuánto ganas en ServiceX conservando el 100% de tus ingresos frente a otras plataformas tradicionales que cobran hasta un 20% de comisión.
+                  Compara cuánto ganas en Gesti conservando el 100% de tus ingresos frente a otras plataformas tradicionales que cobran hasta un 20% de comisión.
                 </p>
               </div>
 
@@ -280,8 +280,8 @@ export function OfferServicesPage() {
                 </div>
 
                 <div className="border-t border-white/20 pt-4 space-y-1">
-                  <span className="text-xs text-white/90 font-semibold block">Con ServiceX ganas:</span>
-                  <span className="text-4xl font-extrabold text-white">${servicexEarnings.toLocaleString()} USD</span>
+                  <span className="text-xs text-white/90 font-semibold block">Con Gesti ganas:</span>
+                  <span className="text-4xl font-extrabold text-white">${GestiEarnings.toLocaleString()} USD</span>
                 </div>
               </div>
 
@@ -296,10 +296,10 @@ export function OfferServicesPage() {
         {/* Value Proposition / Trust Section */}
         <section className="container mx-auto px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#059669]">¿Por qué elegir ServiceX?</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-[#059669]">¿Por qué elegir Gesti?</span>
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Diseñado específicamente para profesionales independientes</h2>
             <p className="text-muted-foreground text-base">
-              A diferencia de las plataformas de subastas o gig marketplaces que devalúan tu trabajo con comisiones abusivas y competencia desleal por precios bajos, ServiceX te ofrece tu propio software SaaS para gestionar tu marca, tus precios y tus clientes de forma independiente.
+              A diferencia de las plataformas de subastas o gig marketplaces que devalúan tu trabajo con comisiones abusivas y competencia desleal por precios bajos, Gesti te ofrece tu propio software SaaS para gestionar tu marca, tus precios y tus clientes de forma independiente.
             </p>
             
             <div className="space-y-4">
@@ -330,7 +330,7 @@ export function OfferServicesPage() {
             
             <div className="p-6 bg-card border border-border rounded-xl space-y-4 shadow-sm">
               <p className="text-sm italic text-muted-foreground">
-                &quot;Antes usaba una aplicación que me cobraba el 15% de cada consulta de fisioterapia. Con ServiceX registré mi clínica en 5 minutos y ahora recibo los pagos completos de forma directa. Los clientes valoran la rapidez de agendado.&quot;
+                &quot;Antes usaba una aplicación que me cobraba el 15% de cada consulta de fisioterapia. Con Gesti registré mi clínica en 5 minutos y ahora recibo los pagos completos de forma directa. Los clientes valoran la rapidez de agendado.&quot;
               </p>
               <div>
                 <p className="font-bold text-sm">Carlos Rosales</p>
@@ -340,7 +340,7 @@ export function OfferServicesPage() {
 
             <div className="p-6 bg-card border border-border rounded-xl space-y-4 shadow-sm">
               <p className="text-sm italic text-muted-foreground">
-                &quot;Gestionar mis clases de inglés para adultos era un dolor de cabeza. ServiceX organizó mi agenda y automatizó los cobros mensuales. Mis ingresos han aumentado un 25% gracias a que no pago comisiones.&quot;
+                &quot;Gestionar mis clases de inglés para adultos era un dolor de cabeza. Gesti organizó mi agenda y automatizó los cobros mensuales. Mis ingresos han aumentado un 25% gracias a que no pago comisiones.&quot;
               </p>
               <div>
                 <p className="font-bold text-sm">Diana Valenzuela</p>
@@ -402,14 +402,14 @@ export function OfferServicesPage() {
       {/* Footer */}
       <footer className="bg-muted/40 border-t border-border py-8 text-xs text-muted-foreground">
         <div className="container mx-auto px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="font-bold text-foreground">ServiceX Marketplace</span>
+          <span className="font-bold text-foreground">Gesti Marketplace</span>
           <div className="flex gap-6">
             <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>
             <a href="#" className="hover:text-foreground transition-colors">Términos de Uso</a>
             <a href="#" className="hover:text-foreground transition-colors">Privacidad</a>
             <a href="#" className="hover:text-foreground transition-colors">Soporte</a>
           </div>
-          <span>© 2026 ServiceX. Todos los derechos reservados.</span>
+          <span>© 2026 Gesti. Todos los derechos reservados.</span>
         </div>
       </footer>
     </div>

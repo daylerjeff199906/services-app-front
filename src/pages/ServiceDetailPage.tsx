@@ -253,7 +253,7 @@ export function ServiceDetailPage() {
         <div className="h-20 px-8 flex items-center justify-between gap-6 container mx-auto">
           {/* Logo */}
           <Link to="/" className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 flex-shrink-0">
-            ServiceX
+            Gesti
           </Link>
 
           {/* Airbnb-style Advanced Search Pill Widget */}
@@ -284,7 +284,7 @@ export function ServiceDetailPage() {
                   to="/services"
                   className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all shadow-sm"
                 >
-                  {user?.name || "Panel"}
+                  {user?.full_name || "Panel"}
                 </Link>
               ) : (
                 <>
@@ -408,7 +408,7 @@ export function ServiceDetailPage() {
                   Servicio ofrecido por {currentService.provider}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Profesional verificado de la categoría {currentService.category} • Certificación ServiceX
+                  Profesional verificado de la categoría {currentService.category} • Certificación Gesti
                 </p>
               </div>
               <div className="size-12 rounded-full bg-[#059669]/10 text-[#059669] flex items-center justify-center font-bold text-sm border border-[#059669]/20 shadow-sm flex-shrink-0">
@@ -432,7 +432,7 @@ export function ServiceDetailPage() {
                   <ShieldCheck className="size-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm">Garantía ServiceX Protegido</h4>
+                  <h4 className="font-bold text-sm">Garantía Gesti Protegido</h4>
                   <p className="text-xs text-muted-foreground">El cobro se retiene de forma segura y solo se libera cuando confirmes la entrega satisfactoria.</p>
                 </div>
               </div>
@@ -610,14 +610,14 @@ export function ServiceDetailPage() {
       {/* Footer */}
       <footer className="bg-muted/40 border-t border-border py-8 text-xs text-muted-foreground transition-colors mt-12">
         <div className="container mx-auto px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="font-bold text-foreground">ServiceX Marketplace</span>
+          <span className="font-bold text-foreground">Gesti Marketplace</span>
           <div className="flex gap-6 font-semibold">
             <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>
             <Link to="/ofrecer" className="hover:text-foreground transition-colors">Ofrecer Servicios</Link>
             <a href="#" className="hover:text-foreground transition-colors">Términos de Uso</a>
             <a href="#" className="hover:text-foreground transition-colors">Privacidad</a>
           </div>
-          <span>© 2026 ServiceX Inc. Todos los derechos reservados.</span>
+          <span>© 2026 Gesti Inc. Todos los derechos reservados.</span>
         </div>
       </footer>
     </div>

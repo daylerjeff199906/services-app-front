@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import { ProtectedRoute } from "@/routes/ProtectedRoute"
+import { AuthGuard } from "@/routes/AuthGuard"
 import { LandingPage } from "@/pages/LandingPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { RegisterPage } from "@/pages/RegisterPage"
@@ -10,6 +10,8 @@ import { OfferServicesPage } from "@/pages/OfferServicesPage"
 import { SearchPage } from "@/pages/SearchPage"
 import { ServiceDetailPage } from "@/pages/ServiceDetailPage"
 import { TodosPage } from "@/pages/TodosPage"
+import { ProfileOnboardingPage } from "@/pages/ProfileOnboardingPage"
+import { BusinessesPage } from "@/pages/BusinessesPage"
 
 export function AppRouter() {
   return (
@@ -24,23 +26,43 @@ export function AppRouter() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/todos" element={<TodosPage />} />
 
+        {/* Profile Onboarding (Requires Auth but only if profile is incomplete) */}
+        <Route
+          path="/onboarding/profile"
+          element={
+            <AuthGuard requireCompleteProfile={false} allowIncompleteProfileOnly>
+              <ProfileOnboardingPage />
+            </AuthGuard>
+          }
+        />
+
+        {/* Intranet / Gestor de Negocios (Requires Auth & Complete Profile) */}
+        <Route
+          path="/intranet/businesses"
+          element={
+            <AuthGuard>
+              <BusinessesPage />
+            </AuthGuard>
+          }
+        />
+
         {/* Auth Required, but No Selected Service Needed yet */}
         <Route
           path="/services"
           element={
-            <ProtectedRoute>
+            <AuthGuard>
               <ServiceSelectorPage />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         />
 
-        {/* Intranet Dashboard (Requires Auth AND Active Service Selection) */}
+        {/* Intranet Dashboard (Requires Auth, Complete Profile AND Active Service Selection) */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute requireSelectedService>
+            <AuthGuard requireSelectedService>
               <PrivateLayout />
-            </ProtectedRoute>
+            </AuthGuard>
           }
         >
           {/* Default dashboard path redirects or displays main dashboard */}
@@ -50,24 +72,24 @@ export function AppRouter() {
           <Route
             path="admin-settings"
             element={
-              <ProtectedRoute allowedRoles={["SAAS_ADMIN"]}>
+              <AuthGuard allowedRoles={["SAAS_ADMIN"]}>
                 <div className="p-6 bg-card rounded-lg border border-border">
                   <h2 className="text-xl font-bold mb-2">Administración SaaS</h2>
                   <p className="text-muted-foreground">Esta sección es visible únicamente para roles SAAS_ADMIN.</p>
                 </div>
-              </ProtectedRoute>
+              </AuthGuard>
             }
           />
 
           <Route
             path="billing"
             element={
-              <ProtectedRoute allowedRoles={["SAAS_ADMIN", "SERVICE_OWNER"]}>
+              <AuthGuard allowedRoles={["SAAS_ADMIN", "SERVICE_OWNER"]}>
                 <div className="p-6 bg-card rounded-lg border border-border">
                   <h2 className="text-xl font-bold mb-2">Facturación y Planes</h2>
                   <p className="text-muted-foreground">Esta sección es visible para SAAS_ADMIN y SERVICE_OWNER.</p>
                 </div>
-              </ProtectedRoute>
+              </AuthGuard>
             }
           />
         </Route>
@@ -78,3 +100,4 @@ export function AppRouter() {
     </BrowserRouter>
   )
 }
+

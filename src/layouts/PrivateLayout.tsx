@@ -2,8 +2,11 @@ import { Outlet } from "react-router-dom"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ThemeSwitch } from "@/components/ui/theme-switch"
+import { usePageHeader } from "@/components/providers/page-header-provider"
 
 export function PrivateLayout() {
+  const { title } = usePageHeader()
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-screen bg-background overflow-hidden text-foreground">
@@ -15,7 +18,7 @@ export function PrivateLayout() {
           <header className="h-16 bg-card border-b border-border flex items-center justify-between px-8 flex-shrink-0">
             <div className="flex items-center gap-4">
               <SidebarTrigger />
-              <h1 className="text-xl font-bold tracking-tight">Panel de Control</h1>
+              <h1 className="text-xl font-bold tracking-tight">{title || "Panel de Control"}</h1>
             </div>
             <div className="flex items-center gap-6 text-sm">
               <ThemeSwitch />

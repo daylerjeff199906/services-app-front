@@ -4,6 +4,7 @@ import { queryClient } from "./lib/query-client"
 import { AppRouter } from "./routes/AppRouter"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useThemeStore } from "./store/theme.store"
+import { PageHeaderProvider } from "@/components/providers/page-header-provider"
 
 function App() {
   const theme = useThemeStore((state) => state.theme)
@@ -17,7 +18,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AppRouter />
+        <PageHeaderProvider>
+          <AppRouter />
+        </PageHeaderProvider>
       </TooltipProvider>
     </QueryClientProvider>
   )

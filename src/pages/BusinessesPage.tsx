@@ -37,10 +37,10 @@ type BusinessInput = z.infer<typeof businessSchema>
 export function BusinessesPage() {
   const navigate = useNavigate()
   const { user, services, setServices, selectService, logout } = useAuthStore()
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isLoadingList, setIsLoadingList] = useState(true)
-  
+
   // Form state
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
@@ -99,7 +99,7 @@ export function BusinessesPage() {
       .replace(/[^a-z0-9\s-]/g, "")     // Keep only alphanumeric, spaces, and hyphens
       .replace(/\s+/g, "-")            // Replace spaces with hyphens
       .replace(/-+/g, "-")             // Deduplicate hyphens
-    
+
     setSlug(generatedSlug)
   }, [name])
 
@@ -154,7 +154,7 @@ export function BusinessesPage() {
       setSlug("")
       setDescription("")
       setIsModalOpen(false)
-      
+
       // Refresh list
       await fetchBusinesses()
     } catch (err: any) {
@@ -178,7 +178,7 @@ export function BusinessesPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
-      
+
       {/* Top Navigation Header */}
       <header className="h-16 bg-card border-b border-border flex items-center justify-between px-8 flex-shrink-0">
         <div className="flex items-center gap-6">
@@ -189,7 +189,7 @@ export function BusinessesPage() {
 
         <div className="flex items-center gap-6 text-sm">
           <ThemeSwitch />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 outline-none p-1.5 rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border">
@@ -218,7 +218,7 @@ export function BusinessesPage() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => navigate("/profile/settings")}
                 className="gap-2 p-2 cursor-pointer"
               >
@@ -226,7 +226,7 @@ export function BusinessesPage() {
                 Mi Cuenta / Perfil
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={handleLogout}
                 className="gap-2 p-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
               >
@@ -239,14 +239,14 @@ export function BusinessesPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-6 py-10">
-        
-        <PageHeader 
+      <main className="container mx-auto px-6 py-10">
+
+        <PageHeader
           title="Mis Espacios de Trabajo"
           description="Selecciona o crea un negocio para administrar tus servicios y agenda."
           actionButton={
             services.length > 0 ? (
-              <Button 
+              <Button
                 onClick={() => setIsModalOpen(true)}
                 className="w-full sm:w-auto flex items-center justify-center gap-1.5"
               >
@@ -276,9 +276,9 @@ export function BusinessesPage() {
             <span className="text-xs text-muted-foreground mt-3 font-medium">Cargando negocios...</span>
           </div>
         ) : services.length === 0 ? (
-          
+
           /* Visual Flat Empty State */
-          <div className="w-full border-2 border-dashed border-border rounded-xl p-12 text-center bg-card flex flex-col items-center max-w-2xl mx-auto animate-fade-in">
+          <div className="w-full border-2 border-dashed border-border rounded-xl p-12 text-center bg-card flex flex-col items-center mx-auto animate-fade-in">
             <div className="size-16 rounded-full bg-muted border border-border flex items-center justify-center mb-6">
               <svg xmlns="http://www.w3.org/2000/svg" className="size-8 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
@@ -290,7 +290,7 @@ export function BusinessesPage() {
             <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2 mb-8 leading-relaxed">
               Comienza creando tu primer espacio de trabajo para configurar tus servicios y empezar a recibir clientes.
             </p>
-            <Button 
+            <Button
               onClick={() => setIsModalOpen(true)}
               className="flex items-center gap-1.5 px-6 font-semibold"
             >
@@ -302,11 +302,11 @@ export function BusinessesPage() {
             </Button>
           </div>
         ) : (
-          
+
           /* Businesses grid layout using simple flat borders, no shadows */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
             {services.map((biz) => (
-              <div 
+              <div
                 key={biz.id}
                 className="bg-card border border-border rounded-xl p-6 flex flex-col justify-between hover:border-primary/50 transition-colors"
               >
@@ -342,15 +342,15 @@ export function BusinessesPage() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
           <div className="bg-card border border-border rounded-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-            
+
             {/* Modal Title */}
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="text-lg font-bold tracking-tight">Crear Nuevo Negocio</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Define los detalles de tu nuevo espacio de trabajo.</p>
               </div>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
+              <button
+                onClick={() => setIsModalOpen(false)}
                 className="text-muted-foreground hover:text-foreground text-xl p-1 font-mono transition-colors"
               >
                 ×
@@ -369,7 +369,7 @@ export function BusinessesPage() {
               <FieldGroup className="gap-4">
                 <Field>
                   <FieldLabel htmlFor="biz-name">Nombre del Negocio</FieldLabel>
-                  <Input 
+                  <Input
                     id="biz-name"
                     type="text"
                     placeholder="Clínica dental DentalSmile"
@@ -389,7 +389,7 @@ export function BusinessesPage() {
                     <span className="bg-muted px-3 border-r border-border text-xs text-muted-foreground flex items-center font-mono select-none">
                       /
                     </span>
-                    <input 
+                    <input
                       id="biz-slug"
                       type="text"
                       placeholder="dentalsmile"
@@ -408,7 +408,7 @@ export function BusinessesPage() {
 
                 <Field>
                   <FieldLabel htmlFor="biz-desc">Descripción (Opcional)</FieldLabel>
-                  <textarea 
+                  <textarea
                     id="biz-desc"
                     rows={3}
                     placeholder="Describe los servicios que ofrece tu espacio de trabajo..."

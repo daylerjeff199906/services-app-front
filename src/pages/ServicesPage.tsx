@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PageHeader } from "@/components/page-header"
 import { toast } from "sonner"
-import { 
-  Search, 
-  Plus, 
-  FolderEdit, 
-  Edit3, 
+import {
+  Search,
+  Plus,
+  FolderEdit,
+  Edit,
   Trash2
 } from "lucide-react"
 
@@ -90,17 +90,31 @@ export function ServicesPage() {
 
       if (servsError) throw servsError
 
-      const mapped = (servs || []).map((s: any) => ({
-        id: s.id,
-        name: s.name,
-        description: s.description,
-        price: s.price,
-        currency: s.currency || "USD",
-        duration: s.duration_minutes ?? s.duration ?? 30,
-        is_active: s.is_active,
-        category_id: s.category_id,
-        image_url: null,
-      }))
+      // 3. Fetch main cover images from multimedia table
+      const { data: mediaData, error: mediaError } = await supabase
+        .from("multimedia")
+        .select("service_id, url")
+        .eq("business_id", selectedService.id)
+        .eq("is_main", true)
+
+      if (mediaError) {
+        console.warn("Could not load multimedia items:", mediaError)
+      }
+
+      const mapped = (servs || []).map((s: any) => {
+        const mainImage = (mediaData || []).find((m: any) => m.service_id === s.id)
+        return {
+          id: s.id,
+          name: s.name,
+          description: s.description,
+          price: s.price,
+          currency: s.currency || "USD",
+          duration: s.duration_minutes ?? s.duration ?? 30,
+          is_active: s.is_active,
+          category_id: s.category_id,
+          image_url: mainImage ? mainImage.url : null,
+        }
+      })
 
       setServices(mapped)
     } catch (err) {
@@ -304,7 +318,7 @@ export function ServicesPage() {
                           onClick={() => navigate(`/dashboard/services/edit/${service.id}`)}
                           className="bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium text-xs px-3 h-8 flex items-center gap-1.5"
                         >
-                          <Edit3 className="size-3.5" />
+                          <Edit className="size-3.5" />
                           Editar
                         </Button>
                         <Button
@@ -337,7 +351,7 @@ export function ServicesPage() {
                 ¿Estás seguro de que deseas eliminar permanentemente el servicio <strong>"{deleteConfirmName}"</strong>? Esta acción no se puede deshacer.
               </p>
             </div>
-            
+
             <div className="flex justify-end gap-3">
               <Button
                 variant="outline"

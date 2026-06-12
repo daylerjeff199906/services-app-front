@@ -26,7 +26,7 @@ export function CreateServicePage() {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("0.00")
-  const [currency, setCurrency] = useState("USD")
+  const [currency, setCurrency] = useState("PEN")
   const [duration, setDuration] = useState("30")
   const [categoryId, setCategoryId] = useState("")
   const [isActive, setIsActive] = useState(true)

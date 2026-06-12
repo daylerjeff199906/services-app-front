@@ -49,11 +49,11 @@ const calculateDayDuration = (intervals: TimeInterval[]) => {
       totalMins += (closeMinutes - openMinutes)
     }
   })
-  
+
   if (totalMins === 0) return "0 hrs"
   const hours = Math.floor(totalMins / 60)
   const mins = totalMins % 60
-  
+
   const shiftText = intervals.length === 1 ? "1 turno" : `${intervals.length} turnos`
   if (mins === 0) {
     return `${hours} hrs (${shiftText})`
@@ -78,7 +78,7 @@ export function HoursPage() {
   const [showSaveDialog, setShowSaveDialog] = useState(false)
 
   // View state and inline editing
-  const [viewMode, setViewMode] = useState<"grid" | "agenda">("grid")
+  const [viewMode, setViewMode] = useState<"grid" | "agenda">("agenda")
   const [editingInterval, setEditingInterval] = useState<{ dayVal: number; index: number } | null>(null)
 
   const fetchHours = async () => {
@@ -110,7 +110,7 @@ export function HoursPage() {
       // Merge with fetched data
       if (data && data.length > 0) {
         setIsFirstTime(false)
-        
+
         // Group fetched rows by day_of_week
         const grouped: Record<number, any[]> = {}
         data.forEach((row: any) => {
@@ -124,7 +124,7 @@ export function HoursPage() {
         Object.keys(grouped).forEach((dayKey) => {
           const dayVal = Number(dayKey)
           const rows = grouped[dayVal]
-          
+
           const isClosed = rows.some((row) => row.is_closed)
           const intervals = rows
             .filter((row) => !row.is_closed)
@@ -195,7 +195,7 @@ export function HoursPage() {
       const lastInterval = daySched.intervals[daySched.intervals.length - 1]
       let newOpen = "14:00"
       let newClose = "18:00"
-      
+
       if (lastInterval) {
         const [lastH] = lastInterval.close_time.split(":").map(Number)
         const nextH = Math.min(lastH + 1, 23)
@@ -220,7 +220,7 @@ export function HoursPage() {
       const daySched = prev[dayVal]
       const updatedIntervals = daySched.intervals.filter((_, i) => i !== index)
       const shouldClose = updatedIntervals.length === 0
-      
+
       return {
         ...prev,
         [dayVal]: {
@@ -253,7 +253,7 @@ export function HoursPage() {
 
     try {
       const rowsToSave: any[] = []
-      
+
       Object.values(schedule).forEach((daySched) => {
         if (daySched.is_closed) {
           rowsToSave.push({
@@ -344,7 +344,7 @@ export function HoursPage() {
           <h3 className="font-bold text-sm text-foreground">Visualización del Horario</h3>
           <p className="text-xs text-muted-foreground">Alterna entre vista de tarjetas o de agenda semanal.</p>
         </div>
-        
+
         {/* Toggle tabs buttons */}
         <div className="flex items-center bg-muted p-1 rounded-lg border border-border self-start sm:self-auto shrink-0 animate-fade-in">
           <button
@@ -352,8 +352,8 @@ export function HoursPage() {
             onClick={() => setViewMode("grid")}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border-0 cursor-pointer outline-none",
-              viewMode === "grid" 
-                ? "bg-card text-foreground shadow-xs" 
+              viewMode === "grid"
+                ? "bg-card text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground bg-transparent"
             )}
           >
@@ -365,8 +365,8 @@ export function HoursPage() {
             onClick={() => setViewMode("agenda")}
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border-0 cursor-pointer outline-none",
-              viewMode === "agenda" 
-                ? "bg-card text-foreground shadow-xs" 
+              viewMode === "agenda"
+                ? "bg-card text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground bg-transparent"
             )}
           >
@@ -378,93 +378,18 @@ export function HoursPage() {
 
       {viewMode === "grid" ? (
         <>
-          {/* Visual Weekly Timeline Preview */}
-          <div className="bg-card border border-border rounded-xl p-5 space-y-4 shadow-sm animate-fade-in">
-            <div className="space-y-1">
-              <h3 className="font-bold text-sm text-foreground">Vista Previa del Horario Semanal</h3>
-              <p className="text-xs text-muted-foreground">Línea de tiempo visual de tus turnos de atención activos.</p>
-            </div>
-            
-            <div className="space-y-2.5 pt-2">
-              {DAYS_OF_WEEK.map((day) => {
-                const daySched = schedule[day.value]
-                const isClosed = !daySched || daySched.is_closed
-                
-                return (
-                  <div key={day.value} className="flex items-center gap-3">
-                    <span className="w-10 text-xs font-semibold text-foreground shrink-0">{day.label.substring(0, 3)}</span>
-                    <div className="flex-1 h-3 bg-muted rounded-full relative overflow-hidden flex">
-                      {isClosed ? (
-                        <div className="w-full h-full bg-muted-foreground/5 flex items-center justify-center">
-                          <span className="text-[7px] text-muted-foreground/60 uppercase tracking-widest font-bold font-sans">Cerrado</span>
-                        </div>
-                      ) : (
-                        daySched.intervals.map((interval, idx) => {
-                          const [startH, startM] = interval.open_time.split(":").map(Number)
-                          const [endH, endM] = interval.close_time.split(":").map(Number)
-                          
-                          const timelineStart = 6 * 60
-                          const timelineEnd = 24 * 60
-                          const totalMinutes = timelineEnd - timelineStart
-                          
-                          const startMin = startH * 60 + startM
-                          const endMin = endH * 60 + endM
-                          
-                          const clampedStart = Math.max(timelineStart, Math.min(timelineEnd, startMin))
-                          const clampedEnd = Math.max(timelineStart, Math.min(timelineEnd, endMin))
-                          
-                          const leftPercent = ((clampedStart - timelineStart) / totalMinutes) * 100
-                          const widthPercent = ((clampedEnd - clampedStart) / totalMinutes) * 100
-                          
-                          if (widthPercent <= 0) return null
-                          
-                          return (
-                            <div
-                              key={idx}
-                              className="absolute h-full bg-[#10b981] rounded-full shadow-inner opacity-90 transition-all duration-300"
-                              style={{
-                                left: `${leftPercent}%`,
-                                width: `${widthPercent}%`,
-                              }}
-                              title={`Turno ${idx + 1}: ${interval.open_time} - ${interval.close_time}`}
-                            />
-                          )
-                        })
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            
-            <div className="flex justify-between items-center text-[9px] text-muted-foreground px-1 pt-1 font-mono">
-              <span>06:00 AM</span>
-              <span>10:00 AM</span>
-              <span>02:00 PM</span>
-              <span>06:00 PM</span>
-              <span>10:00 PM</span>
-              <span>12:00 AM</span>
-            </div>
-          </div>
-
           {/* Grid of Days */}
           <div className="space-y-4">
-            <div className="space-y-1">
-              <h3 className="font-bold text-sm text-foreground">Configurar días de atención</h3>
-              <p className="text-xs text-muted-foreground">Configura los turnos de apertura y cierre de cada día de la semana.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {DAYS_OF_WEEK.map((day) => {
                 const daySched = schedule[day.value]
                 if (!daySched) return null
 
                 return (
-                  <div 
+                  <div
                     key={day.value}
-                    className={`p-5 border rounded-xl bg-card border-border flex flex-col justify-between gap-4 transition-all duration-200 ${
-                      daySched.is_closed ? "opacity-60 bg-muted/10" : "hover:border-foreground/30 shadow-2xs"
-                    }`}
+                    className={`p-5 border rounded-xl bg-card border-border flex flex-col justify-between gap-4 transition-all duration-200 ${daySched.is_closed ? "opacity-60 bg-muted/10" : "hover:border-foreground/30 shadow-2xs"
+                      }`}
                   >
                     {/* Card Header: Day and Toggle */}
                     <div className="flex items-start justify-between gap-2 border-b border-border pb-3">
@@ -476,20 +401,18 @@ export function HoursPage() {
                           </span>
                         )}
                       </div>
-                      
+
                       {/* Toggle closed switch */}
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => handleToggleClosed(day.value)}
-                          className={`relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                            !daySched.is_closed ? "bg-[#10b981]" : "bg-muted"
-                          }`}
+                          className={`relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${!daySched.is_closed ? "bg-[#10b981]" : "bg-muted"
+                            }`}
                         >
                           <span
-                            className={`pointer-events-none inline-block size-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                              !daySched.is_closed ? "translate-x-3.5" : "translate-x-0"
-                            }`}
+                            className={`pointer-events-none inline-block size-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${!daySched.is_closed ? "translate-x-3.5" : "translate-x-0"
+                              }`}
                           />
                         </button>
                         <span className="text-[10px] font-bold select-none w-10 text-muted-foreground">
@@ -530,7 +453,7 @@ export function HoursPage() {
                                     ))}
                                   </select>
                                 </div>
-                                
+
                                 {/* Remove shift button */}
                                 <button
                                   type="button"
@@ -565,11 +488,6 @@ export function HoursPage() {
       ) : (
         /* Weekly Calendar Agenda view */
         <div className="space-y-4 animate-fade-in">
-          <div className="space-y-1">
-            <h3 className="font-bold text-sm text-foreground">Agenda Semanal Interactiva</h3>
-            <p className="text-xs text-muted-foreground">Administra tus turnos como una agenda. Haz click en cualquier turno para editarlo o eliminarlo.</p>
-          </div>
-
           <div className="overflow-x-auto w-full border border-border rounded-xl bg-card shadow-sm">
             <div className="min-w-[840px] grid grid-cols-7 divide-x divide-border h-[480px]">
               {DAYS_OF_WEEK.map((day) => {
@@ -592,7 +510,7 @@ export function HoursPage() {
                         {daySched.is_closed ? "Abrir día" : "Cerrar día"}
                       </button>
                     </div>
-                    
+
                     {/* Day Column Body */}
                     <div className="flex-1 p-2 space-y-2 overflow-y-auto bg-muted/5 min-h-0">
                       {!daySched.is_closed ? (
@@ -612,13 +530,13 @@ export function HoursPage() {
                               <div className="text-[9px] text-muted-foreground font-semibold mt-1">
                                 Total: {calculateDayDuration([interval]).split(" (")[0]}
                               </div>
-                              
+
                               <span className="absolute bottom-1 right-2 text-[8px] text-[#10b981] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                                 Editar
                               </span>
                             </div>
                           ))}
-                          
+
                           <button
                             type="button"
                             onClick={() => handleAddInterval(day.value)}
@@ -665,7 +583,7 @@ export function HoursPage() {
             <h4 className="font-bold text-sm text-foreground">
               Turno {editingInterval.index + 1} - {DAYS_OF_WEEK.find(d => d.value === editingInterval.dayVal)?.label}
             </h4>
-            
+
             <div className="space-y-3">
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] font-semibold text-muted-foreground uppercase">Hora de Apertura</label>
@@ -688,7 +606,7 @@ export function HoursPage() {
                 </select>
               </div>
             </div>
-            
+
             <div className="flex justify-between items-center pt-2">
               <Button
                 variant="destructive"
@@ -762,8 +680,8 @@ export function HoursPage() {
                 ¿Guardar horarios de atención?
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed font-medium">
-                {isFirstTime 
-                  ? "Configurarás los horarios de disponibilidad del negocio por primera vez en la plataforma." 
+                {isFirstTime
+                  ? "Configurarás los horarios de disponibilidad del negocio por primera vez en la plataforma."
                   : "Se actualizará la disponibilidad del negocio con los nuevos horarios seleccionados."}
               </p>
             </div>

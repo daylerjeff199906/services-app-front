@@ -5,7 +5,9 @@ import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
 import { toast } from "sonner"
-import { AlertTriangle, Trash2, Plus } from "lucide-react"
+import { AlertTriangle, Trash2, Plus, LayoutGrid, Calendar } from "lucide-react"
+import { FormFooter } from "@/components/ui/form-footer"
+import { cn } from "@/lib/utils"
 
 const DAYS_OF_WEEK = [
   { value: 1, label: "Lunes" },
@@ -74,6 +76,10 @@ export function HoursPage() {
   const [hasChanges, setHasChanges] = useState(false)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
+
+  // View state and inline editing
+  const [viewMode, setViewMode] = useState<"grid" | "agenda">("grid")
+  const [editingInterval, setEditingInterval] = useState<{ dayVal: number; index: number } | null>(null)
 
   const fetchHours = async () => {
     if (!selectedService) return
@@ -324,7 +330,7 @@ export function HoursPage() {
   }
 
   return (
-    <div className="px-8 w-full mx-auto space-y-8 text-foreground">
+    <div className="px-8 w-full mx-auto space-y-8 text-foreground pb-20">
       <PageHeader
         onBackClick={handleCancel}
         showBackButton
@@ -332,192 +338,314 @@ export function HoursPage() {
         description="Establece los días de la semana y horarios en los que tu negocio está operativo."
       />
 
-      {/* Visual Weekly Timeline Preview */}
-      <div className="bg-card border border-border rounded-xl p-5 space-y-4 shadow-sm animate-fade-in">
-        <div className="space-y-1">
-          <h3 className="font-bold text-sm text-foreground">Vista Previa del Horario Semanal</h3>
-          <p className="text-xs text-muted-foreground">Línea de tiempo visual de tus turnos de atención activos.</p>
+      {/* Tabs View Selector */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
+        <div className="space-y-0.5">
+          <h3 className="font-bold text-sm text-foreground">Visualización del Horario</h3>
+          <p className="text-xs text-muted-foreground">Alterna entre vista de tarjetas o de agenda semanal.</p>
         </div>
         
-        <div className="space-y-2.5 pt-2">
-          {DAYS_OF_WEEK.map((day) => {
-            const daySched = schedule[day.value]
-            const isClosed = !daySched || daySched.is_closed
-            
-            return (
-              <div key={day.value} className="flex items-center gap-3">
-                <span className="w-10 text-xs font-semibold text-foreground shrink-0">{day.label.substring(0, 3)}</span>
-                <div className="flex-1 h-3 bg-muted rounded-full relative overflow-hidden flex">
-                  {isClosed ? (
-                    <div className="w-full h-full bg-muted-foreground/5 flex items-center justify-center">
-                      <span className="text-[7px] text-muted-foreground/60 uppercase tracking-widest font-bold font-sans">Cerrado</span>
-                    </div>
-                  ) : (
-                    daySched.intervals.map((interval, idx) => {
-                      const [startH, startM] = interval.open_time.split(":").map(Number)
-                      const [endH, endM] = interval.close_time.split(":").map(Number)
-                      
-                      const timelineStart = 6 * 60
-                      const timelineEnd = 24 * 60
-                      const totalMinutes = timelineEnd - timelineStart
-                      
-                      const startMin = startH * 60 + startM
-                      const endMin = endH * 60 + endM
-                      
-                      const clampedStart = Math.max(timelineStart, Math.min(timelineEnd, startMin))
-                      const clampedEnd = Math.max(timelineStart, Math.min(timelineEnd, endMin))
-                      
-                      const leftPercent = ((clampedStart - timelineStart) / totalMinutes) * 100
-                      const widthPercent = ((clampedEnd - clampedStart) / totalMinutes) * 100
-                      
-                      if (widthPercent <= 0) return null
-                      
-                      return (
-                        <div
-                          key={idx}
-                          className="absolute h-full bg-[#10b981] rounded-full shadow-inner opacity-90 transition-all duration-300"
-                          style={{
-                            left: `${leftPercent}%`,
-                            width: `${widthPercent}%`,
-                          }}
-                          title={`Turno ${idx + 1}: ${interval.open_time} - ${interval.close_time}`}
-                        />
-                      )
-                    })
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-        
-        <div className="flex justify-between items-center text-[9px] text-muted-foreground px-1 pt-1 font-mono">
-          <span>06:00 AM</span>
-          <span>10:00 AM</span>
-          <span>02:00 PM</span>
-          <span>06:00 PM</span>
-          <span>10:00 PM</span>
-          <span>12:00 AM</span>
+        {/* Toggle tabs buttons */}
+        <div className="flex items-center bg-muted p-1 rounded-lg border border-border self-start sm:self-auto shrink-0 animate-fade-in">
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border-0 cursor-pointer outline-none",
+              viewMode === "grid" 
+                ? "bg-card text-foreground shadow-xs" 
+                : "text-muted-foreground hover:text-foreground bg-transparent"
+            )}
+          >
+            <LayoutGrid className="size-3.5" />
+            Tarjetas Grid
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("agenda")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border-0 cursor-pointer outline-none",
+              viewMode === "agenda" 
+                ? "bg-card text-foreground shadow-xs" 
+                : "text-muted-foreground hover:text-foreground bg-transparent"
+            )}
+          >
+            <Calendar className="size-3.5" />
+            Agenda Semanal
+          </button>
         </div>
       </div>
 
-      {/* Grid of Days */}
-      <div className="space-y-4">
-        <div className="space-y-1">
-          <h3 className="font-bold text-sm text-foreground">Configurar días de atención</h3>
-          <p className="text-xs text-muted-foreground">Configura los turnos de apertura y cierre de cada día de la semana.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {DAYS_OF_WEEK.map((day) => {
-            const daySched = schedule[day.value]
-            if (!daySched) return null
-
-            return (
-              <div 
-                key={day.value}
-                className={`p-5 border rounded-xl bg-card border-border flex flex-col justify-between gap-4 transition-all duration-200 ${
-                  daySched.is_closed ? "opacity-60 bg-muted/10" : "hover:border-foreground/30 shadow-2xs"
-                }`}
-              >
-                {/* Card Header: Day and Toggle */}
-                <div className="flex items-start justify-between gap-2 border-b border-border pb-3">
-                  <div className="flex flex-col">
-                    <span className="font-bold text-sm text-foreground">{day.label}</span>
-                    {!daySched.is_closed && (
-                      <span className="text-[11px] text-muted-foreground font-medium mt-0.5 animate-fade-in">
-                        {calculateDayDuration(daySched.intervals)}
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Toggle closed switch */}
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleClosed(day.value)}
-                      className={`relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        !daySched.is_closed ? "bg-[#10b981]" : "bg-muted"
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block size-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          !daySched.is_closed ? "translate-x-3.5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
-                    <span className="text-[10px] font-bold select-none w-10 text-muted-foreground">
-                      {!daySched.is_closed ? "Abierto" : "Cerrado"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Card Body: Shifts list */}
-                <div className="flex-1 flex flex-col justify-between gap-4">
-                  {daySched.is_closed ? (
-                    <div className="flex-1 flex items-center justify-center py-6 text-xs text-muted-foreground/40 font-medium">
-                      Cerrado todo el día
+      {viewMode === "grid" ? (
+        <>
+          {/* Visual Weekly Timeline Preview */}
+          <div className="bg-card border border-border rounded-xl p-5 space-y-4 shadow-sm animate-fade-in">
+            <div className="space-y-1">
+              <h3 className="font-bold text-sm text-foreground">Vista Previa del Horario Semanal</h3>
+              <p className="text-xs text-muted-foreground">Línea de tiempo visual de tus turnos de atención activos.</p>
+            </div>
+            
+            <div className="space-y-2.5 pt-2">
+              {DAYS_OF_WEEK.map((day) => {
+                const daySched = schedule[day.value]
+                const isClosed = !daySched || daySched.is_closed
+                
+                return (
+                  <div key={day.value} className="flex items-center gap-3">
+                    <span className="w-10 text-xs font-semibold text-foreground shrink-0">{day.label.substring(0, 3)}</span>
+                    <div className="flex-1 h-3 bg-muted rounded-full relative overflow-hidden flex">
+                      {isClosed ? (
+                        <div className="w-full h-full bg-muted-foreground/5 flex items-center justify-center">
+                          <span className="text-[7px] text-muted-foreground/60 uppercase tracking-widest font-bold font-sans">Cerrado</span>
+                        </div>
+                      ) : (
+                        daySched.intervals.map((interval, idx) => {
+                          const [startH, startM] = interval.open_time.split(":").map(Number)
+                          const [endH, endM] = interval.close_time.split(":").map(Number)
+                          
+                          const timelineStart = 6 * 60
+                          const timelineEnd = 24 * 60
+                          const totalMinutes = timelineEnd - timelineStart
+                          
+                          const startMin = startH * 60 + startM
+                          const endMin = endH * 60 + endM
+                          
+                          const clampedStart = Math.max(timelineStart, Math.min(timelineEnd, startMin))
+                          const clampedEnd = Math.max(timelineStart, Math.min(timelineEnd, endMin))
+                          
+                          const leftPercent = ((clampedStart - timelineStart) / totalMinutes) * 100
+                          const widthPercent = ((clampedEnd - clampedStart) / totalMinutes) * 100
+                          
+                          if (widthPercent <= 0) return null
+                          
+                          return (
+                            <div
+                              key={idx}
+                              className="absolute h-full bg-[#10b981] rounded-full shadow-inner opacity-90 transition-all duration-300"
+                              style={{
+                                left: `${leftPercent}%`,
+                                width: `${widthPercent}%`,
+                              }}
+                              title={`Turno ${idx + 1}: ${interval.open_time} - ${interval.close_time}`}
+                            />
+                          )
+                        })
+                      )}
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="space-y-2">
-                        {daySched.intervals.map((interval, idx) => (
-                          <div key={idx} className="flex items-center gap-1.5 animate-fade-in justify-between">
-                            <div className="flex items-center gap-1">
-                              <select
-                                value={interval.open_time}
-                                onChange={(e) => handleTimeChange(day.value, idx, "open_time", e.target.value)}
-                                className="flex h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
-                              >
-                                {timeOptions.map((opt) => (
-                                  <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
-                                ))}
-                              </select>
-                              <span className="text-[10px] text-muted-foreground font-medium">a</span>
-                              <select
-                                value={interval.close_time}
-                                onChange={(e) => handleTimeChange(day.value, idx, "close_time", e.target.value)}
-                                className="flex h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
-                              >
-                                {timeOptions.map((opt) => (
-                                  <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
-                                ))}
-                              </select>
-                            </div>
-                            
-                            {/* Remove shift button */}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveInterval(day.value, idx)}
-                              className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-1 cursor-pointer rounded hover:bg-destructive/5"
-                              title="Eliminar turno"
-                            >
-                              <Trash2 className="size-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                  </div>
+                )
+              })}
+            </div>
+            
+            <div className="flex justify-between items-center text-[9px] text-muted-foreground px-1 pt-1 font-mono">
+              <span>06:00 AM</span>
+              <span>10:00 AM</span>
+              <span>02:00 PM</span>
+              <span>06:00 PM</span>
+              <span>10:00 PM</span>
+              <span>12:00 AM</span>
+            </div>
+          </div>
 
-                      {/* Add shift action */}
+          {/* Grid of Days */}
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <h3 className="font-bold text-sm text-foreground">Configurar días de atención</h3>
+              <p className="text-xs text-muted-foreground">Configura los turnos de apertura y cierre de cada día de la semana.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {DAYS_OF_WEEK.map((day) => {
+                const daySched = schedule[day.value]
+                if (!daySched) return null
+
+                return (
+                  <div 
+                    key={day.value}
+                    className={`p-5 border rounded-xl bg-card border-border flex flex-col justify-between gap-4 transition-all duration-200 ${
+                      daySched.is_closed ? "opacity-60 bg-muted/10" : "hover:border-foreground/30 shadow-2xs"
+                    }`}
+                  >
+                    {/* Card Header: Day and Toggle */}
+                    <div className="flex items-start justify-between gap-2 border-b border-border pb-3">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-sm text-foreground">{day.label}</span>
+                        {!daySched.is_closed && (
+                          <span className="text-[11px] text-muted-foreground font-medium mt-0.5 animate-fade-in">
+                            {calculateDayDuration(daySched.intervals)}
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Toggle closed switch */}
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleClosed(day.value)}
+                          className={`relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            !daySched.is_closed ? "bg-[#10b981]" : "bg-muted"
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block size-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              !daySched.is_closed ? "translate-x-3.5" : "translate-x-0"
+                            }`}
+                          />
+                        </button>
+                        <span className="text-[10px] font-bold select-none w-10 text-muted-foreground">
+                          {!daySched.is_closed ? "Abierto" : "Cerrado"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Body: Shifts list */}
+                    <div className="flex-1 flex flex-col justify-between gap-4">
+                      {daySched.is_closed ? (
+                        <div className="flex-1 flex items-center justify-center py-6 text-xs text-muted-foreground/40 font-medium">
+                          Cerrado todo el día
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="space-y-2">
+                            {daySched.intervals.map((interval, idx) => (
+                              <div key={idx} className="flex items-center gap-1.5 animate-fade-in justify-between">
+                                <div className="flex items-center gap-1">
+                                  <select
+                                    value={interval.open_time}
+                                    onChange={(e) => handleTimeChange(day.value, idx, "open_time", e.target.value)}
+                                    className="flex h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
+                                  >
+                                    {timeOptions.map((opt) => (
+                                      <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
+                                    ))}
+                                  </select>
+                                  <span className="text-[10px] text-muted-foreground font-medium">a</span>
+                                  <select
+                                    value={interval.close_time}
+                                    onChange={(e) => handleTimeChange(day.value, idx, "close_time", e.target.value)}
+                                    className="flex h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
+                                  >
+                                    {timeOptions.map((opt) => (
+                                      <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                
+                                {/* Remove shift button */}
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveInterval(day.value, idx)}
+                                  className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-1 cursor-pointer rounded hover:bg-destructive/5"
+                                  title="Eliminar turno"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Add shift action */}
+                          <button
+                            type="button"
+                            onClick={() => handleAddInterval(day.value)}
+                            className="flex items-center gap-1 text-[10px] text-[#10b981] hover:underline font-bold bg-transparent border-0 outline-none cursor-pointer pt-1"
+                          >
+                            <Plus className="size-3" />
+                            Agregar turno
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </>
+      ) : (
+        /* Weekly Calendar Agenda view */
+        <div className="space-y-4 animate-fade-in">
+          <div className="space-y-1">
+            <h3 className="font-bold text-sm text-foreground">Agenda Semanal Interactiva</h3>
+            <p className="text-xs text-muted-foreground">Administra tus turnos como una agenda. Haz click en cualquier turno para editarlo o eliminarlo.</p>
+          </div>
+
+          <div className="overflow-x-auto w-full border border-border rounded-xl bg-card shadow-sm">
+            <div className="min-w-[840px] grid grid-cols-7 divide-x divide-border h-[480px]">
+              {DAYS_OF_WEEK.map((day) => {
+                const daySched = schedule[day.value]
+                if (!daySched) return null
+
+                return (
+                  <div key={day.value} className={`flex flex-col h-full ${daySched.is_closed ? "bg-muted/10 opacity-75" : ""}`}>
+                    {/* Day Column Header */}
+                    <div className="p-3 border-b border-border bg-muted/20 flex flex-col justify-between items-center gap-1 shrink-0 text-center select-none">
+                      <span className="font-bold text-xs text-foreground">{day.label}</span>
+                      <span className="text-[10px] text-muted-foreground font-semibold">
+                        {daySched.is_closed ? "Cerrado" : calculateDayDuration(daySched.intervals).split(" (")[0]}
+                      </span>
                       <button
                         type="button"
-                        onClick={() => handleAddInterval(day.value)}
-                        className="flex items-center gap-1 text-[10px] text-[#10b981] hover:underline font-bold bg-transparent border-0 outline-none cursor-pointer pt-1"
+                        onClick={() => handleToggleClosed(day.value)}
+                        className="text-[9px] text-[#10b981] hover:text-[#059669] font-bold hover:underline mt-1 bg-transparent border-0 cursor-pointer outline-none"
                       >
-                        <Plus className="size-3" />
-                        Agregar turno
+                        {daySched.is_closed ? "Abrir día" : "Cerrar día"}
                       </button>
                     </div>
-                  )}
-                </div>
-              </div>
-            )
-          })}
+                    
+                    {/* Day Column Body */}
+                    <div className="flex-1 p-2 space-y-2 overflow-y-auto bg-muted/5 min-h-0">
+                      {!daySched.is_closed ? (
+                        <>
+                          {daySched.intervals.map((interval, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => setEditingInterval({ dayVal: day.value, index: idx })}
+                              className="p-3 bg-card border border-border rounded-lg hover:border-[#10b981] transition-all cursor-pointer shadow-2xs space-y-1 relative group hover:shadow-xs"
+                            >
+                              <div className="text-[9px] text-muted-foreground font-bold font-mono tracking-wider">
+                                TURNO {idx + 1}
+                              </div>
+                              <div className="text-xs font-bold text-foreground font-mono">
+                                {interval.open_time} - {interval.close_time}
+                              </div>
+                              <div className="text-[9px] text-muted-foreground font-semibold mt-1">
+                                Total: {calculateDayDuration([interval]).split(" (")[0]}
+                              </div>
+                              
+                              <span className="absolute bottom-1 right-2 text-[8px] text-[#10b981] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                Editar
+                              </span>
+                            </div>
+                          ))}
+                          
+                          <button
+                            type="button"
+                            onClick={() => handleAddInterval(day.value)}
+                            className="w-full py-2.5 border border-dashed border-border hover:border-[#10b981] hover:bg-[#10b981]/5 text-muted-foreground hover:text-[#10b981] rounded-lg flex items-center justify-center gap-1.5 transition-all text-xs font-semibold cursor-pointer outline-none bg-transparent"
+                          >
+                            <Plus className="size-3" />
+                            Añadir turno
+                          </button>
+                        </>
+                      ) : (
+                        <div className="h-full flex flex-col items-center justify-center py-20 text-center select-none">
+                          <span className="text-[9px] text-muted-foreground/30 uppercase font-extrabold tracking-wider">
+                            Sin atención
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Footer save row */}
-      <div className="pt-6 border-t border-border flex justify-between items-center">
+      {/* Floating Action Footer Component */}
+      <FormFooter>
         <Button variant="outline" onClick={handleCancel}>
           Cancelar
         </Button>
@@ -528,7 +656,62 @@ export function HoursPage() {
         >
           {isSaving ? "Guardando..." : "Guardar Horarios"}
         </Button>
-      </div>
+      </FormFooter>
+
+      {/* Inline Shift Editor Modal (Agenda view) */}
+      {editingInterval && (
+        <div className="fixed inset-0 bg-background/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-card border border-border rounded-xl p-5 max-w-xs w-full space-y-4 shadow-xl relative animate-scale-in">
+            <h4 className="font-bold text-sm text-foreground">
+              Turno {editingInterval.index + 1} - {DAYS_OF_WEEK.find(d => d.value === editingInterval.dayVal)?.label}
+            </h4>
+            
+            <div className="space-y-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-semibold text-muted-foreground uppercase">Hora de Apertura</label>
+                <select
+                  value={schedule[editingInterval.dayVal].intervals[editingInterval.index].open_time}
+                  onChange={(e) => handleTimeChange(editingInterval.dayVal, editingInterval.index, "open_time", e.target.value)}
+                  className="w-full h-8 rounded border border-input bg-transparent text-xs text-foreground px-2 font-mono outline-none"
+                >
+                  {timeOptions.map((opt) => <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-semibold text-muted-foreground uppercase">Hora de Cierre</label>
+                <select
+                  value={schedule[editingInterval.dayVal].intervals[editingInterval.index].close_time}
+                  onChange={(e) => handleTimeChange(editingInterval.dayVal, editingInterval.index, "close_time", e.target.value)}
+                  className="w-full h-8 rounded border border-input bg-transparent text-xs text-foreground px-2 font-mono outline-none"
+                >
+                  {timeOptions.map((opt) => <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>)}
+                </select>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center pt-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  handleRemoveInterval(editingInterval.dayVal, editingInterval.index)
+                  setEditingInterval(null)
+                }}
+                className="text-[10px] h-7 px-2 font-semibold"
+              >
+                Eliminar Turno
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setEditingInterval(null)}
+                className="bg-[#10b981] hover:bg-[#059669] text-white text-[10px] h-7 px-3 font-semibold"
+              >
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cancel Confirmation Dialog Overlay */}
       {showCancelDialog && (

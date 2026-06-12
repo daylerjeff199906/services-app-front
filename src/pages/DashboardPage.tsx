@@ -34,7 +34,6 @@ export function DashboardPage() {
   })
   const [isLoadingOnboarding, setIsLoadingOnboarding] = useState(true)
   const [sqlWarning, setSqlWarning] = useState(false)
-  const [isSimulating, setIsSimulating] = useState(false)
 
   const fetchOnboardingStatus = async () => {
     if (!selectedService) return
@@ -151,52 +150,6 @@ export function DashboardPage() {
     fetchOnboardingStatus()
   }, [selectedService])
 
-  const handleSimulateBooking = async () => {
-    if (!selectedService) return
-    setIsSimulating(true)
-    try {
-      // Get first service of the business to link the booking to
-      const { data: servicesData, error: sError } = await supabase
-        .from("services")
-        .select("id")
-        .eq("business_id", selectedService.id)
-        .limit(1)
-
-      if (sError) throw sError
-
-      if (!servicesData || servicesData.length === 0) {
-        alert("Primero debes agregar al menos un servicio (Paso 3) antes de simular una cita.")
-        setIsSimulating(false)
-        return
-      }
-
-      // Insert dummy booking
-      const { error: bError } = await supabase
-        .from("bookings")
-        .insert({
-          business_id: selectedService.id,
-          service_id: servicesData[0].id,
-          customer_name: "Cliente de Prueba",
-          customer_email: "prueba@gesti.com",
-          customer_phone: "999999999",
-          booking_date: new Date().toISOString().split("T")[0],
-          start_time: "10:00:00",
-          end_time: "11:00:00",
-          status: "confirmed"
-        })
-
-      if (bError) throw bError
-
-      alert("Cita de simulación creada exitosamente. ¡Paso 6 completado!")
-      fetchOnboardingStatus()
-    } catch (err) {
-      console.error("Error creating simulation booking:", err)
-      alert("Error al crear la cita de simulación. Asegúrate de ejecutar la consulta SQL de Supabase para habilitar la tabla 'bookings'.")
-    } finally {
-      setIsSimulating(false)
-    }
-  }
-
   // Calculate onboarding steps
   const steps = [
     {
@@ -243,15 +196,6 @@ export function DashboardPage() {
     },
     {
       id: 6,
-      title: "Crear cita de simulación de prueba",
-      description: "Genera una reserva ficticia para probar el flujo de agenda.",
-      isCompleted: onboardingStatus.bookingsCount > 0,
-      action: handleSimulateBooking,
-      actionLabel: isSimulating ? "Simulando..." : "Simular cita",
-      isBtn: true,
-    },
-    {
-      id: 7,
       title: "Publicar negocio",
       description: "Activa la publicación de tu negocio en la plataforma para recibir reservas reales.",
       isCompleted: onboardingStatus.isActive,
@@ -295,25 +239,23 @@ export function DashboardPage() {
     <LayoutWrapper sectionTitle="Inicio">
       <div className="space-y-8 text-foreground">
         
-        <PageHeader 
-          title={`Bienvenido a la consola de ${selectedService?.name || ""}`}
-          description={
-            isMinimumFunctionalComplete 
-              ? "Aquí puedes configurar tu cartera de ofertas, interactuar con clientes y revisar métricas de negocio."
-              : "Completa la configuración inicial básica de tu negocio para activar el panel de control completo."
-          }
-          actionButton={
-            <div className="flex gap-2">
-              <Button onClick={() => navigate("/dashboard/services/new")} className="bg-[#10b981] hover:bg-[#059669] text-white">
-                <Plus className="size-4 mr-2" />
-                Nuevo Servicio
-              </Button>
-              <Button variant="outline" onClick={() => navigate("/dashboard/settings/business")}>
-                Ajustes
-              </Button>
-            </div>
-          }
-        />
+        {isMinimumFunctionalComplete && (
+          <PageHeader 
+            title={`Bienvenido a la consola de ${selectedService?.name || ""}`}
+            description="Aquí puedes configurar tu cartera de ofertas, interactuar con clientes y revisar métricas de negocio."
+            actionButton={
+              <div className="flex gap-2">
+                <Button onClick={() => navigate("/dashboard/services/new")} className="bg-[#10b981] hover:bg-[#059669] text-white">
+                  <Plus className="size-4 mr-2" />
+                  Nuevo Servicio
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/dashboard/settings/business")}>
+                  Ajustes
+                </Button>
+              </div>
+            }
+          />
+        )}
 
         {/* SQL Warning alert if tables are missing */}
         {sqlWarning && (
@@ -390,24 +332,13 @@ export function DashboardPage() {
                     
                     {/* Action Link/Btn */}
                     {!step.isCompleted ? (
-                      step.isBtn ? (
-                        <Button 
-                          size="sm"
-                          disabled={isSimulating}
-                          onClick={step.action} 
-                          className="bg-[#10b981] hover:bg-[#059669] text-white text-xs py-1.5 font-semibold shrink-0"
-                        >
-                          {step.actionLabel}
-                        </Button>
-                      ) : (
-                        <button 
-                          onClick={() => navigate(step.path || "/")} 
-                          className="flex items-center gap-1 text-xs text-[#10b981] hover:underline font-bold shrink-0 self-end sm:self-center bg-transparent border-0 outline-none cursor-pointer"
-                        >
-                          {step.actionLabel}
-                          <ChevronRight className="size-3.5" />
-                        </button>
-                      )
+                      <button 
+                        onClick={() => navigate(step.path || "/")} 
+                        className="flex items-center gap-1 text-xs text-[#10b981] hover:underline font-bold shrink-0 self-end sm:self-center bg-transparent border-0 outline-none cursor-pointer"
+                      >
+                        {step.actionLabel}
+                        <ChevronRight className="size-3.5" />
+                      </button>
                     ) : (
                       <span className="text-xs text-emerald-500 font-semibold flex items-center gap-1 select-none shrink-0 self-end sm:self-center">
                         Completado

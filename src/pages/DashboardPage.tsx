@@ -165,7 +165,7 @@ export function DashboardPage() {
         : onboardingStatus.isIndependent === false
         ? onboardingStatus.locationsCount > 0
         : false,
-      path: onboardingStatus.isIndependent === null ? "/dashboard/settings/business" : "/dashboard/agenda/locations",
+      path: onboardingStatus.isIndependent === null ? "/dashboard/settings/business?return_to=/dashboard" : "/dashboard/agenda/locations?return_to=/dashboard",
       actionLabel: onboardingStatus.isIndependent === null ? "Configurar tipo de negocio" : "Configurar locales",
     },
     {

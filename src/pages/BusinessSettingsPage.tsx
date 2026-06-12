@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Copy, Check, ShieldAlert, Trash2 } from "lucide-react"
 import { FormFooter } from "@/components/ui/form-footer"
+import { toast } from "sonner"
 
 interface Member {
   role: string
@@ -178,7 +179,7 @@ export function BusinessSettingsPage() {
     const trimmed = newPhone.trim()
     if (!trimmed) return
     if (contactNumbers.some((c) => c.number === trimmed)) {
-      alert("Este número ya está agregado.")
+      toast.error("Este número de teléfono ya está agregado.")
       return
     }
     setContactNumbers([...contactNumbers, { number: trimmed, label: newPhoneLabel }])
@@ -194,11 +195,11 @@ export function BusinessSettingsPage() {
     const trimmed = newLink.trim()
     if (!trimmed) return
     if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
-      alert("El enlace debe comenzar con http:// o https://")
+      toast.error("El enlace debe comenzar con http:// o https://")
       return
     }
     if (socialLinks.includes(trimmed)) {
-      alert("Este enlace ya está agregado.")
+      toast.error("Este enlace de red social ya está agregado.")
       return
     }
     setSocialLinks([...socialLinks, trimmed])
@@ -264,12 +265,12 @@ export function BusinessSettingsPage() {
             .eq("id", selectedService.id)
 
           if (errorFallback2) throw errorFallback2
-          alert("Cambios guardados con éxito (excepto los números de contacto y redes sociales, asegúrate de aplicar la consulta SQL en Supabase).")
+          toast.warning("Cambios guardados (excepto números y redes, aplica la consulta SQL en Supabase).")
         } else {
-          alert("Cambios guardados con éxito (excepto las redes sociales, asegúrate de aplicar la consulta SQL en Supabase).")
+          toast.warning("Cambios guardados (excepto redes sociales, aplica la consulta SQL en Supabase).")
         }
       } else {
-        alert("Cambios guardados con éxito.")
+        toast.success("Ajustes del negocio guardados con éxito.")
       }
 
       // Update in local store state too
@@ -282,7 +283,7 @@ export function BusinessSettingsPage() {
       selectService({ ...selectedService, name, description, isActive, isIndependent })
     } catch (err) {
       console.error("Error saving business details:", err)
-      alert("Error al guardar los cambios.")
+      toast.error("Error al guardar los cambios.")
     } finally {
       setIsSubmitting(false)
     }

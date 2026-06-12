@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/page-header"
 import { Check, X, Plus } from "lucide-react"
 import { toast } from "sonner"
+import { uploadToR2 } from "@/utils/r2-storage"
 
 interface Category {
   id: string
@@ -35,6 +36,51 @@ export function CreateServicePage() {
   const [showInlineCat, setShowInlineCat] = useState(false)
   const [newCatName, setNewCatName] = useState("")
   const [isCreatingCat, setIsCreatingCat] = useState(false)
+
+  // Cover Image upload states
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null)
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+
+  // Revoke preview URL on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (coverPreviewUrl) {
+        URL.revokeObjectURL(coverPreviewUrl)
+      }
+    }
+  }, [coverPreviewUrl])
+
+  const handleSelectCoverFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Formato no soportado", {
+        description: "El archivo seleccionado debe ser una imagen."
+      })
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Archivo demasiado grande", {
+        description: "La imagen no debe superar los 5MB."
+      })
+      return
+    }
+
+    if (coverPreviewUrl) {
+      URL.revokeObjectURL(coverPreviewUrl)
+    }
+
+    setCoverImageFile(file)
+    setCoverPreviewUrl(URL.createObjectURL(file))
+  }
+
+  const handleRemoveCoverImage = () => {
+    if (coverPreviewUrl) {
+      URL.revokeObjectURL(coverPreviewUrl)
+    }
+    setCoverImageFile(null)
+    setCoverPreviewUrl(null)
+  }
+
 
   const fetchCategories = async () => {
     if (!selectedService) return
@@ -105,7 +151,9 @@ export function CreateServicePage() {
     if (!name.trim() || !selectedService) return
 
     setIsSaving(true)
+    const toastId = toast.loading("Registrando servicio...")
     try {
+      // 1. Create service in Supabase
       const { data, error } = await supabase
         .from("services")
         .insert({
@@ -124,14 +172,43 @@ export function CreateServicePage() {
 
       if (error) throw error
 
+      // 2. Upload cover image to R2 if selected
+      if (coverImageFile) {
+        toast.loading("Subiendo imagen de portada...", { id: toastId })
+        try {
+          const uploadedUrl = await uploadToR2(coverImageFile, data.id)
+
+          // Insert into Supabase multimedia
+          const { error: dbError } = await supabase
+            .from("multimedia")
+            .insert({
+              business_id: selectedService.id,
+              service_id: data.id,
+              url: uploadedUrl,
+              media_type: "image",
+              display_order: 0,
+              is_main: true
+            })
+
+          if (dbError) throw dbError
+        } catch (r2Err: any) {
+          console.error("Cover image upload failed:", r2Err)
+          toast.error("Servicio creado, pero falló la imagen", {
+            description: "El servicio fue creado con éxito, pero no se pudo subir la imagen de portada. Puedes añadirla desde la edición."
+          })
+        }
+      }
+
       toast.success("Servicio registrado", {
-        description: `El servicio "${name.trim()}" ha sido agregado correctamente a tu catálogo. Ahora puedes configurar su multimedia.`
+        id: toastId,
+        description: `El servicio "${name.trim()}" ha sido agregado correctamente a tu catálogo.`
       })
 
       navigate(`/dashboard/services/edit/${data.id}`)
     } catch (err) {
       console.error("Error saving service:", err)
       toast.error("Error de guardado", {
+        id: toastId,
         description: "Ocurrió un error al intentar crear el servicio."
       })
     } finally {
@@ -150,7 +227,7 @@ export function CreateServicePage() {
   }
 
   return (
-    <div className="w-full space-y-8 text-foreground">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-foreground">
       <PageHeader
         onBackClick={() => navigate("/dashboard/services")}
         showBackButton
@@ -315,6 +392,72 @@ export function CreateServicePage() {
             </div>
           </div>
 
+          {/* Cover Image */}
+          <div className="flex flex-col md:flex-row md:items-start justify-between p-6 gap-4 border-b border-border">
+            <div className="md:w-1/3">
+              <label className="text-sm font-medium">Imagen de portada</label>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+                Selecciona una foto representativa para este servicio.
+              </p>
+            </div>
+            <div className="md:w-2/3 max-w-md w-full">
+              {coverPreviewUrl ? (
+                <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-border group bg-muted">
+                  <img
+                    src={coverPreviewUrl}
+                    alt="Vista previa de portada"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoverImage}
+                    className="absolute top-2 right-2 size-8 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-colors cursor-pointer border-0 outline-none z-10"
+                    title="Quitar imagen"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setIsDragOver(true)
+                  }}
+                  onDragLeave={() => setIsDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    setIsDragOver(false)
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      handleSelectCoverFile(e.dataTransfer.files[0])
+                    }
+                  }}
+                  onClick={() => document.getElementById("cover-file-upload")?.click()}
+                  className={`border border-dashed rounded-xl p-6 hover:border-emerald-500 hover:bg-emerald-500/5 transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-3 bg-muted/10 min-h-[140px] ${isDragOver ? "border-emerald-500 bg-emerald-500/10" : "border-border"
+                    }`}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="cover-file-upload"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleSelectCoverFile(e.target.files[0])
+                      }
+                    }}
+                  />
+                  <div className="p-2.5 bg-muted/40 rounded-full text-muted-foreground">
+                    <Plus className="size-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-foreground">Subir imagen de portada</p>
+                    <p className="text-[10px] text-muted-foreground">o arrastra y suelta aquí (Máx. 5MB)</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Public Visibility */}
           <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4">
             <div className="md:w-1/3">
@@ -327,14 +470,12 @@ export function CreateServicePage() {
               <button
                 type="button"
                 onClick={() => setIsActive(!isActive)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  isActive ? "bg-[#10b981]" : "bg-muted"
-                }`}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isActive ? "bg-[#10b981]" : "bg-muted"
+                  }`}
               >
                 <span
-                  className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    isActive ? "translate-x-4" : "translate-x-0"
-                  }`}
+                  className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isActive ? "translate-x-4" : "translate-x-0"
+                    }`}
                 />
               </button>
             </div>

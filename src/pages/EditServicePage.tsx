@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/page-header"
-import { Check, X, Plus, Edit3, FolderEdit } from "lucide-react"
+import { Check, X, Plus } from "lucide-react"
 import { FormFooter } from "@/components/ui/form-footer"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { uploadToR2, deleteFromR2 } from "@/utils/r2-storage"
+import { AlertDialog } from "@/components/ui/alert-dialog"
+
 
 interface Category {
   id: string
@@ -67,6 +69,11 @@ export function EditServicePage() {
   // Drag and drop / reorder state
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [hasOrderChanges, setHasOrderChanges] = useState(false)
+
+  // Delete target state
+  const [deleteTarget, setDeleteTarget] = useState<MultimediaItem | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
 
   // Cleanup object URLs of uploading items on unmount
   const multimediaRef = React.useRef(multimedia)
@@ -426,8 +433,12 @@ export function EditServicePage() {
     }
   }
 
-  const handleDeleteImage = async (item: MultimediaItem) => {
-    if (!window.confirm("¿Deseas remover esta imagen del servicio?")) return
+  const handleDeleteImage = (item: MultimediaItem) => {
+    setDeleteTarget(item)
+  }
+
+  const executeDeleteImage = async (item: MultimediaItem) => {
+    setIsDeleting(true)
     const toastId = toast.loading("Eliminando imagen...")
     try {
       // 1. Delete from Cloudflare R2 Storage (if R2 URL)
@@ -464,6 +475,9 @@ export function EditServicePage() {
         id: toastId,
         description: "No se pudo remover completamente la imagen."
       })
+    } finally {
+      setIsDeleting(false)
+      setDeleteTarget(null)
     }
   }
 
@@ -585,7 +599,7 @@ export function EditServicePage() {
   }
 
   return (
-    <div className="w-full space-y-8 text-foreground">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-foreground">
       <PageHeader
         onBackClick={() => navigate("/dashboard/services")}
         showBackButton
@@ -593,29 +607,27 @@ export function EditServicePage() {
         description="Modifica los datos del servicio seleccionado y gestiona su galería multimedia."
       />
 
-      <div className="flex flex-col md:flex-row gap-8 items-start">
+      <div className="flex flex-col md:flex-row gap-10 items-start">
         {/* Sidebar Aside Layout */}
-        <aside className="w-full md:w-64 shrink-0 flex flex-row md:flex-col gap-1 md:sticky md:top-8 self-start">
+        <aside className="w-full md:w-56 shrink-0 flex flex-row md:flex-col gap-6 md:gap-4 md:sticky md:top-8 self-start border-b md:border-b-0 border-border pb-4 md:pb-0 overflow-x-auto md:overflow-x-visible no-scrollbar">
           <button
             type="button"
             onClick={() => setSearchParams({ tab: "info" })}
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left ${activeTab === "info"
-              ? "bg-muted text-foreground font-semibold"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            className={`flex items-center text-sm transition-all text-left outline-none cursor-pointer whitespace-nowrap ${activeTab === "info"
+                ? "border-b-2 md:border-b-0 md:border-l-[3px] border-foreground pl-0 md:pl-4 pb-2 md:pb-0 font-semibold text-foreground"
+                : "border-b-2 md:border-b-0 md:border-l-[3px] border-transparent pl-0 md:pl-4 pb-2 md:pb-0 text-muted-foreground hover:text-foreground font-medium"
               }`}
           >
-            <Edit3 className="size-4" />
             Información Principal
           </button>
           <button
             type="button"
             onClick={() => setSearchParams({ tab: "multimedia" })}
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left ${activeTab === "multimedia"
-              ? "bg-muted text-foreground font-semibold"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            className={`flex items-center text-sm transition-all text-left outline-none cursor-pointer whitespace-nowrap ${activeTab === "multimedia"
+                ? "border-b-2 md:border-b-0 md:border-l-[3px] border-foreground pl-0 md:pl-4 pb-2 md:pb-0 font-semibold text-foreground"
+                : "border-b-2 md:border-b-0 md:border-l-[3px] border-transparent pl-0 md:pl-4 pb-2 md:pb-0 text-muted-foreground hover:text-foreground font-medium"
               }`}
           >
-            <FolderEdit className="size-4" />
             Galería Multimedia
           </button>
         </aside>
@@ -1086,6 +1098,18 @@ export function EditServicePage() {
           )}
         </div>
       </div>
+
+      <AlertDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && executeDeleteImage(deleteTarget)}
+        title="¿Eliminar esta imagen?"
+        description="Esta acción eliminará de forma permanente la imagen seleccionada de la galería del servicio y del almacenamiento de R2. No se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

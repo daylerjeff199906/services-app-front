@@ -87,18 +87,8 @@ export const getAdminRoutes = (_locale?: string): AdminRouteItem[] => {
     },
     {
       title: "Ajustes",
-      url: "#",
+      url: `/dashboard/settings/business`,
       icon: Settings2,
-      items: [
-        {
-          title: "Mi Negocio",
-          url: `/dashboard/settings/business`,
-        },
-        {
-          title: "Facturación y Planes",
-          url: `/dashboard/settings/billing`,
-        },
-      ],
     },
   ]
 }

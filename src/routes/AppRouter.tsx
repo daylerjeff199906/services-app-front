@@ -20,6 +20,10 @@ import { ServicesPage } from "@/pages/ServicesPage"
 import { CreateServicePage } from "@/pages/CreateServicePage"
 import { EditServicePage } from "@/pages/EditServicePage"
 import { CategoriesPage } from "@/pages/CategoriesPage"
+import { HoursPage } from "@/pages/HoursPage"
+import { LocationsPage } from "@/pages/LocationsPage"
+import { CreateLocationPage } from "@/pages/CreateLocationPage"
+import { EditLocationPage } from "@/pages/EditLocationPage"
 
 export function AppRouter() {
   return (
@@ -168,6 +172,40 @@ export function AppRouter() {
             element={
               <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
                 <CategoriesPage />
+              </AuthGuard>
+            }
+          />
+
+          {/* Agenda & Hours Routes */}
+          <Route
+            path="agenda/hours"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <HoursPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="agenda/locations"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <LocationsPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="agenda/locations/new"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <CreateLocationPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="agenda/locations/edit/:id"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <EditLocationPage />
               </AuthGuard>
             }
           />

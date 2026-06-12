@@ -6,8 +6,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { PageHeader } from "@/components/page-header"
-import { Check, X, Plus, Edit3, FolderEdit, ArrowUp, ArrowDown, Trash2, Image as ImageIcon } from "lucide-react"
+import { Check, X, Plus } from "lucide-react"
+import { FormFooter } from "@/components/ui/form-footer"
 import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import { uploadToR2, deleteFromR2 } from "@/utils/r2-storage"
+import { AlertDialog } from "@/components/ui/alert-dialog"
+
 
 interface Category {
   id: string
@@ -21,6 +26,8 @@ interface MultimediaItem {
   media_type: string
   display_order: number
   is_main: boolean
+  isUploading?: boolean
+  previewUrl?: string
 }
 
 export function EditServicePage() {
@@ -54,6 +61,35 @@ export function EditServicePage() {
   const [isLoadingMedia, setIsLoadingMedia] = useState(false)
   const [newImgUrl, setNewImgUrl] = useState("")
   const [isAddingImg, setIsAddingImg] = useState(false)
+
+  // R2 Upload states
+  const [uploadMethod, setUploadMethod] = useState<"file" | "url">("file")
+  const [isDragOver, setIsDragOver] = useState(false)
+
+  // Drag and drop / reorder state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [hasOrderChanges, setHasOrderChanges] = useState(false)
+
+  // Delete target state
+  const [deleteTarget, setDeleteTarget] = useState<MultimediaItem | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+
+  // Cleanup object URLs of uploading items on unmount
+  const multimediaRef = React.useRef(multimedia)
+  useEffect(() => {
+    multimediaRef.current = multimedia
+  }, [multimedia])
+
+  useEffect(() => {
+    return () => {
+      multimediaRef.current.forEach((item) => {
+        if (item.isUploading && item.previewUrl) {
+          URL.revokeObjectURL(item.previewUrl)
+        }
+      })
+    }
+  }, [])
 
   // Ensure default tab parameter is in URL
   useEffect(() => {
@@ -214,17 +250,158 @@ export function EditServicePage() {
   }
 
   // Multimedia actions
-  const handleAddImage = async (e: React.FormEvent) => {
+  // Multimedia actions
+  const uploadSingleFile = async (file: File, tempId: string, serviceId: string) => {
+    try {
+      // 1. Upload to R2
+      let uploadedUrl = ""
+      try {
+        uploadedUrl = await uploadToR2(file, serviceId)
+        console.log('uploadedUrl', uploadedUrl)
+      } catch (r2Err: any) {
+        console.error("R2 Upload Error for file:", file.name, r2Err)
+        const isNetworkErr = r2Err.message?.includes("fetch") || r2Err.toString().includes("TypeError")
+        throw new Error(
+          isNetworkErr
+            ? `Error de red o CORS al subir "${file.name}". Configura las reglas CORS de tu bucket R2.`
+            : `Fallo al subir "${file.name}" a R2: ${r2Err.message || r2Err}`
+        )
+      }
+
+      // Calculate display order
+      let currentOrder = 0
+      setMultimedia((prev) => {
+        const idx = prev.findIndex(item => item.id === tempId)
+        currentOrder = idx !== -1 ? idx : prev.length
+        return prev
+      })
+
+      // 2. Insert into Supabase
+      const isMain = multimedia.length === 0 || !multimedia.some(m => m.is_main)
+      const { data, error: dbError } = await supabase
+        .from("multimedia")
+        .insert({
+          business_id: selectedService!.id,
+          service_id: serviceId,
+          url: uploadedUrl,
+          media_type: "image",
+          display_order: currentOrder,
+          is_main: isMain
+        })
+        .select()
+        .single()
+
+      if (dbError) throw dbError
+
+      // Replace placeholder with final item
+      setMultimedia((prev) => {
+        const updated = prev.map((item) => {
+          if (item.id === tempId) {
+            if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
+            return {
+              ...data,
+              isUploading: false,
+              previewUrl: undefined
+            }
+          }
+          return item
+        })
+        return updated
+      })
+
+      toast.success(`Imagen "${file.name}" subida e integrada con éxito.`)
+    } catch (err: any) {
+      console.error("Single file upload failed:", err)
+      toast.error(`Error al subir "${file.name}"`, {
+        description: err.message || "Ocurrió un error al procesar la subida."
+      })
+      // Remove placeholder on error
+      setMultimedia((prev) => {
+        const target = prev.find((item) => item.id === tempId)
+        if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl)
+        return prev.filter((item) => item.id !== tempId)
+      })
+    }
+  }
+
+  const handleFileSelection = (files: FileList | File[]) => {
+    const list = Array.from(files)
+    if (list.length === 0) return
+
+    const totalAllowed = 10
+    const currentTotal = multimedia.length
+    if (currentTotal + list.length > totalAllowed) {
+      toast.error("Límite de imágenes excedido", {
+        description: `Solo puedes tener un máximo de ${totalAllowed} imágenes por servicio. Actualmente tienes ${currentTotal} imágenes y seleccionaste ${list.length}.`
+      })
+      return
+    }
+
+    let hasInvalid = false
+    let hasTooLarge = false
+
+    list.forEach((file, index) => {
+      if (!file.type.startsWith("image/")) {
+        hasInvalid = true
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        hasTooLarge = true
+        return
+      }
+
+      const tempId = `temp_${Math.random().toString(36).substring(2, 9)}`
+      const previewUrl = URL.createObjectURL(file)
+      const display_order = currentTotal + index
+
+      const placeholder: MultimediaItem = {
+        id: tempId,
+        url: "",
+        description: null,
+        media_type: "image",
+        display_order,
+        is_main: currentTotal === 0 && index === 0,
+        isUploading: true,
+        previewUrl
+      }
+
+      // Add placeholder instantly
+      setMultimedia((prev) => [...prev, placeholder])
+      // Trigger async upload
+      uploadSingleFile(file, tempId, id!)
+    })
+
+    if (hasInvalid) {
+      toast.error("Formato inválido", {
+        description: "Algunos archivos no eran imágenes y fueron omitidos."
+      })
+    }
+    if (hasTooLarge) {
+      toast.error("Archivo muy grande", {
+        description: "Algunas imágenes excedían los 5MB y fueron omitidas."
+      })
+    }
+  }
+
+  const handleAddImageUrl = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newImgUrl.trim() || !id || !selectedService) return
 
+    if (multimedia.length >= 10) {
+      toast.error("Límite de imágenes excedido", {
+        description: "Solo puedes tener un máximo de 10 imágenes por servicio."
+      })
+      return
+    }
+
     setIsAddingImg(true)
+    const toastId = toast.loading("Registrando imagen por URL...")
     try {
       const maxOrder = multimedia.reduce((max, item) => item.display_order > max ? item.display_order : max, -1)
       const nextOrder = maxOrder + 1
       const isMainDefault = multimedia.length === 0
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("multimedia")
         .insert({
           business_id: selectedService.id,
@@ -234,17 +411,21 @@ export function EditServicePage() {
           display_order: nextOrder,
           is_main: isMainDefault
         })
+        .select()
+        .single()
 
       if (error) throw error
 
       toast.success("Imagen agregada", {
-        description: "La imagen ha sido agregada exitosamente a la galería."
+        id: toastId,
+        description: "La URL de la imagen ha sido agregada exitosamente a la galería."
       })
       setNewImgUrl("")
-      fetchMultimedia()
+      setMultimedia((prev) => [...prev, data])
     } catch (err) {
-      console.error("Error adding image:", err)
+      console.error("Error adding image by URL:", err)
       toast.error("Error al guardar", {
+        id: toastId,
         description: "No se pudo registrar la imagen en la galería."
       })
     } finally {
@@ -252,9 +433,18 @@ export function EditServicePage() {
     }
   }
 
-  const handleDeleteImage = async (item: MultimediaItem) => {
-    if (!window.confirm("¿Deseas remover esta imagen del servicio?")) return
+  const handleDeleteImage = (item: MultimediaItem) => {
+    setDeleteTarget(item)
+  }
+
+  const executeDeleteImage = async (item: MultimediaItem) => {
+    setIsDeleting(true)
+    const toastId = toast.loading("Eliminando imagen...")
     try {
+      // 1. Delete from Cloudflare R2 Storage (if R2 URL)
+      await deleteFromR2(item.url)
+
+      // 2. Delete from Supabase
       const { error } = await supabase
         .from("multimedia")
         .delete()
@@ -263,7 +453,8 @@ export function EditServicePage() {
       if (error) throw error
 
       toast.success("Imagen eliminada", {
-        description: "Se quitó la imagen de la galería."
+        id: toastId,
+        description: "Se removió la imagen del storage y de la galería."
       })
 
       // If the deleted image was the main one, promote another image to cover
@@ -281,8 +472,12 @@ export function EditServicePage() {
     } catch (err) {
       console.error("Error deleting image:", err)
       toast.error("Error de eliminación", {
-        description: "No se pudo remover la imagen."
+        id: toastId,
+        description: "No se pudo remover completamente la imagen."
       })
+    } finally {
+      setIsDeleting(false)
+      setDeleteTarget(null)
     }
   }
 
@@ -316,32 +511,80 @@ export function EditServicePage() {
     }
   }
 
-  const handleMoveImage = async (index: number, direction: "up" | "down") => {
-    const targetIndex = direction === "up" ? index - 1 : index + 1
-    if (targetIndex < 0 || targetIndex >= multimedia.length) return
+  // HTML5 Drag and Drop Reordering Handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = "move"
+  }
 
-    const itemA = multimedia[index]
-    const itemB = multimedia[targetIndex]
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
 
+  const handleCardDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault()
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelection(e.dataTransfer.files)
+      return
+    }
+
+    if (draggedIndex === null || draggedIndex === targetIndex) return
+
+    const updated = [...multimedia]
+    const [draggedItem] = updated.splice(draggedIndex, 1)
+    updated.splice(targetIndex, 0, draggedItem)
+
+    const reordered = updated.map((item, idx) => ({
+      ...item,
+      display_order: idx
+    }))
+
+    setMultimedia(reordered)
+    setDraggedIndex(null)
+    setHasOrderChanges(true)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+  }
+
+  const handleSaveOrder = async () => {
+    setIsSaving(true)
+    const toastId = toast.loading("Guardando el nuevo orden de imágenes...")
     try {
-      const { error: errA } = await supabase
-        .from("multimedia")
-        .update({ display_order: itemB.display_order })
-        .eq("id", itemA.id)
+      const promises = multimedia
+        .filter((item) => !item.isUploading)
+        .map((item) =>
+          supabase
+            .from("multimedia")
+            .update({ display_order: item.display_order })
+            .eq("id", item.id)
+        )
 
-      if (errA) throw errA
-
-      const { error: errB } = await supabase
-        .from("multimedia")
-        .update({ display_order: itemA.display_order })
-        .eq("id", itemB.id)
-
-      if (errB) throw errB
-
-      fetchMultimedia()
+      await Promise.all(promises)
+      toast.success("Orden de galería guardado correctamente.", { id: toastId })
+      setHasOrderChanges(false)
     } catch (err) {
-      console.error("Error reordering images:", err)
-      toast.error("Error al reordenar")
+      console.error("Error saving display order:", err)
+      toast.error("No se pudo guardar el orden de las imágenes.", {
+        id: toastId,
+        description: "Hubo un error de comunicación con la base de datos."
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleCancelOrder = () => {
+    setHasOrderChanges(false)
+    fetchMultimedia()
+  }
+
+  const handleGridDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelection(e.dataTransfer.files)
     }
   }
 
@@ -356,7 +599,7 @@ export function EditServicePage() {
   }
 
   return (
-    <div className="w-full space-y-8 text-foreground">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 text-foreground">
       <PageHeader
         onBackClick={() => navigate("/dashboard/services")}
         showBackButton
@@ -364,31 +607,27 @@ export function EditServicePage() {
         description="Modifica los datos del servicio seleccionado y gestiona su galería multimedia."
       />
 
-      <div className="flex flex-col md:flex-row gap-8 items-start">
+      <div className="flex flex-col md:flex-row gap-10 items-start">
         {/* Sidebar Aside Layout */}
-        <aside className="w-full md:w-64 shrink-0 flex flex-row md:flex-col gap-1.5 p-1.5 bg-card border border-border rounded-xl">
+        <aside className="w-full md:w-56 shrink-0 flex flex-row md:flex-col gap-6 md:gap-4 md:sticky md:top-8 self-start border-b md:border-b-0 border-border pb-4 md:pb-0 overflow-x-auto md:overflow-x-visible no-scrollbar">
           <button
             type="button"
             onClick={() => setSearchParams({ tab: "info" })}
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left ${
-              activeTab === "info"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "hover:bg-muted text-muted-foreground hover:text-foreground"
-            }`}
+            className={`flex items-center text-sm transition-all text-left outline-none cursor-pointer whitespace-nowrap ${activeTab === "info"
+                ? "border-b-2 md:border-b-0 md:border-l-[3px] border-foreground pl-0 md:pl-4 pb-2 md:pb-0 font-semibold text-foreground"
+                : "border-b-2 md:border-b-0 md:border-l-[3px] border-transparent pl-0 md:pl-4 pb-2 md:pb-0 text-muted-foreground hover:text-foreground font-medium"
+              }`}
           >
-            <Edit3 className="size-4" />
             Información Principal
           </button>
           <button
             type="button"
             onClick={() => setSearchParams({ tab: "multimedia" })}
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left ${
-              activeTab === "multimedia"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "hover:bg-muted text-muted-foreground hover:text-foreground"
-            }`}
+            className={`flex items-center text-sm transition-all text-left outline-none cursor-pointer whitespace-nowrap ${activeTab === "multimedia"
+                ? "border-b-2 md:border-b-0 md:border-l-[3px] border-foreground pl-0 md:pl-4 pb-2 md:pb-0 font-semibold text-foreground"
+                : "border-b-2 md:border-b-0 md:border-l-[3px] border-transparent pl-0 md:pl-4 pb-2 md:pb-0 text-muted-foreground hover:text-foreground font-medium"
+              }`}
           >
-            <FolderEdit className="size-4" />
             Galería Multimedia
           </button>
         </aside>
@@ -565,14 +804,12 @@ export function EditServicePage() {
                     <button
                       type="button"
                       onClick={() => setIsActive(!isActive)}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        isActive ? "bg-[#10b981]" : "bg-muted"
-                      }`}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isActive ? "bg-[#10b981]" : "bg-muted"
+                        }`}
                     >
                       <span
-                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          isActive ? "translate-x-4" : "translate-x-0"
-                        }`}
+                        className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isActive ? "translate-x-4" : "translate-x-0"
+                          }`}
                       />
                     </button>
                   </div>
@@ -599,140 +836,280 @@ export function EditServicePage() {
             </div>
           ) : (
             <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-medium tracking-tight text-muted-foreground">Multimedia del Servicio</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Agrega múltiples fotos a la galería del servicio y ordénalas según tu preferencia.</p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-medium tracking-tight text-muted-foreground">Multimedia del Servicio</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Agrega múltiples fotos a la galería del servicio y ordénalas según tu preferencia.</p>
+                </div>
+                {/* Method Selector tabs */}
+                <div className="flex bg-muted p-0.5 rounded-lg border border-border self-start">
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod("file")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-xs font-semibold transition-all border-0 cursor-pointer outline-none",
+                      uploadMethod === "file"
+                        ? "bg-card text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground bg-transparent"
+                    )}
+                  >
+                    Subir Archivos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUploadMethod("url")}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-xs font-semibold transition-all border-0 cursor-pointer outline-none",
+                      uploadMethod === "url"
+                        ? "bg-card text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground bg-transparent"
+                    )}
+                  >
+                    Por URL
+                  </button>
+                </div>
               </div>
 
-              {/* Add New Image Form */}
-              <div className="border border-border rounded-xl bg-card p-6 shadow-sm">
-                <form onSubmit={handleAddImage} className="space-y-4">
-                  <h3 className="text-sm font-semibold">Añadir nueva imagen a la galería</h3>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex-1">
-                      <Input
-                        required
-                        type="url"
-                        placeholder="https://ejemplo.com/imagen.jpg"
-                        value={newImgUrl}
-                        onChange={(e) => setNewImgUrl(e.target.value)}
-                        className="text-sm"
-                      />
+              {uploadMethod === "file" ? (
+                /* FILE UPLOAD & GRID VIEW */
+                <div className="space-y-4">
+                  {/* Title / Description count */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Fotos · {multimedia.length}/10 - Puedes agregar un máximo de 10 fotos.
+                    </span>
+                  </div>
+
+                  {isLoadingMedia ? (
+                    <div className="py-12 text-center text-muted-foreground text-xs animate-pulse">
+                      Cargando galería...
                     </div>
-                    <Button
-                      type="submit"
-                      disabled={isAddingImg}
-                      className="bg-[#10b981] hover:bg-[#059669] text-white font-medium whitespace-nowrap"
+                  ) : multimedia.length === 0 ? (
+                    /* Large Empty State Dropzone */
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault()
+                        setIsDragOver(true)
+                      }}
+                      onDragLeave={() => setIsDragOver(false)}
+                      onDrop={handleGridDrop}
+                      onClick={() => document.getElementById("file-upload")?.click()}
+                      className={cn(
+                        "border border-dashed rounded-xl p-12 hover:border-emerald-500 hover:bg-emerald-500/5 transition-all text-center cursor-pointer flex flex-col items-center justify-center gap-4 min-h-[220px] bg-muted/10",
+                        isDragOver ? "border-emerald-500 bg-emerald-500/10" : "border-border"
+                      )}
                     >
-                      <Plus className="size-4 mr-2" />
-                      Agregar
-                    </Button>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">Proporciona un enlace absoluto de imagen (ej. de Unsplash o Cloudflare).</p>
-                </form>
-              </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        id="file-upload"
+                        onChange={(e) => {
+                          if (e.target.files) {
+                            handleFileSelection(e.target.files)
+                          }
+                        }}
+                      />
+                      <div className="p-4 bg-muted/40 rounded-full text-muted-foreground">
+                        {/* File plus sheet icon */}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="size-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-semibold text-foreground">Agregar fotos</h3>
+                        <p className="text-xs text-muted-foreground">o arrastra y suelta</p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Grid and Dropzone wrapper */
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault()
+                        setIsDragOver(true)
+                      }}
+                      onDragLeave={() => setIsDragOver(false)}
+                      onDrop={handleGridDrop}
+                      className={cn(
+                        "border rounded-xl p-6 transition-all min-h-[160px]",
+                        isDragOver ? "border-emerald-500 bg-emerald-500/5 ring-1 ring-emerald-500/20" : "border-border bg-card"
+                      )}
+                    >
+                      {/* Grid layout matching slide 2/3 */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {multimedia.map((item, index) => (
+                          <div
+                            key={item.id}
+                            draggable={!item.isUploading}
+                            onDragStart={(e) => handleDragStart(e, index)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleCardDrop(e, index)}
+                            onDragEnd={handleDragEnd}
+                            className={cn(
+                              "relative aspect-square w-full rounded-xl overflow-hidden bg-muted transition-all border group select-none",
+                              item.is_main ? "border-emerald-500 shadow-md shadow-emerald-500/5" : "border-border",
+                              draggedIndex === index ? "opacity-30 scale-95" : "",
+                              !item.isUploading ? "cursor-grab active:cursor-grabbing" : ""
+                            )}
+                          >
+                            <img
+                              src={item.isUploading ? item.previewUrl : item.url}
+                              alt="Galería"
+                              className="w-full h-full object-cover select-none pointer-events-none"
+                            />
 
-              {/* Gallery List */}
-              <div className="border border-border rounded-xl bg-card p-6 shadow-sm space-y-4">
-                <h3 className="text-sm font-semibold">Imágenes cargadas</h3>
-
-                {isLoadingMedia ? (
-                  <div className="py-8 text-center text-muted-foreground text-xs animate-pulse">
-                    Cargando galería...
-                  </div>
-                ) : multimedia.length === 0 ? (
-                  <div className="py-12 text-center border border-dashed border-border rounded-xl bg-muted/5 text-xs text-muted-foreground flex flex-col items-center justify-center gap-2">
-                    <ImageIcon className="size-8 text-muted-foreground/50" />
-                    <span>No hay imágenes registradas para este servicio. Agrega una arriba.</span>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {multimedia.map((item, index) => (
-                      <div
-                        key={item.id}
-                        className={`relative group rounded-xl overflow-hidden border transition-all flex flex-col bg-muted/10 ${
-                          item.is_main ? "border-emerald-500/50 shadow-md shadow-emerald-500/5" : "border-border"
-                        }`}
-                      >
-                        {/* Image Preview Container */}
-                        <div className="aspect-video w-full bg-muted overflow-hidden relative">
-                          <img
-                            src={item.url}
-                            alt="Galería del servicio"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-
-                          {/* Cover Badge */}
-                          {item.is_main && (
-                            <span className="absolute top-2 left-2 text-[9px] font-bold px-2 py-0.5 bg-emerald-500 text-white rounded-md uppercase tracking-wider select-none shadow-sm">
-                              Portada
-                            </span>
-                          )}
-
-                          {/* Actions Overlay */}
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-2">
-                            {/* Reordering Controls */}
-                            <Button
-                              type="button"
-                              disabled={index === 0}
-                              onClick={() => handleMoveImage(index, "up")}
-                              className="size-8 p-0 bg-background/90 hover:bg-background text-foreground hover:scale-105 transition-transform"
-                              title="Subir prioridad"
-                            >
-                              <ArrowUp className="size-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              disabled={index === multimedia.length - 1}
-                              onClick={() => handleMoveImage(index, "down")}
-                              className="size-8 p-0 bg-background/90 hover:bg-background text-foreground hover:scale-105 transition-transform"
-                              title="Bajar prioridad"
-                            >
-                              <ArrowDown className="size-4" />
-                            </Button>
-
-                            {/* Set Main Cover */}
-                            {!item.is_main && (
-                              <Button
-                                type="button"
-                                onClick={() => handleSetMain(item.id)}
-                                className="size-8 p-0 bg-emerald-500 hover:bg-emerald-600 text-white hover:scale-105 transition-transform"
-                                title="Establecer portada"
-                              >
-                                <Check className="size-4" />
-                              </Button>
+                            {/* Portada label */}
+                            {item.is_main && !item.isUploading && (
+                              <span className="absolute top-2 left-2 text-[9px] font-bold px-2 py-0.5 bg-emerald-500 text-white rounded-md uppercase tracking-wider select-none shadow-xs z-10">
+                                Portada
+                              </span>
                             )}
 
-                            {/* Delete Button */}
-                            <Button
-                              type="button"
-                              onClick={() => handleDeleteImage(item)}
-                              className="size-8 p-0 bg-destructive hover:bg-destructive/90 text-destructive-foreground hover:scale-105 transition-transform"
-                              title="Eliminar de galería"
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </div>
-                        </div>
+                            {item.isUploading ? (
+                              /* Three bouncing dots loader */
+                              <div className="flex justify-center items-center gap-1.5 h-full w-full bg-black/55 absolute inset-0 z-25">
+                                <span className="w-2 h-2 bg-white/90 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                                <span className="w-2 h-2 bg-white/90 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                                <span className="w-2 h-2 bg-white/90 rounded-full animate-bounce"></span>
+                              </div>
+                            ) : (
+                              <>
+                                {/* X button top-right */}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDeleteImage(item)
+                                  }}
+                                  className="absolute top-2 right-2 size-6 rounded-full bg-black/50 hover:bg-black/75 flex items-center justify-center text-white transition-colors z-10 cursor-pointer"
+                                  title="Eliminar de galería"
+                                >
+                                  <X className="size-3.5" />
+                                </button>
 
-                        {/* Description Details Card */}
-                        <div className="p-3 flex justify-between items-center text-xs border-t border-border bg-card">
-                          <span className="truncate text-muted-foreground font-mono max-w-[150px]" title={item.url}>
-                            {item.url}
-                          </span>
-                          <span className="shrink-0 text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded text-[10px]">
-                            Orden: {item.display_order}
-                          </span>
-                        </div>
+                                {/* Cover trigger on hover */}
+                                {!item.is_main && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleSetMain(item.id)
+                                    }}
+                                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium cursor-pointer"
+                                  >
+                                    Establecer Portada
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Agregar foto card at the end */}
+                        {multimedia.length < 10 && (
+                          <div
+                            onClick={() => document.getElementById("file-upload")?.click()}
+                            className="aspect-square w-full rounded-xl border border-dashed border-border bg-muted/20 hover:bg-muted/40 hover:border-emerald-500/50 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group"
+                          >
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              id="file-upload"
+                              onChange={(e) => {
+                                if (e.target.files) {
+                                  handleFileSelection(e.target.files)
+                                }
+                              }}
+                            />
+                            <div className="p-2 bg-muted/60 rounded-lg group-hover:bg-emerald-500/10 group-hover:text-emerald-500 transition-colors">
+                              <Plus className="size-5 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
+                            </div>
+                            <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
+                              Agregar foto
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* URL UPLOAD METHOD */
+                <div className="border border-border rounded-xl bg-card p-6 shadow-sm space-y-4">
+                  <h3 className="text-sm font-semibold">Agregar imagen por URL</h3>
+                  <form onSubmit={handleAddImageUrl} className="space-y-4 animate-fade-in">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex-1">
+                        <Input
+                          required
+                          type="url"
+                          placeholder="https://ejemplo.com/imagen.jpg"
+                          value={newImgUrl}
+                          onChange={(e) => setNewImgUrl(e.target.value)}
+                          className="text-sm"
+                          disabled={isAddingImg}
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={isAddingImg}
+                        className="bg-[#10b981] hover:bg-[#059669] text-white font-medium whitespace-nowrap"
+                      >
+                        <Plus className="size-4 mr-2" />
+                        Agregar
+                      </Button>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">Proporciona un enlace absoluto de imagen (ej. de Unsplash o Cloudflare).</p>
+                  </form>
+                </div>
+              )}
+
+              {/* Order Changes Save Bar */}
+              {hasOrderChanges && (
+                <FormFooter variant="sticky" className="border-emerald-500/20 bg-emerald-500/5 backdrop-blur-md">
+                  <div className="flex w-full items-center justify-between">
+                    <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      Has modificado el orden de la galería. Guarda para confirmar.
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCancelOrder}
+                        className="h-8 text-xs font-medium"
+                      >
+                        Descartar
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleSaveOrder}
+                        className="bg-[#10b981] hover:bg-[#059669] text-white font-medium h-8 text-xs"
+                      >
+                        Guardar Orden
+                      </Button>
+                    </div>
                   </div>
-                )}
-              </div>
+                </FormFooter>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      <AlertDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && executeDeleteImage(deleteTarget)}
+        title="¿Eliminar esta imagen?"
+        description="Esta acción eliminará de forma permanente la imagen seleccionada de la galería del servicio y del almacenamiento de R2. No se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
     </div>
   )
 }

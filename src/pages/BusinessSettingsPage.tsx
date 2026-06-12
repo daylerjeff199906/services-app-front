@@ -5,6 +5,7 @@ import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Copy, Check, ShieldAlert, Trash2 } from "lucide-react"
+import { FormFooter } from "@/components/ui/form-footer"
 
 interface Member {
   role: string
@@ -23,11 +24,19 @@ export function BusinessSettingsPage() {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [isActive, setIsActive] = useState(true)
+  const [isIndependent, setIsIndependent] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   const [members, setMembers] = useState<Member[]>([])
   const [copiedId, setCopiedId] = useState(false)
+
+  // Contact numbers state
+  const [contactNumbers, setContactNumbers] = useState<string[]>([])
+  const [newPhone, setNewPhone] = useState("")
+
+  // Locations state
+  const [locations, setLocations] = useState<any[]>([])
 
   // Danger Zone Deletion states
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -44,19 +53,38 @@ export function BusinessSettingsPage() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        // Fetch current business details
-        const { data: bizData, error: bizError } = await supabase
-          .from("businesses")
-          .select("id, name, description, is_active")
-          .eq("id", selectedService.id)
-          .single()
+        // Fetch current business details with contact_numbers query fallback
+        let bizData: any = null
+        try {
+          const { data, error } = await supabase
+            .from("businesses")
+            .select("id, name, description, is_active, is_independent, contact_numbers")
+            .eq("id", selectedService.id)
+            .single()
 
-        if (bizError) throw bizError
+          if (error) {
+            // Fallback if contact_numbers column doesn't exist yet
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from("businesses")
+              .select("id, name, description, is_active, is_independent")
+              .eq("id", selectedService.id)
+              .single()
+
+            if (fallbackError) throw fallbackError
+            bizData = fallbackData
+          } else {
+            bizData = data
+          }
+        } catch (bizSelectErr) {
+          console.error("Failed to select business details with contact_numbers, fallback used:", bizSelectErr)
+        }
 
         if (bizData) {
           setName(bizData.name)
           setDescription(bizData.description || "")
           setIsActive(bizData.is_active ?? true)
+          setIsIndependent(bizData.is_independent ?? false)
+          setContactNumbers(bizData.contact_numbers || [])
         }
 
         // Fetch team members
@@ -95,6 +123,20 @@ export function BusinessSettingsPage() {
         }
 
         setMembers(formatted)
+
+        // Fetch locations defensively
+        try {
+          const { data: locData, error: locError } = await supabase
+            .from("business_locations")
+            .select("*")
+            .eq("business_id", selectedService.id)
+
+          if (!locError) {
+            setLocations(locData || [])
+          }
+        } catch (e) {
+          console.error("Locations table not ready yet:", e)
+        }
       } catch (err) {
         console.error("Error loading settings data:", err)
       } finally {
@@ -105,11 +147,29 @@ export function BusinessSettingsPage() {
     loadData()
   }, [selectedService, navigate])
 
+  const handleAddPhone = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const trimmed = newPhone.trim()
+    if (!trimmed) return
+    if (contactNumbers.includes(trimmed)) {
+      alert("Este número ya está agregado.")
+      return
+    }
+    setContactNumbers([...contactNumbers, trimmed])
+    setNewPhone("")
+  }
+
+  const handleRemovePhone = (indexToRemove: number) => {
+    setContactNumbers(contactNumbers.filter((_, i) => i !== indexToRemove))
+  }
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     setCopiedId(true)
     setTimeout(() => setCopiedId(false), 2000)
   }
+
+
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,27 +177,50 @@ export function BusinessSettingsPage() {
 
     setIsSubmitting(true)
     try {
+      // Try updating with contact_numbers first
       const { error } = await supabase
         .from("businesses")
         .update({
           name,
           description,
           is_active: isActive,
+          is_independent: isIndependent,
+          contact_numbers: contactNumbers,
         })
         .eq("id", selectedService.id)
 
-      if (error) throw error
+      if (error) {
+        // Fallback if the contact_numbers column doesn't exist yet
+        const isMissingColumn = error.code === "42703" || error.message?.includes("contact_numbers")
+        if (isMissingColumn) {
+          console.warn("contact_numbers column not found, falling back to update without it...")
+          const { error: fallbackError } = await supabase
+            .from("businesses")
+            .update({
+              name,
+              description,
+              is_active: isActive,
+              is_independent: isIndependent,
+            })
+            .eq("id", selectedService.id)
+
+          if (fallbackError) throw fallbackError
+          alert("Cambios guardados con éxito (excepto los números de contacto, asegúrate de aplicar la consulta SQL en Supabase).")
+        } else {
+          throw error
+        }
+      } else {
+        alert("Cambios guardados con éxito.")
+      }
 
       // Update in local store state too
       const updatedServices = services.map((s) =>
         s.id === selectedService.id
-          ? { ...s, name, description, isActive }
+          ? { ...s, name, description, isActive, isIndependent }
           : s
       )
       setServices(updatedServices)
-      selectService({ ...selectedService, name, description, isActive })
-
-      alert("Cambios guardados con éxito.")
+      selectService({ ...selectedService, name, description, isActive, isIndependent })
     } catch (err) {
       console.error("Error saving business details:", err)
       alert("Error al guardar los cambios.")
@@ -188,7 +271,7 @@ export function BusinessSettingsPage() {
   }
 
   return (
-    <div className="px-8 max-w-4xl mx-auto space-y-10 text-foreground">
+    <div className="px-8 max-w-4xl mx-auto space-y-10 text-foreground pb-8">
       {/* Page Header */}
       <div className="space-y-1">
         <h1 className="text-3xl font-medium tracking-tight">
@@ -263,6 +346,93 @@ export function BusinessSettingsPage() {
             </div>
           </div>
 
+          {/* Números de contacto */}
+          <div className="flex flex-col md:flex-row md:items-start justify-between p-6 gap-4 border-b border-border">
+            <div className="md:w-1/3">
+              <label className="text-sm font-medium">Números de contacto</label>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">Agrega uno o varios números telefónicos para que tus clientes puedan contactarte.</p>
+            </div>
+            <div className="md:w-2/3 max-w-md w-full space-y-3">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="tel"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="Ej. +51 987 654 321"
+                  disabled={isSubmitting}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const trimmed = newPhone.trim();
+                      if (trimmed) {
+                        if (contactNumbers.includes(trimmed)) {
+                          alert("Este número ya está agregado.");
+                          return;
+                        }
+                        setContactNumbers([...contactNumbers, trimmed]);
+                        setNewPhone("");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={handleAddPhone}
+                  disabled={isSubmitting || !newPhone.trim()}
+                  className="bg-[#10b981] hover:bg-[#059669] text-white shrink-0"
+                >
+                  Agregar
+                </Button>
+              </div>
+
+              {contactNumbers.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {contactNumbers.map((phone, idx) => (
+                    <div
+                      key={`${phone}-${idx}`}
+                      className="flex items-center gap-1.5 px-3 py-1 bg-muted border border-border rounded-full text-xs font-medium animate-fade-in"
+                    >
+                      <span>{phone}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhone(idx)}
+                        disabled={isSubmitting}
+                        className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-0 cursor-pointer"
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Tipo de Negocio / Independiente */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
+            <div className="md:w-1/3">
+              <label className="text-sm font-medium">Tipo de establecimiento</label>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">¿Es un local físico o un servicio a domicilio / independiente?</p>
+            </div>
+            <div className="md:w-2/3 max-w-md w-full flex items-center justify-start gap-3">
+              <button
+                type="button"
+                onClick={() => setIsIndependent(!isIndependent)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isIndependent ? "bg-[#10b981]" : "bg-muted"
+                  }`}
+                disabled={isSubmitting}
+              >
+                <span
+                  className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isIndependent ? "translate-x-4" : "translate-x-0"
+                    }`}
+                />
+              </button>
+              <span className="text-sm font-medium text-muted-foreground">
+                {isIndependent ? "Negocio Independiente / A domicilio (Sin local físico)" : "Establecimiento con Locales/Sucursales"}
+              </span>
+            </div>
+          </div>
+
           {/* Active status */}
           <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
             <div className="md:w-1/3">
@@ -283,7 +453,7 @@ export function BusinessSettingsPage() {
           </div>
 
           {/* Submit panel */}
-          <div className="bg-muted/10 px-6 py-4 flex justify-end">
+          <FormFooter>
             <Button
               type="submit"
               disabled={isSubmitting}
@@ -291,9 +461,84 @@ export function BusinessSettingsPage() {
             >
               {isSubmitting ? "Guardando..." : "Guardar cambios"}
             </Button>
-          </div>
+          </FormFooter>
         </form>
       </div>
+
+      {/* Locales y Sucursales (Only if business is NOT independent) */}
+      {!isIndependent && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-medium tracking-tight text-muted-foreground">Locales y Sucursales</h2>
+
+          <div className="border border-border rounded-xl bg-card overflow-hidden">
+            <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h3 className="font-medium text-sm text-foreground">Sedes físicas de atención</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 font-medium font-sans">
+                  {locations.length === 0
+                    ? "No hay locales registrados en este negocio."
+                    : `Tienes ${locations.length} ${locations.length === 1 ? 'local registrado' : 'locales registrados'} en este negocio.`}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/dashboard/agenda/locations")}
+                className="shrink-0 font-medium"
+              >
+                Gestionar locales
+              </Button>
+            </div>
+
+            {locations.length > 0 && (
+              <div className="border-t border-border">
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/5 text-muted-foreground text-xs uppercase font-semibold">
+                      <th className="px-6 py-3">Local</th>
+                      <th className="px-6 py-3">Dirección</th>
+                      <th className="px-6 py-3 text-right">Contacto</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {locations.slice(0, 3).map((loc) => {
+                      const firstContact = loc.contact_numbers && loc.contact_numbers.length > 0
+                        ? loc.contact_numbers[0]
+                        : loc.phone || "Sin contacto"
+                      return (
+                        <tr key={loc.id} className="hover:bg-muted/5 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="font-medium text-foreground">{loc.name}</span>
+                            {loc.city && (
+                              <span className="ml-2 text-[9px] font-semibold bg-muted px-1.5 py-0.5 rounded border border-border uppercase text-muted-foreground">
+                                {loc.city}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-xs text-muted-foreground font-medium">
+                            {loc.address}
+                          </td>
+                          <td className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground font-mono">
+                            {firstContact}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {locations.length > 3 && (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-3 text-center text-xs text-muted-foreground font-medium bg-muted/5">
+                          Y {locations.length - 3} locales más...
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Project Access Section */}
       <div className="space-y-4">

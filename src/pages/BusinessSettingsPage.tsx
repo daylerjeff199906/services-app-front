@@ -23,11 +23,20 @@ export function BusinessSettingsPage() {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [isActive, setIsActive] = useState(true)
+  const [isIndependent, setIsIndependent] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   const [members, setMembers] = useState<Member[]>([])
   const [copiedId, setCopiedId] = useState(false)
+
+  // Locations state
+  const [locations, setLocations] = useState<any[]>([])
+  const [newLocName, setNewLocName] = useState("")
+  const [newLocAddress, setNewLocAddress] = useState("")
+  const [newLocCity, setNewLocCity] = useState("")
+  const [newLocPhone, setNewLocPhone] = useState("")
+  const [isAddingLocation, setIsAddingLocation] = useState(false)
 
   // Danger Zone Deletion states
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -47,7 +56,7 @@ export function BusinessSettingsPage() {
         // Fetch current business details
         const { data: bizData, error: bizError } = await supabase
           .from("businesses")
-          .select("id, name, description, is_active")
+          .select("id, name, description, is_active, is_independent")
           .eq("id", selectedService.id)
           .single()
 
@@ -57,6 +66,7 @@ export function BusinessSettingsPage() {
           setName(bizData.name)
           setDescription(bizData.description || "")
           setIsActive(bizData.is_active ?? true)
+          setIsIndependent(bizData.is_independent ?? false)
         }
 
         // Fetch team members
@@ -95,6 +105,20 @@ export function BusinessSettingsPage() {
         }
 
         setMembers(formatted)
+
+        // Fetch locations defensively
+        try {
+          const { data: locData, error: locError } = await supabase
+            .from("business_locations")
+            .select("*")
+            .eq("business_id", selectedService.id)
+
+          if (!locError) {
+            setLocations(locData || [])
+          }
+        } catch (e) {
+          console.error("Locations table not ready yet:", e)
+        }
       } catch (err) {
         console.error("Error loading settings data:", err)
       } finally {
@@ -111,6 +135,54 @@ export function BusinessSettingsPage() {
     setTimeout(() => setCopiedId(false), 2000)
   }
 
+  const handleAddLocation = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedService || !newLocName.trim() || !newLocAddress.trim()) return
+    setIsAddingLocation(true)
+    try {
+      const { data, error } = await supabase
+        .from("business_locations")
+        .insert({
+          business_id: selectedService.id,
+          name: newLocName.trim(),
+          address: newLocAddress.trim(),
+          city: newLocCity.trim() || null,
+          phone: newLocPhone.trim() || null
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      setLocations([...locations, data])
+      setNewLocName("")
+      setNewLocAddress("")
+      setNewLocCity("")
+      setNewLocPhone("")
+      alert("Local agregado con éxito.")
+    } catch (err) {
+      console.error("Error adding location:", err)
+      alert("Error al agregar el local. ¿Ejecutaste el script SQL en Supabase?")
+    } finally {
+      setIsAddingLocation(false)
+    }
+  }
+
+  const handleDeleteLocation = async (locId: string) => {
+    if (!window.confirm("¿Seguro que deseas eliminar este local?")) return
+    try {
+      const { error } = await supabase
+        .from("business_locations")
+        .delete()
+        .eq("id", locId)
+
+      if (error) throw error
+      setLocations(locations.filter((loc) => loc.id !== locId))
+    } catch (err) {
+      console.error("Error deleting location:", err)
+      alert("Error al eliminar el local.")
+    }
+  }
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedService) return
@@ -123,6 +195,7 @@ export function BusinessSettingsPage() {
           name,
           description,
           is_active: isActive,
+          is_independent: isIndependent,
         })
         .eq("id", selectedService.id)
 
@@ -131,11 +204,11 @@ export function BusinessSettingsPage() {
       // Update in local store state too
       const updatedServices = services.map((s) =>
         s.id === selectedService.id
-          ? { ...s, name, description, isActive }
+          ? { ...s, name, description, isActive, isIndependent }
           : s
       )
       setServices(updatedServices)
-      selectService({ ...selectedService, name, description, isActive })
+      selectService({ ...selectedService, name, description, isActive, isIndependent })
 
       alert("Cambios guardados con éxito.")
     } catch (err) {
@@ -263,6 +336,33 @@ export function BusinessSettingsPage() {
             </div>
           </div>
 
+          {/* Tipo de Negocio / Independiente */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
+            <div className="md:w-1/3">
+              <label className="text-sm font-medium">Tipo de establecimiento</label>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">¿Es un local físico o un servicio a domicilio / independiente?</p>
+            </div>
+            <div className="md:w-2/3 max-w-md w-full flex items-center justify-start gap-3">
+              <button
+                type="button"
+                onClick={() => setIsIndependent(!isIndependent)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  isIndependent ? "bg-[#10b981]" : "bg-muted"
+                }`}
+                disabled={isSubmitting}
+              >
+                <span
+                  className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    isIndependent ? "translate-x-4" : "translate-x-0"
+                  }`}
+                />
+              </button>
+              <span className="text-sm font-medium text-muted-foreground">
+                {isIndependent ? "Negocio Independiente / A domicilio (Sin local físico)" : "Establecimiento con Locales/Sucursales"}
+              </span>
+            </div>
+          </div>
+
           {/* Active status */}
           <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
             <div className="md:w-1/3">
@@ -294,6 +394,99 @@ export function BusinessSettingsPage() {
           </div>
         </form>
       </div>
+
+      {/* Locales y Sucursales (Only if business is NOT independent) */}
+      {!isIndependent && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-medium tracking-tight text-muted-foreground">Locales y Sucursales</h2>
+          
+          <div className="border border-border rounded-xl bg-card overflow-hidden">
+            {/* List Locations */}
+            <div className="p-6 border-b border-border">
+              <h3 className="font-semibold text-sm mb-4">Ubicaciones actuales</h3>
+              {locations.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No hay locales registrados en este negocio. Agrega el primero a continuación.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {locations.map((loc) => (
+                    <div key={loc.id} className="p-4 border border-border rounded-lg bg-muted/5 flex justify-between items-start gap-4 animate-fade-in">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-sm">{loc.name}</p>
+                        <p className="text-xs text-muted-foreground">{loc.address}</p>
+                        {loc.city && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-medium">{loc.city}</span>}
+                        {loc.phone && <p className="text-xs text-muted-foreground mt-1">📞 {loc.phone}</p>}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteLocation(loc.id)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 size-8"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Add Location Form */}
+            <form onSubmit={handleAddLocation} className="p-6 bg-muted/5 space-y-4">
+              <h3 className="font-semibold text-sm">Agregar nuevo local / sucursal</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Nombre del local *</label>
+                  <Input
+                    required
+                    type="text"
+                    placeholder="Ej. Sede Central, Sucursal Norte"
+                    value={newLocName}
+                    onChange={(e) => setNewLocName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Dirección física *</label>
+                  <Input
+                    required
+                    type="text"
+                    placeholder="Calle, Avenida, Número..."
+                    value={newLocAddress}
+                    onChange={(e) => setNewLocAddress(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Ciudad (Opcional)</label>
+                  <Input
+                    type="text"
+                    placeholder="Ej. Lima, Arequipa"
+                    value={newLocCity}
+                    onChange={(e) => setNewLocCity(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium">Teléfono de contacto (Opcional)</label>
+                  <Input
+                    type="text"
+                    placeholder="Ej. +51 999 999 999"
+                    value={newLocPhone}
+                    onChange={(e) => setNewLocPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button
+                  type="submit"
+                  disabled={isAddingLocation}
+                  className="bg-[#10b981] hover:bg-[#059669] text-white font-medium"
+                >
+                  {isAddingLocation ? "Agregando..." : "Agregar Local"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Project Access Section */}
       <div className="space-y-4">

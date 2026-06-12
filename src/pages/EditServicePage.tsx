@@ -366,14 +366,14 @@ export function EditServicePage() {
 
       <div className="flex flex-col md:flex-row gap-8 items-start">
         {/* Sidebar Aside Layout */}
-        <aside className="w-full md:w-64 shrink-0 flex flex-row md:flex-col gap-1.5 p-1.5 bg-card border border-border rounded-xl">
+        <aside className="w-full md:w-64 shrink-0 flex flex-row md:flex-col gap-1 md:sticky md:top-8 self-start">
           <button
             type="button"
             onClick={() => setSearchParams({ tab: "info" })}
             className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left ${
               activeTab === "info"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                ? "bg-muted text-foreground font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <Edit3 className="size-4" />
@@ -384,8 +384,8 @@ export function EditServicePage() {
             onClick={() => setSearchParams({ tab: "multimedia" })}
             className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all w-full text-left ${
               activeTab === "multimedia"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                ? "bg-muted text-foreground font-semibold"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             }`}
           >
             <FolderEdit className="size-4" />

@@ -25,6 +25,7 @@ const routeMap: Record<string, string> = {
   hours: "Horarios",
   locations: "Ubicaciones",
   new: "Nuevo",
+  edit: "Editar",
   clients: "Clientes",
 };
 

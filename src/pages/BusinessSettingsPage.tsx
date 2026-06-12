@@ -37,11 +37,6 @@ export function BusinessSettingsPage() {
 
   // Locations state
   const [locations, setLocations] = useState<any[]>([])
-  const [newLocName, setNewLocName] = useState("")
-  const [newLocAddress, setNewLocAddress] = useState("")
-  const [newLocCity, setNewLocCity] = useState("")
-  const [newLocPhone, setNewLocPhone] = useState("")
-  const [isAddingLocation, setIsAddingLocation] = useState(false)
 
   // Danger Zone Deletion states
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -174,53 +169,7 @@ export function BusinessSettingsPage() {
     setTimeout(() => setCopiedId(false), 2000)
   }
 
-  const handleAddLocation = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedService || !newLocName.trim() || !newLocAddress.trim()) return
-    setIsAddingLocation(true)
-    try {
-      const { data, error } = await supabase
-        .from("business_locations")
-        .insert({
-          business_id: selectedService.id,
-          name: newLocName.trim(),
-          address: newLocAddress.trim(),
-          city: newLocCity.trim() || null,
-          phone: newLocPhone.trim() || null
-        })
-        .select()
-        .single()
 
-      if (error) throw error
-      setLocations([...locations, data])
-      setNewLocName("")
-      setNewLocAddress("")
-      setNewLocCity("")
-      setNewLocPhone("")
-      alert("Local agregado con éxito.")
-    } catch (err) {
-      console.error("Error adding location:", err)
-      alert("Error al agregar el local. ¿Ejecutaste el script SQL en Supabase?")
-    } finally {
-      setIsAddingLocation(false)
-    }
-  }
-
-  const handleDeleteLocation = async (locId: string) => {
-    if (!window.confirm("¿Seguro que deseas eliminar este local?")) return
-    try {
-      const { error } = await supabase
-        .from("business_locations")
-        .delete()
-        .eq("id", locId)
-
-      if (error) throw error
-      setLocations(locations.filter((loc) => loc.id !== locId))
-    } catch (err) {
-      console.error("Error deleting location:", err)
-      alert("Error al eliminar el local.")
-    }
-  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -524,89 +473,71 @@ export function BusinessSettingsPage() {
           <h2 className="text-lg font-medium tracking-tight text-muted-foreground">Locales y Sucursales</h2>
           
           <div className="border border-border rounded-xl bg-card overflow-hidden">
-            {/* List Locations */}
-            <div className="p-6 border-b border-border">
-              <h3 className="font-semibold text-sm mb-4">Ubicaciones actuales</h3>
-              {locations.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No hay locales registrados en este negocio. Agrega el primero a continuación.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {locations.map((loc) => (
-                    <div key={loc.id} className="p-4 border border-border rounded-lg bg-muted/5 flex justify-between items-start gap-4 animate-fade-in">
-                      <div className="space-y-1">
-                        <p className="font-semibold text-sm">{loc.name}</p>
-                        <p className="text-xs text-muted-foreground">{loc.address}</p>
-                        {loc.city && <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground font-medium">{loc.city}</span>}
-                        {loc.phone && <p className="text-xs text-muted-foreground mt-1">📞 {loc.phone}</p>}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteLocation(loc.id)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 size-8"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h3 className="font-medium text-sm text-foreground">Sedes físicas de atención</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 font-medium font-sans">
+                  {locations.length === 0 
+                    ? "No hay locales registrados en este negocio." 
+                    : `Tienes ${locations.length} ${locations.length === 1 ? 'local registrado' : 'locales registrados'} en este negocio.`}
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/dashboard/agenda/locations")}
+                className="shrink-0 font-medium"
+              >
+                Gestionar locales
+              </Button>
             </div>
 
-            {/* Add Location Form */}
-            <form onSubmit={handleAddLocation} className="p-6 bg-muted/5 space-y-4">
-              <h3 className="font-semibold text-sm">Agregar nuevo local / sucursal</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Nombre del local *</label>
-                  <Input
-                    required
-                    type="text"
-                    placeholder="Ej. Sede Central, Sucursal Norte"
-                    value={newLocName}
-                    onChange={(e) => setNewLocName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Dirección física *</label>
-                  <Input
-                    required
-                    type="text"
-                    placeholder="Calle, Avenida, Número..."
-                    value={newLocAddress}
-                    onChange={(e) => setNewLocAddress(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Ciudad (Opcional)</label>
-                  <Input
-                    type="text"
-                    placeholder="Ej. Lima, Arequipa"
-                    value={newLocCity}
-                    onChange={(e) => setNewLocCity(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-medium">Teléfono de contacto (Opcional)</label>
-                  <Input
-                    type="text"
-                    placeholder="Ej. +51 999 999 999"
-                    value={newLocPhone}
-                    onChange={(e) => setNewLocPhone(e.target.value)}
-                  />
-                </div>
+            {locations.length > 0 && (
+              <div className="border-t border-border">
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/5 text-muted-foreground text-xs uppercase font-semibold">
+                      <th className="px-6 py-3">Local</th>
+                      <th className="px-6 py-3">Dirección</th>
+                      <th className="px-6 py-3 text-right">Contacto</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {locations.slice(0, 3).map((loc) => {
+                      const firstContact = loc.contact_numbers && loc.contact_numbers.length > 0
+                        ? loc.contact_numbers[0]
+                        : loc.phone || "Sin contacto"
+                      return (
+                        <tr key={loc.id} className="hover:bg-muted/5 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="font-medium text-foreground">{loc.name}</span>
+                            {loc.city && (
+                              <span className="ml-2 text-[9px] font-semibold bg-muted px-1.5 py-0.5 rounded border border-border uppercase text-muted-foreground">
+                                {loc.city}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-xs text-muted-foreground font-medium">
+                            {loc.address}
+                          </td>
+                          <td className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground font-mono">
+                            {firstContact}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {locations.length > 3 && (
+                      <tr>
+                        <td colSpan={3} className="px-6 py-3 text-center text-xs text-muted-foreground font-medium bg-muted/5">
+                          Y {locations.length - 3} locales más...
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-              <div className="flex justify-end pt-2">
-                <Button
-                  type="submit"
-                  disabled={isAddingLocation}
-                  className="bg-[#10b981] hover:bg-[#059669] text-white font-medium"
-                >
-                  {isAddingLocation ? "Agregando..." : "Agregar Local"}
-                </Button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
       )}

@@ -3,18 +3,10 @@ import { useNavigate } from "react-router-dom"
 import { useAuthStore } from "@/store/auth.store"
 import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { PageHeader } from "@/components/page-header"
-import { MapPin, Plus, Trash2 } from "lucide-react"
-import { 
-  Sheet, 
-  SheetTrigger, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle, 
-  SheetDescription,
-  SheetClose
-} from "@/components/ui/sheet"
+import { MapPin, Plus, Trash2, Pencil, AlertTriangle } from "lucide-react"
+import { EmptyState } from "@/components/ui/empty-state"
+import { toast } from "sonner"
 
 export function LocationsPage() {
   const navigate = useNavigate()
@@ -22,14 +14,11 @@ export function LocationsPage() {
 
   const [locations, setLocations] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isAdding, setIsAdding] = useState(false)
-  const [isOpen, setIsOpen] = useState(false)
 
-  // Form states
-  const [name, setName] = useState("")
-  const [address, setAddress] = useState("")
-  const [city, setCity] = useState("")
-  const [phone, setPhone] = useState("")
+  // Custom delete confirmation dialog state
+  const [deleteLocId, setDeleteLocId] = useState<string | null>(null)
+  const [deleteLocName, setDeleteLocName] = useState<string>("")
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const fetchLocations = async () => {
     if (!selectedService) return
@@ -45,6 +34,7 @@ export function LocationsPage() {
       setLocations(data || [])
     } catch (err) {
       console.error("Error loading locations:", err)
+      toast.error("Error al cargar las ubicaciones.")
     } finally {
       setIsLoading(false)
     }
@@ -58,53 +48,30 @@ export function LocationsPage() {
     fetchLocations()
   }, [selectedService])
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!selectedService || !name.trim() || !address.trim()) return
-
-    setIsAdding(true)
-    try {
-      const { data, error } = await supabase
-        .from("business_locations")
-        .insert({
-          business_id: selectedService.id,
-          name: name.trim(),
-          address: address.trim(),
-          city: city.trim() || null,
-          phone: phone.trim() || null,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      setLocations([...locations, data])
-      setName("")
-      setAddress("")
-      setCity("")
-      setPhone("")
-      setIsOpen(false)
-    } catch (err) {
-      console.error("Error adding location:", err)
-      alert("Error al guardar el local. Asegúrate de haber ejecutado el script SQL en Supabase.")
-    } finally {
-      setIsAdding(false)
-    }
+  const triggerDelete = (id: string, name: string) => {
+    setDeleteLocId(id)
+    setDeleteLocName(name)
   }
 
-  const handleDelete = async (locId: string) => {
-    if (!window.confirm("¿Seguro que deseas remover esta sucursal del negocio?")) return
+  const handleDeleteConfirm = async () => {
+    if (!deleteLocId) return
+    setIsDeleting(true)
     try {
       const { error } = await supabase
         .from("business_locations")
         .delete()
-        .eq("id", locId)
+        .eq("id", deleteLocId)
 
       if (error) throw error
-      setLocations(locations.filter(l => l.id !== locId))
+
+      setLocations((prev) => prev.filter((l) => l.id !== deleteLocId))
+      toast.success(`El local "${deleteLocName}" ha sido eliminado.`)
+      setDeleteLocId(null)
     } catch (err) {
       console.error("Error deleting location:", err)
-      alert("No se pudo eliminar el local.")
+      toast.error("No se pudo eliminar el local. Intenta nuevamente.")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -119,121 +86,156 @@ export function LocationsPage() {
   }
 
   return (
-    <div className="px-8 w-full mx-auto space-y-8 text-foreground">
+    <div className="px-8 w-full mx-auto space-y-8 text-foreground pb-12">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <PageHeader
-          onBackClick={() => navigate("/dashboard")}
+          onBackClick={() => navigate("/dashboard/settings/business")}
           showBackButton
           title="Ubicaciones de Atención"
           description="Administra los locales físicos y sucursales donde ofreces tus servicios."
         />
 
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button className="bg-[#10b981] hover:bg-[#059669] text-white font-medium shrink-0">
-              <Plus className="size-4 mr-2" />
-              Nuevo Local
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="p-6">
-            <SheetHeader>
-              <SheetTitle>Agregar Nuevo Local</SheetTitle>
-              <SheetDescription>
-                Registra una nueva sucursal física para tu negocio. Todos los campos marcados con * son obligatorios.
-              </SheetDescription>
-            </SheetHeader>
-            <form onSubmit={handleCreate} className="space-y-4 pt-4">
-              <div className="space-y-1">
-                <label className="text-xs font-semibold">Nombre del local *</label>
-                <Input
-                  required
-                  placeholder="Ej. Sede Miraflores, Centro Médico Principal"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold">Dirección *</label>
-                <Input
-                  required
-                  placeholder="Ej. Av. Larco 777"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold">Ciudad / Distrito</label>
-                <Input
-                  placeholder="Ej. Miraflores, Lima"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold">Teléfono</label>
-                <Input
-                  placeholder="Ej. +51 987 654 321"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2 justify-end pt-4">
-                <SheetClose asChild>
-                  <Button variant="outline" type="button">Cancelar</Button>
-                </SheetClose>
-                <Button 
-                  type="submit" 
-                  disabled={isAdding} 
-                  className="bg-[#10b981] hover:bg-[#059669] text-white"
-                >
-                  {isAdding ? "Guardando..." : "Crear Local"}
-                </Button>
-              </div>
-            </form>
-          </SheetContent>
-        </Sheet>
+        <Button
+          onClick={() => navigate("new")}
+          className="bg-[#10b981] hover:bg-[#059669] text-white font-medium shrink-0"
+        >
+          <Plus className="size-4 mr-2" />
+          Nuevo Local
+        </Button>
       </div>
 
       <div className="border border-border rounded-xl bg-card overflow-hidden">
         <div className="p-6">
           <h3 className="font-semibold text-sm mb-4">Sucursales del negocio</h3>
+          
           {locations.length === 0 ? (
-            <div className="py-12 border border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-3 bg-muted/5">
-              <MapPin className="size-8 text-muted-foreground/40" />
-              <div className="text-center">
-                <p className="text-sm font-semibold">No hay locales registrados</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Agrega tu primera sucursal física para empezar.</p>
-              </div>
-            </div>
+            <EmptyState
+              title="No hay locales registrados"
+              description="Agrega tu primera sucursal física para empezar a recibir citas en locales específicos."
+              icon={MapPin}
+              action={
+                <Button
+                  onClick={() => navigate("new")}
+                  className="bg-[#10b981] hover:bg-[#059669] text-white text-xs font-semibold"
+                >
+                  <Plus className="size-3.5 mr-1.5" />
+                  Agregar primer local
+                </Button>
+              }
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {locations.map((loc) => (
-                <div key={loc.id} className="p-5 border border-border rounded-xl bg-muted/5 flex justify-between items-start gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="size-4 text-[#10b981] shrink-0" />
-                      <p className="font-bold text-sm text-foreground">{loc.name}</p>
+              {locations.map((loc) => {
+                const hasCoordinates = loc.latitude !== null && loc.longitude !== null
+                const hasContact = (loc.contact_numbers && loc.contact_numbers.length > 0) || loc.phone
+                
+                return (
+                  <div
+                    key={loc.id}
+                    className="p-5 border border-border rounded-xl bg-muted/5 flex justify-between items-start gap-4 hover:border-foreground/20 transition-all shadow-2xs"
+                  >
+                    <div className="space-y-2 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="size-4 text-[#10b981] shrink-0" />
+                        <p className="font-bold text-sm text-foreground truncate">{loc.name}</p>
+                      </div>
+                      
+                      <div className="space-y-1 pl-6">
+                        <p className="text-xs text-muted-foreground font-medium leading-relaxed truncate-2-lines">
+                          {loc.address}
+                        </p>
+                        
+                        <div className="flex flex-wrap gap-1.5 items-center pt-0.5">
+                          {loc.city && (
+                            <span className="text-[10px] text-muted-foreground font-semibold bg-muted px-1.5 py-0.5 rounded border border-border">
+                              {loc.city}
+                            </span>
+                          )}
+                          
+                          {hasCoordinates && (
+                            <span className="text-[9px] text-[#10b981] font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-[#10b981]/25 font-mono">
+                              GPS: {Number(loc.latitude).toFixed(4)}, {Number(loc.longitude).toFixed(4)}
+                            </span>
+                          )}
+                        </div>
+
+                        {hasContact && (
+                          <div className="text-xs text-muted-foreground/85 mt-2 flex flex-wrap gap-x-1.5 gap-y-1 items-center font-medium">
+                            <span className="text-muted-foreground">📞</span>
+                            {loc.contact_numbers && loc.contact_numbers.length > 0 ? (
+                              <span className="font-mono">{loc.contact_numbers.join(" | ")}</span>
+                            ) : (
+                              <span className="font-mono">{loc.phone}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="space-y-0.5 pl-6">
-                      <p className="text-xs text-muted-foreground font-medium leading-relaxed">{loc.address}</p>
-                      {loc.city && <p className="text-[10px] text-muted-foreground font-semibold bg-muted inline-block px-1.5 py-0.5 rounded">{loc.city}</p>}
-                      {loc.phone && <p className="text-xs text-muted-foreground mt-1.5">📞 {loc.phone}</p>}
+
+                    <div className="flex gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(`edit/${loc.id}`)}
+                        className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0 size-8"
+                        title="Editar local"
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => triggerDelete(loc.id, loc.name)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 size-8"
+                        title="Eliminar local"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(loc.id)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0 size-8"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Alert Dialog Overlay */}
+      {deleteLocId && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-card border border-border rounded-xl max-w-md w-full p-6 space-y-6 shadow-2xl relative animate-scale-in">
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium text-foreground tracking-tight flex items-center gap-2">
+                <AlertTriangle className="size-5 text-destructive shrink-0" />
+                ¿Eliminar sucursal de atención?
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                ¿Estás seguro de que deseas eliminar el local <strong>"{deleteLocName}"</strong>? Se cancelará la asociación de este local a todos los servicios y citas de tu negocio.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeleteLocId(null)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={isDeleting}
+                onClick={handleDeleteConfirm}
+                className="font-semibold"
+              >
+                {isDeleting ? "Eliminando..." : "Eliminar permanentemente"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -2,12 +2,9 @@ import { Outlet } from "react-router-dom"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { ThemeSwitch } from "@/components/ui/theme-switch"
-import { usePageHeader } from "@/components/providers/page-header-provider"
 import { DynamicBreadcrumbs } from "@/components/dynamic-breadcrumbs"
 
 export function PrivateLayout() {
-  const { title } = usePageHeader()
-
   return (
     <SidebarProvider>
       <div className="flex h-screen w-screen bg-background overflow-hidden text-foreground">

@@ -5,6 +5,7 @@ import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Copy, Check, ShieldAlert, Trash2 } from "lucide-react"
+import { FormFooter } from "@/components/ui/form-footer"
 
 interface Member {
   role: string
@@ -505,7 +506,7 @@ export function BusinessSettingsPage() {
           </div>
 
           {/* Submit panel */}
-          <div className="bg-muted/10 px-6 py-4 flex justify-end">
+          <FormFooter>
             <Button
               type="submit"
               disabled={isSubmitting}
@@ -513,7 +514,7 @@ export function BusinessSettingsPage() {
             >
               {isSubmitting ? "Guardando..." : "Guardar cambios"}
             </Button>
-          </div>
+          </FormFooter>
         </form>
       </div>
 

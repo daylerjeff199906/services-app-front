@@ -271,7 +271,7 @@ export function BusinessSettingsPage() {
   }
 
   return (
-    <div className="px-8 max-w-4xl mx-auto space-y-10 text-foreground">
+    <div className="px-8 max-w-4xl mx-auto space-y-10 text-foreground pb-8">
       {/* Page Header */}
       <div className="space-y-1">
         <h1 className="text-3xl font-medium tracking-tight">
@@ -384,7 +384,7 @@ export function BusinessSettingsPage() {
                   Agregar
                 </Button>
               </div>
-              
+
               {contactNumbers.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-1">
                   {contactNumbers.map((phone, idx) => (
@@ -418,15 +418,13 @@ export function BusinessSettingsPage() {
               <button
                 type="button"
                 onClick={() => setIsIndependent(!isIndependent)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  isIndependent ? "bg-[#10b981]" : "bg-muted"
-                }`}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isIndependent ? "bg-[#10b981]" : "bg-muted"
+                  }`}
                 disabled={isSubmitting}
               >
                 <span
-                  className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    isIndependent ? "translate-x-4" : "translate-x-0"
-                  }`}
+                  className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isIndependent ? "translate-x-4" : "translate-x-0"
+                    }`}
                 />
               </button>
               <span className="text-sm font-medium text-muted-foreground">
@@ -471,14 +469,14 @@ export function BusinessSettingsPage() {
       {!isIndependent && (
         <div className="space-y-4">
           <h2 className="text-lg font-medium tracking-tight text-muted-foreground">Locales y Sucursales</h2>
-          
+
           <div className="border border-border rounded-xl bg-card overflow-hidden">
             <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h3 className="font-medium text-sm text-foreground">Sedes físicas de atención</h3>
                 <p className="text-xs text-muted-foreground mt-0.5 font-medium font-sans">
-                  {locations.length === 0 
-                    ? "No hay locales registrados en este negocio." 
+                  {locations.length === 0
+                    ? "No hay locales registrados en este negocio."
                     : `Tienes ${locations.length} ${locations.length === 1 ? 'local registrado' : 'locales registrados'} en este negocio.`}
                 </p>
               </div>

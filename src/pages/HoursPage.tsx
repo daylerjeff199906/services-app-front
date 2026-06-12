@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuthStore } from "@/store/auth.store"
 import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
+import { toast } from "sonner"
+import { AlertTriangle, Trash2, Plus } from "lucide-react"
 
 const DAYS_OF_WEEK = [
   { value: 1, label: "Lunes" },
@@ -23,20 +25,55 @@ const timeOptions = Array.from({ length: 48 }).map((_, i) => {
   return `${formattedHour}:${minute}`
 })
 
-interface DaySchedule {
-  day_of_week: number
+interface TimeInterval {
   open_time: string
   close_time: string
+}
+
+interface DaySchedule {
+  day_of_week: number
   is_closed: boolean
+  intervals: TimeInterval[]
+}
+
+const calculateDayDuration = (intervals: TimeInterval[]) => {
+  let totalMins = 0
+  intervals.forEach((interval) => {
+    const [openH, openM] = interval.open_time.split(":").map(Number)
+    const [closeH, closeM] = interval.close_time.split(":").map(Number)
+    const openMinutes = openH * 60 + openM
+    const closeMinutes = closeH * 60 + closeM
+    if (closeMinutes > openMinutes) {
+      totalMins += (closeMinutes - openMinutes)
+    }
+  })
+  
+  if (totalMins === 0) return "0 hrs"
+  const hours = Math.floor(totalMins / 60)
+  const mins = totalMins % 60
+  
+  const shiftText = intervals.length === 1 ? "1 turno" : `${intervals.length} turnos`
+  if (mins === 0) {
+    return `${hours} hrs (${shiftText})`
+  }
+  return `${hours}h ${mins}m (${shiftText})`
 }
 
 export function HoursPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const returnTo = searchParams.get("return_to") || searchParams.get("retur_to")
   const { selectedService } = useAuthStore()
 
   const [schedule, setSchedule] = useState<Record<number, DaySchedule>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Configuration flow indicators and dialog triggers
+  const [isFirstTime, setIsFirstTime] = useState(true)
+  const [hasChanges, setHasChanges] = useState(false)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
 
   const fetchHours = async () => {
     if (!selectedService) return
@@ -54,30 +91,57 @@ export function HoursPage() {
       DAYS_OF_WEEK.forEach((d) => {
         defaultSchedule[d.value] = {
           day_of_week: d.value,
-          open_time: "09:00",
-          close_time: "18:00",
           is_closed: d.value === 0, // closed on Sundays by default
+          intervals: [
+            {
+              open_time: "09:00",
+              close_time: "18:00",
+            }
+          ]
         }
       })
 
       // Merge with fetched data
       if (data && data.length > 0) {
+        setIsFirstTime(false)
+        
+        // Group fetched rows by day_of_week
+        const grouped: Record<number, any[]> = {}
         data.forEach((row: any) => {
-          // Format times from HH:MM:SS to HH:MM
-          const open = row.open_time ? row.open_time.substring(0, 5) : "09:00"
-          const close = row.close_time ? row.close_time.substring(0, 5) : "18:00"
-          defaultSchedule[row.day_of_week] = {
-            day_of_week: row.day_of_week,
-            open_time: open,
-            close_time: close,
-            is_closed: row.is_closed,
+          if (!grouped[row.day_of_week]) {
+            grouped[row.day_of_week] = []
+          }
+          grouped[row.day_of_week].push(row)
+        })
+
+        // Populate defaultSchedule with grouped rows
+        Object.keys(grouped).forEach((dayKey) => {
+          const dayVal = Number(dayKey)
+          const rows = grouped[dayVal]
+          
+          const isClosed = rows.some((row) => row.is_closed)
+          const intervals = rows
+            .filter((row) => !row.is_closed)
+            .map((row) => {
+              const open = row.open_time ? row.open_time.substring(0, 5) : "09:00"
+              const close = row.close_time ? row.close_time.substring(0, 5) : "18:00"
+              return { open_time: open, close_time: close }
+            })
+
+          defaultSchedule[dayVal] = {
+            day_of_week: dayVal,
+            is_closed: isClosed,
+            intervals: intervals.length > 0 ? intervals : [{ open_time: "09:00", close_time: "18:00" }],
           }
         })
+      } else {
+        setIsFirstTime(true)
       }
 
       setSchedule(defaultSchedule)
     } catch (err) {
       console.error("Error loading business hours:", err)
+      toast.error("Error al cargar los horarios de atención.")
     } finally {
       setIsLoading(false)
     }
@@ -99,41 +163,151 @@ export function HoursPage() {
         is_closed: !prev[dayVal].is_closed,
       },
     }))
+    setHasChanges(true)
   }
 
-  const handleTimeChange = (dayVal: number, field: "open_time" | "close_time", value: string) => {
-    setSchedule((prev) => ({
-      ...prev,
-      [dayVal]: {
-        ...prev[dayVal],
-        [field]: value,
-      },
-    }))
+  const handleTimeChange = (dayVal: number, index: number, field: "open_time" | "close_time", value: string) => {
+    setSchedule((prev) => {
+      const daySched = prev[dayVal]
+      const updatedIntervals = daySched.intervals.map((interval, i) =>
+        i === index ? { ...interval, [field]: value } : interval
+      )
+      return {
+        ...prev,
+        [dayVal]: {
+          ...daySched,
+          intervals: updatedIntervals,
+        },
+      }
+    })
+    setHasChanges(true)
   }
 
-  const handleSave = async () => {
+  const handleAddInterval = (dayVal: number) => {
+    setSchedule((prev) => {
+      const daySched = prev[dayVal]
+      const lastInterval = daySched.intervals[daySched.intervals.length - 1]
+      let newOpen = "14:00"
+      let newClose = "18:00"
+      
+      if (lastInterval) {
+        const [lastH] = lastInterval.close_time.split(":").map(Number)
+        const nextH = Math.min(lastH + 1, 23)
+        const formattedH = nextH.toString().padStart(2, "0")
+        newOpen = `${formattedH}:00`
+        newClose = `${Math.min(nextH + 4, 23).toString().padStart(2, "0")}:00`
+      }
+
+      return {
+        ...prev,
+        [dayVal]: {
+          ...daySched,
+          intervals: [...daySched.intervals, { open_time: newOpen, close_time: newClose }],
+        },
+      }
+    })
+    setHasChanges(true)
+  }
+
+  const handleRemoveInterval = (dayVal: number, index: number) => {
+    setSchedule((prev) => {
+      const daySched = prev[dayVal]
+      const updatedIntervals = daySched.intervals.filter((_, i) => i !== index)
+      const shouldClose = updatedIntervals.length === 0
+      
+      return {
+        ...prev,
+        [dayVal]: {
+          ...daySched,
+          is_closed: shouldClose ? true : daySched.is_closed,
+          intervals: shouldClose ? [{ open_time: "09:00", close_time: "18:00" }] : updatedIntervals,
+        },
+      }
+    })
+    setHasChanges(true)
+  }
+
+  const handleCancel = () => {
+    if (hasChanges) {
+      setShowCancelDialog(true)
+    } else {
+      const target = returnTo || "/dashboard"
+      window.location.href = target
+    }
+  }
+
+  const handleSaveTrigger = () => {
+    setShowSaveDialog(true)
+  }
+
+  const executeSave = async () => {
     if (!selectedService) return
     setIsSaving(true)
+    setShowSaveDialog(false)
 
     try {
-      const rowsToSave = Object.values(schedule).map((row) => ({
-        business_id: selectedService.id,
-        day_of_week: row.day_of_week,
-        open_time: `${row.open_time}:00`,
-        close_time: `${row.close_time}:00`,
-        is_closed: row.is_closed,
-      }))
+      const rowsToSave: any[] = []
+      
+      Object.values(schedule).forEach((daySched) => {
+        if (daySched.is_closed) {
+          rowsToSave.push({
+            business_id: selectedService.id,
+            day_of_week: daySched.day_of_week,
+            open_time: "09:00:00",
+            close_time: "18:00:00",
+            is_closed: true,
+          })
+        } else {
+          daySched.intervals.forEach((interval) => {
+            rowsToSave.push({
+              business_id: selectedService.id,
+              day_of_week: daySched.day_of_week,
+              open_time: `${interval.open_time}:00`,
+              close_time: `${interval.close_time}:00`,
+              is_closed: false,
+            })
+          })
+        }
+      })
 
-      const { error } = await supabase
+      // 1. Delete existing active schedules for this business
+      const { error: deleteError } = await supabase
         .from("business_hours")
-        .upsert(rowsToSave, { onConflict: "business_id,day_of_week" })
+        .delete()
+        .eq("business_id", selectedService.id)
 
-      if (error) throw error
-      alert("Horarios guardados exitosamente.")
-      navigate("/dashboard")
-    } catch (err) {
+      if (deleteError) throw deleteError
+
+      // 2. Insert new split schedules
+      const { error: insertError } = await supabase
+        .from("business_hours")
+        .insert(rowsToSave)
+
+      if (insertError) {
+        if (insertError.code === "23505") {
+          throw new Error("constraint_violation")
+        }
+        throw insertError
+      }
+
+      if (isFirstTime) {
+        toast.success("Horarios configurados por primera vez con éxito.")
+      } else {
+        toast.success("Horarios actualizados con éxito.")
+      }
+
+      setHasChanges(false)
+      setTimeout(() => {
+        const target = returnTo || "/dashboard"
+        window.location.href = target
+      }, 1200)
+    } catch (err: any) {
       console.error("Error saving business hours:", err)
-      alert("Error al guardar los horarios. ¿Ejecutaste el script SQL en Supabase?")
+      if (err.message === "constraint_violation") {
+        toast.error("Error: Ejecuta la consulta SQL en Supabase para habilitar múltiples turnos.")
+      } else {
+        toast.error("Error al guardar los horarios. ¿Ejecutaste el script SQL en Supabase?")
+      }
     } finally {
       setIsSaving(false)
     }
@@ -152,7 +326,7 @@ export function HoursPage() {
   return (
     <div className="px-8 w-full mx-auto space-y-8 text-foreground">
       <PageHeader
-        onBackClick={() => navigate("/dashboard")}
+        onBackClick={handleCancel}
         showBackButton
         title="Horarios de Atención"
         description="Establece los días de la semana y horarios en los que tu negocio está operativo."
@@ -170,17 +344,24 @@ export function HoursPage() {
               return (
                 <div 
                   key={day.value}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-xl gap-4 transition-colors ${
+                  className={`flex flex-col md:flex-row md:items-start justify-between p-4 border rounded-xl gap-4 transition-colors ${
                     daySched.is_closed ? "bg-muted/10 border-border opacity-70" : "bg-muted/5 border-border"
                   }`}
                 >
-                  <div className="flex items-center justify-between sm:justify-start gap-8 min-w-[120px]">
+                  {/* Day Info (Label & duration) */}
+                  <div className="flex flex-col min-w-[150px]">
                     <span className="font-bold text-sm">{day.label}</span>
+                    {!daySched.is_closed && (
+                      <span className="text-[11px] text-muted-foreground font-medium mt-0.5 animate-fade-in">
+                        {calculateDayDuration(daySched.intervals)} de jornada
+                      </span>
+                    )}
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-6 justify-between sm:justify-end flex-1">
+                  {/* Switch and Shifts List */}
+                  <div className="flex flex-col sm:flex-row sm:items-start md:justify-end gap-6 flex-1 w-full">
                     {/* Toggle closed switch */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 pt-2 sm:pt-1.5">
                       <button
                         type="button"
                         onClick={() => handleToggleClosed(day.value)}
@@ -199,28 +380,54 @@ export function HoursPage() {
                       </span>
                     </div>
 
-                    {/* Time Selects (Disabled if closed) */}
+                    {/* Shifts/Intervals listing */}
                     {!daySched.is_closed && (
-                      <div className="flex items-center gap-2 animate-fade-in">
-                        <select
-                          value={daySched.open_time}
-                          onChange={(e) => handleTimeChange(day.value, "open_time", e.target.value)}
-                          className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
-                        >
-                          {timeOptions.map((opt) => (
-                            <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
+                      <div className="flex-1 space-y-3 w-full">
+                        <div className="space-y-2">
+                          {daySched.intervals.map((interval, idx) => (
+                            <div key={idx} className="flex items-center gap-2 animate-fade-in flex-wrap sm:flex-nowrap">
+                              <select
+                                value={interval.open_time}
+                                onChange={(e) => handleTimeChange(day.value, idx, "open_time", e.target.value)}
+                                className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
+                              >
+                                {timeOptions.map((opt) => (
+                                  <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
+                                ))}
+                              </select>
+                              <span className="text-xs text-muted-foreground font-medium">a</span>
+                              <select
+                                value={interval.close_time}
+                                onChange={(e) => handleTimeChange(day.value, idx, "close_time", e.target.value)}
+                                className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
+                              >
+                                {timeOptions.map((opt) => (
+                                  <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
+                                ))}
+                              </select>
+                              
+                              {/* Remove shift button */}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveInterval(day.value, idx)}
+                                className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-1.5 cursor-pointer rounded hover:bg-destructive/5"
+                                title="Eliminar turno"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            </div>
                           ))}
-                        </select>
-                        <span className="text-xs text-muted-foreground font-medium">a</span>
-                        <select
-                          value={daySched.close_time}
-                          onChange={(e) => handleTimeChange(day.value, "close_time", e.target.value)}
-                          className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
+                        </div>
+
+                        {/* Add shift action */}
+                        <button
+                          type="button"
+                          onClick={() => handleAddInterval(day.value)}
+                          className="flex items-center gap-1 text-[11px] text-[#10b981] hover:underline font-bold bg-transparent border-0 outline-none cursor-pointer pt-1"
                         >
-                          {timeOptions.map((opt) => (
-                            <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
-                          ))}
-                        </select>
+                          <Plus className="size-3" />
+                          Agregar turno / rango
+                        </button>
                       </div>
                     )}
                   </div>
@@ -232,11 +439,11 @@ export function HoursPage() {
 
         {/* Footer save row */}
         <div className="bg-muted/10 px-6 py-4 flex justify-between items-center border-t border-border">
-          <Button variant="outline" onClick={() => navigate("/dashboard")}>
+          <Button variant="outline" onClick={handleCancel}>
             Cancelar
           </Button>
           <Button
-            onClick={handleSave}
+            onClick={handleSaveTrigger}
             disabled={isSaving}
             className="bg-[#10b981] hover:bg-[#059669] text-white font-medium"
           >
@@ -244,6 +451,83 @@ export function HoursPage() {
           </Button>
         </div>
       </div>
+
+      {/* Cancel Confirmation Dialog Overlay */}
+      {showCancelDialog && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-card border border-border rounded-xl max-w-md w-full p-6 space-y-6 shadow-2xl relative animate-scale-in">
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium text-foreground tracking-tight flex items-center gap-2">
+                <AlertTriangle className="size-5 text-amber-500 shrink-0 animate-bounce" />
+                ¿Descartar cambios realizados?
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                Tienes modificaciones pendientes en tu horario de atención. Si sales ahora, se perderán de forma permanente.
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCancelDialog(false)}
+              >
+                Seguir editando
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  setShowCancelDialog(false)
+                  const target = returnTo || "/dashboard"
+                  window.location.href = target
+                }}
+                className="font-semibold"
+              >
+                Descartar y salir
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Confirmation Dialog Overlay */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-card border border-border rounded-xl max-w-md w-full p-6 space-y-6 shadow-2xl relative animate-scale-in">
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium text-foreground tracking-tight flex items-center gap-2">
+                <AlertTriangle className="size-5 text-[#10b981] shrink-0" />
+                ¿Guardar horarios de atención?
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                {isFirstTime 
+                  ? "Configurarás los horarios de disponibilidad del negocio por primera vez en la plataforma." 
+                  : "Se actualizará la disponibilidad del negocio con los nuevos horarios seleccionados."}
+              </p>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowSaveDialog(false)}
+                disabled={isSaving}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={executeSave}
+                disabled={isSaving}
+                className="bg-[#10b981] hover:bg-[#059669] text-white font-semibold"
+              >
+                {isSaving ? "Guardando..." : "Confirmar y Guardar"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

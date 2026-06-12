@@ -182,20 +182,12 @@ export function DashboardPage() {
       id: 4,
       title: "Agregar miembros del equipo",
       description: "Invita o registra a los colaboradores y profesionales.",
-      isCompleted: onboardingStatus.teamMembersCount > 0,
+      isCompleted: true, // Completado por defecto (dueño)
       path: "/dashboard/settings/business/team",
       actionLabel: "Gestionar equipo",
     },
     {
       id: 5,
-      title: "Configurar horarios del personal",
-      description: "Asigna los horarios de disponibilidad a tus colaboradores.",
-      isCompleted: onboardingStatus.staffHoursCount > 0,
-      path: "/dashboard/settings/business/team",
-      actionLabel: "Asignar turnos",
-    },
-    {
-      id: 6,
       title: "Publicar negocio",
       description: "Activa la publicación de tu negocio en la plataforma para recibir reservas reales.",
       isCompleted: onboardingStatus.isActive,
@@ -207,13 +199,11 @@ export function DashboardPage() {
   const completedCount = steps.filter(s => s.isCompleted).length
   const progressPercent = Math.round((completedCount / steps.length) * 100)
 
-  // Minimum functional config check (Steps 1 to 5)
+  // Minimum functional config check (Steps 1 to 3 are the only incomplete requirements)
   const isMinimumFunctionalComplete = 
     (onboardingStatus.isIndependent || onboardingStatus.locationsCount > 0) && // Step 1
     (onboardingStatus.businessHoursCount > 0) && // Step 2
-    (onboardingStatus.servicesCount > 0) && // Step 3
-    (onboardingStatus.teamMembersCount > 0) && // Step 4
-    (onboardingStatus.staffHoursCount > 0) // Step 5
+    (onboardingStatus.servicesCount > 0) // Step 3
 
   // Metrics
   const metrics = [

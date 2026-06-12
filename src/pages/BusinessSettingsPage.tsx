@@ -30,6 +30,10 @@ export function BusinessSettingsPage() {
   const [members, setMembers] = useState<Member[]>([])
   const [copiedId, setCopiedId] = useState(false)
 
+  // Contact numbers state
+  const [contactNumbers, setContactNumbers] = useState<string[]>([])
+  const [newPhone, setNewPhone] = useState("")
+
   // Locations state
   const [locations, setLocations] = useState<any[]>([])
   const [newLocName, setNewLocName] = useState("")
@@ -53,20 +57,38 @@ export function BusinessSettingsPage() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        // Fetch current business details
-        const { data: bizData, error: bizError } = await supabase
-          .from("businesses")
-          .select("id, name, description, is_active, is_independent")
-          .eq("id", selectedService.id)
-          .single()
+        // Fetch current business details with contact_numbers query fallback
+        let bizData: any = null
+        try {
+          const { data, error } = await supabase
+            .from("businesses")
+            .select("id, name, description, is_active, is_independent, contact_numbers")
+            .eq("id", selectedService.id)
+            .single()
 
-        if (bizError) throw bizError
+          if (error) {
+            // Fallback if contact_numbers column doesn't exist yet
+            const { data: fallbackData, error: fallbackError } = await supabase
+              .from("businesses")
+              .select("id, name, description, is_active, is_independent")
+              .eq("id", selectedService.id)
+              .single()
+
+            if (fallbackError) throw fallbackError
+            bizData = fallbackData
+          } else {
+            bizData = data
+          }
+        } catch (bizSelectErr) {
+          console.error("Failed to select business details with contact_numbers, fallback used:", bizSelectErr)
+        }
 
         if (bizData) {
           setName(bizData.name)
           setDescription(bizData.description || "")
           setIsActive(bizData.is_active ?? true)
           setIsIndependent(bizData.is_independent ?? false)
+          setContactNumbers(bizData.contact_numbers || [])
         }
 
         // Fetch team members
@@ -129,6 +151,22 @@ export function BusinessSettingsPage() {
     loadData()
   }, [selectedService, navigate])
 
+  const handleAddPhone = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const trimmed = newPhone.trim()
+    if (!trimmed) return
+    if (contactNumbers.includes(trimmed)) {
+      alert("Este número ya está agregado.")
+      return
+    }
+    setContactNumbers([...contactNumbers, trimmed])
+    setNewPhone("")
+  }
+
+  const handleRemovePhone = (indexToRemove: number) => {
+    setContactNumbers(contactNumbers.filter((_, i) => i !== indexToRemove))
+  }
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     setCopiedId(true)
@@ -189,6 +227,7 @@ export function BusinessSettingsPage() {
 
     setIsSubmitting(true)
     try {
+      // Try updating with contact_numbers first
       const { error } = await supabase
         .from("businesses")
         .update({
@@ -196,10 +235,33 @@ export function BusinessSettingsPage() {
           description,
           is_active: isActive,
           is_independent: isIndependent,
+          contact_numbers: contactNumbers,
         })
         .eq("id", selectedService.id)
 
-      if (error) throw error
+      if (error) {
+        // Fallback if the contact_numbers column doesn't exist yet
+        const isMissingColumn = error.code === "42703" || error.message?.includes("contact_numbers")
+        if (isMissingColumn) {
+          console.warn("contact_numbers column not found, falling back to update without it...")
+          const { error: fallbackError } = await supabase
+            .from("businesses")
+            .update({
+              name,
+              description,
+              is_active: isActive,
+              is_independent: isIndependent,
+            })
+            .eq("id", selectedService.id)
+
+          if (fallbackError) throw fallbackError
+          alert("Cambios guardados con éxito (excepto los números de contacto, asegúrate de aplicar la consulta SQL en Supabase).")
+        } else {
+          throw error
+        }
+      } else {
+        alert("Cambios guardados con éxito.")
+      }
 
       // Update in local store state too
       const updatedServices = services.map((s) =>
@@ -209,8 +271,6 @@ export function BusinessSettingsPage() {
       )
       setServices(updatedServices)
       selectService({ ...selectedService, name, description, isActive, isIndependent })
-
-      alert("Cambios guardados con éxito.")
     } catch (err) {
       console.error("Error saving business details:", err)
       alert("Error al guardar los cambios.")
@@ -333,6 +393,68 @@ export function BusinessSettingsPage() {
                 className="w-full px-3 py-2 text-sm bg-background border border-input rounded-md outline-none focus:ring-2 focus:ring-ring/50"
                 disabled={isSubmitting}
               />
+            </div>
+          </div>
+
+          {/* Números de contacto */}
+          <div className="flex flex-col md:flex-row md:items-start justify-between p-6 gap-4 border-b border-border">
+            <div className="md:w-1/3">
+              <label className="text-sm font-medium">Números de contacto</label>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">Agrega uno o varios números telefónicos para que tus clientes puedan contactarte.</p>
+            </div>
+            <div className="md:w-2/3 max-w-md w-full space-y-3">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="tel"
+                  value={newPhone}
+                  onChange={(e) => setNewPhone(e.target.value)}
+                  placeholder="Ej. +51 987 654 321"
+                  disabled={isSubmitting}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const trimmed = newPhone.trim();
+                      if (trimmed) {
+                        if (contactNumbers.includes(trimmed)) {
+                          alert("Este número ya está agregado.");
+                          return;
+                        }
+                        setContactNumbers([...contactNumbers, trimmed]);
+                        setNewPhone("");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={handleAddPhone}
+                  disabled={isSubmitting || !newPhone.trim()}
+                  className="bg-[#10b981] hover:bg-[#059669] text-white shrink-0"
+                >
+                  Agregar
+                </Button>
+              </div>
+              
+              {contactNumbers.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {contactNumbers.map((phone, idx) => (
+                    <div
+                      key={`${phone}-${idx}`}
+                      className="flex items-center gap-1.5 px-3 py-1 bg-muted border border-border rounded-full text-xs font-medium animate-fade-in"
+                    >
+                      <span>{phone}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePhone(idx)}
+                        disabled={isSubmitting}
+                        className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-0 cursor-pointer"
+                      >
+                        <Trash2 className="size-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

@@ -47,9 +47,9 @@ export function BusinessTeamPage() {
       const formatted = (data || []).map((m: any) => {
         const isMe = m.user_id === user?.id
         const profileData = m.profiles || (isMe ? {
-          id: user.id,
-          full_name: user.full_name,
-          username: user.email?.split("@")[0] || "usuario",
+          id: user?.id || "",
+          full_name: user?.full_name || "",
+          username: user?.email?.split("@")[0] || "usuario",
         } : null)
 
         return {

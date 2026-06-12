@@ -1,7 +1,6 @@
 import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthStore } from "@/store/auth.store"
-import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ShieldCheck } from "lucide-react"
 
@@ -41,13 +40,13 @@ export function BusinessTeamInvitePage() {
       // If we insert directly to business_user_roles (for active demo):
       // We look up profiles matching username or mock-simulate successful invite.
       // Let's loop through entered emails and log or mock-insert if profile exists:
-      
+
       // Let's simulate invitation success message
       setTimeout(() => {
         setSuccess(`Invitaciones enviadas con éxito a: ${emailList.join(", ")}`)
         setEmails("")
         setIsSubmitting(false)
-        
+
         // Go back to team view after a short delay
         setTimeout(() => {
           navigate("/dashboard/settings/business/team")
@@ -108,17 +107,16 @@ export function BusinessTeamInvitePage() {
         {/* Role Selection Group */}
         <div className="space-y-3">
           <label className="text-sm font-medium block">Rol del Miembro</label>
-          
+
           <div className="space-y-3">
             {/* Propietario (OWNER) Option */}
-            <label 
-              className={`flex items-start gap-4 p-4 border rounded-xl cursor-pointer hover:bg-muted/5 transition-colors ${
-                selectedRole === "OWNER" ? "border-foreground bg-muted/5" : "border-border"
-              }`}
+            <label
+              className={`flex items-start gap-4 p-4 border rounded-xl cursor-pointer hover:bg-muted/5 transition-colors ${selectedRole === "OWNER" ? "border-foreground bg-muted/5" : "border-border"
+                }`}
             >
-              <input 
-                type="radio" 
-                name="invite-role" 
+              <input
+                type="radio"
+                name="invite-role"
                 value="OWNER"
                 checked={selectedRole === "OWNER"}
                 onChange={() => setSelectedRole("OWNER")}
@@ -133,14 +131,13 @@ export function BusinessTeamInvitePage() {
             </label>
 
             {/* Administrador (MANAGER) Option */}
-            <label 
-              className={`flex items-start gap-4 p-4 border rounded-xl cursor-pointer hover:bg-muted/5 transition-colors ${
-                selectedRole === "MANAGER" ? "border-foreground bg-muted/5" : "border-border"
-              }`}
+            <label
+              className={`flex items-start gap-4 p-4 border rounded-xl cursor-pointer hover:bg-muted/5 transition-colors ${selectedRole === "MANAGER" ? "border-foreground bg-muted/5" : "border-border"
+                }`}
             >
-              <input 
-                type="radio" 
-                name="invite-role" 
+              <input
+                type="radio"
+                name="invite-role"
                 value="MANAGER"
                 checked={selectedRole === "MANAGER"}
                 onChange={() => setSelectedRole("MANAGER")}
@@ -155,14 +152,13 @@ export function BusinessTeamInvitePage() {
             </label>
 
             {/* Colaborador (STAFF) Option */}
-            <label 
-              className={`flex items-start gap-4 p-4 border rounded-xl cursor-pointer hover:bg-muted/5 transition-colors ${
-                selectedRole === "STAFF" ? "border-foreground bg-muted/5" : "border-border"
-              }`}
+            <label
+              className={`flex items-start gap-4 p-4 border rounded-xl cursor-pointer hover:bg-muted/5 transition-colors ${selectedRole === "STAFF" ? "border-foreground bg-muted/5" : "border-border"
+                }`}
             >
-              <input 
-                type="radio" 
-                name="invite-role" 
+              <input
+                type="radio"
+                name="invite-role"
                 value="STAFF"
                 checked={selectedRole === "STAFF"}
                 onChange={() => setSelectedRole("STAFF")}

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuthStore } from "@/store/auth.store"
 import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Copy, Check, ShieldAlert, Trash2 } from "lucide-react"
 import { FormFooter } from "@/components/ui/form-footer"
+import { toast } from "sonner"
 
 interface Member {
   role: string
@@ -19,12 +20,13 @@ interface Member {
 
 export function BusinessSettingsPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { selectedService, selectService, services, setServices, user } = useAuthStore()
 
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [isActive, setIsActive] = useState(true)
-  const [isIndependent, setIsIndependent] = useState(false)
+  const [isIndependent, setIsIndependent] = useState<boolean | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -32,8 +34,13 @@ export function BusinessSettingsPage() {
   const [copiedId, setCopiedId] = useState(false)
 
   // Contact numbers state
-  const [contactNumbers, setContactNumbers] = useState<string[]>([])
+  const [contactNumbers, setContactNumbers] = useState<{ number: string; label: string }[]>([])
   const [newPhone, setNewPhone] = useState("")
+  const [newPhoneLabel, setNewPhoneLabel] = useState("WhatsApp")
+
+  // Social media links state
+  const [socialLinks, setSocialLinks] = useState<string[]>([])
+  const [newLink, setNewLink] = useState("")
 
   // Locations state
   const [locations, setLocations] = useState<any[]>([])
@@ -53,38 +60,59 @@ export function BusinessSettingsPage() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        // Fetch current business details with contact_numbers query fallback
+        // Fetch current business details with fallback
         let bizData: any = null
         try {
           const { data, error } = await supabase
             .from("businesses")
-            .select("id, name, description, is_active, is_independent, contact_numbers")
+            .select("id, name, description, is_active, is_independent, contact_numbers, social_links")
             .eq("id", selectedService.id)
             .single()
 
           if (error) {
-            // Fallback if contact_numbers column doesn't exist yet
+            // Fallback if social_links doesn't exist
             const { data: fallbackData, error: fallbackError } = await supabase
               .from("businesses")
-              .select("id, name, description, is_active, is_independent")
+              .select("id, name, description, is_active, is_independent, contact_numbers")
               .eq("id", selectedService.id)
               .single()
 
-            if (fallbackError) throw fallbackError
-            bizData = fallbackData
+            if (fallbackError) {
+              // Fallback if contact_numbers column doesn't exist yet either
+              const { data: minData, error: minError } = await supabase
+                .from("businesses")
+                .select("id, name, description, is_active, is_independent")
+                .eq("id", selectedService.id)
+                .single()
+
+              if (minError) throw minError
+              bizData = minData
+            } else {
+              bizData = fallbackData
+            }
           } else {
             bizData = data
           }
         } catch (bizSelectErr) {
-          console.error("Failed to select business details with contact_numbers, fallback used:", bizSelectErr)
+          console.error("Failed to select business details, fallback used:", bizSelectErr)
         }
 
         if (bizData) {
           setName(bizData.name)
           setDescription(bizData.description || "")
           setIsActive(bizData.is_active ?? true)
-          setIsIndependent(bizData.is_independent ?? false)
-          setContactNumbers(bizData.contact_numbers || [])
+          setIsIndependent(bizData.is_independent ?? null)
+          
+          // Deserialize contact numbers
+          const parsedContacts = (bizData.contact_numbers || []).map((item: string) => {
+            if (item.includes("|")) {
+              const [label, number] = item.split("|")
+              return { label, number }
+            }
+            return { label: "WhatsApp", number: item }
+          })
+          setContactNumbers(parsedContacts)
+          setSocialLinks(bizData.social_links || [])
         }
 
         // Fetch team members
@@ -151,16 +179,36 @@ export function BusinessSettingsPage() {
     e.preventDefault()
     const trimmed = newPhone.trim()
     if (!trimmed) return
-    if (contactNumbers.includes(trimmed)) {
-      alert("Este número ya está agregado.")
+    if (contactNumbers.some((c) => c.number === trimmed)) {
+      toast.error("Este número de teléfono ya está agregado.")
       return
     }
-    setContactNumbers([...contactNumbers, trimmed])
+    setContactNumbers([...contactNumbers, { number: trimmed, label: newPhoneLabel }])
     setNewPhone("")
   }
 
   const handleRemovePhone = (indexToRemove: number) => {
     setContactNumbers(contactNumbers.filter((_, i) => i !== indexToRemove))
+  }
+
+  const handleAddLink = (e: React.MouseEvent) => {
+    e.preventDefault()
+    const trimmed = newLink.trim()
+    if (!trimmed) return
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+      toast.error("El enlace debe comenzar con http:// o https://")
+      return
+    }
+    if (socialLinks.includes(trimmed)) {
+      toast.error("Este enlace de red social ya está agregado.")
+      return
+    }
+    setSocialLinks([...socialLinks, trimmed])
+    setNewLink("")
+  }
+
+  const handleRemoveLink = (indexToRemove: number) => {
+    setSocialLinks(socialLinks.filter((_, i) => i !== indexToRemove))
   }
 
   const copyToClipboard = (text: string) => {
@@ -169,15 +217,15 @@ export function BusinessSettingsPage() {
     setTimeout(() => setCopiedId(false), 2000)
   }
 
-
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedService) return
 
     setIsSubmitting(true)
     try {
-      // Try updating with contact_numbers first
+      const serializedContacts = contactNumbers.map((c) => `${c.label}|${c.number}`)
+
+      // Try updating with everything
       const { error } = await supabase
         .from("businesses")
         .update({
@@ -185,16 +233,29 @@ export function BusinessSettingsPage() {
           description,
           is_active: isActive,
           is_independent: isIndependent,
-          contact_numbers: contactNumbers,
+          contact_numbers: serializedContacts,
+          social_links: socialLinks,
         })
         .eq("id", selectedService.id)
 
       if (error) {
-        // Fallback if the contact_numbers column doesn't exist yet
-        const isMissingColumn = error.code === "42703" || error.message?.includes("contact_numbers")
-        if (isMissingColumn) {
-          console.warn("contact_numbers column not found, falling back to update without it...")
-          const { error: fallbackError } = await supabase
+        // Fallback 1: Try without social_links
+        console.warn("Update with social_links failed, trying fallback without it...", error)
+        const { error: errorFallback1 } = await supabase
+          .from("businesses")
+          .update({
+            name,
+            description,
+            is_active: isActive,
+            is_independent: isIndependent,
+            contact_numbers: serializedContacts,
+          })
+          .eq("id", selectedService.id)
+
+        if (errorFallback1) {
+          // Fallback 2: Try without contact_numbers either
+          console.warn("Update with contact_numbers failed, trying bare minimum...", errorFallback1)
+          const { error: errorFallback2 } = await supabase
             .from("businesses")
             .update({
               name,
@@ -204,13 +265,13 @@ export function BusinessSettingsPage() {
             })
             .eq("id", selectedService.id)
 
-          if (fallbackError) throw fallbackError
-          alert("Cambios guardados con éxito (excepto los números de contacto, asegúrate de aplicar la consulta SQL en Supabase).")
+          if (errorFallback2) throw errorFallback2
+          toast.warning("Cambios guardados (excepto números y redes, aplica la consulta SQL en Supabase).")
         } else {
-          throw error
+          toast.warning("Cambios guardados (excepto redes sociales, aplica la consulta SQL en Supabase).")
         }
       } else {
-        alert("Cambios guardados con éxito.")
+        toast.success("Ajustes del negocio guardados con éxito.")
       }
 
       // Update in local store state too
@@ -221,9 +282,14 @@ export function BusinessSettingsPage() {
       )
       setServices(updatedServices)
       selectService({ ...selectedService, name, description, isActive, isIndependent })
+
+      const returnTo = searchParams.get("return_to")
+      if (returnTo) {
+        navigate(returnTo)
+      }
     } catch (err) {
       console.error("Error saving business details:", err)
-      alert("Error al guardar los cambios.")
+      toast.error("Error al guardar los cambios.")
     } finally {
       setIsSubmitting(false)
     }
@@ -354,22 +420,35 @@ export function BusinessSettingsPage() {
             </div>
             <div className="md:w-2/3 max-w-md w-full space-y-3">
               <div className="flex items-center gap-2">
+                <select
+                  value={newPhoneLabel}
+                  onChange={(e) => setNewPhoneLabel(e.target.value)}
+                  className="h-9 rounded-md border border-input bg-transparent px-2 py-1 text-xs outline-none text-foreground shrink-0 w-24"
+                  disabled={isSubmitting}
+                >
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Llamadas">Llamadas</option>
+                  <option value="Principal">Principal</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Otro">Otro</option>
+                </select>
                 <Input
                   type="tel"
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
                   placeholder="Ej. +51 987 654 321"
                   disabled={isSubmitting}
+                  className="flex-1"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
                       const trimmed = newPhone.trim();
                       if (trimmed) {
-                        if (contactNumbers.includes(trimmed)) {
+                        if (contactNumbers.some(c => c.number === trimmed)) {
                           alert("Este número ya está agregado.");
                           return;
                         }
-                        setContactNumbers([...contactNumbers, trimmed]);
+                        setContactNumbers([...contactNumbers, { number: trimmed, label: newPhoneLabel }]);
                         setNewPhone("");
                       }
                     }
@@ -387,17 +466,20 @@ export function BusinessSettingsPage() {
 
               {contactNumbers.length > 0 && (
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {contactNumbers.map((phone, idx) => (
+                  {contactNumbers.map((c, idx) => (
                     <div
-                      key={`${phone}-${idx}`}
-                      className="flex items-center gap-1.5 px-3 py-1 bg-muted border border-border rounded-full text-xs font-medium animate-fade-in"
+                      key={`${c.number}-${idx}`}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-muted border border-border rounded-full text-xs font-medium animate-fade-in"
                     >
-                      <span>{phone}</span>
+                      <span className="text-[10px] uppercase font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 px-1.5 py-0.5 rounded">
+                        {c.label}
+                      </span>
+                      <span className="font-mono text-muted-foreground">{c.number}</span>
                       <button
                         type="button"
                         onClick={() => handleRemovePhone(idx)}
                         disabled={isSubmitting}
-                        className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-0 cursor-pointer"
+                        className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-0 cursor-pointer ml-1"
                       >
                         <Trash2 className="size-3" />
                       </button>
@@ -409,27 +491,39 @@ export function BusinessSettingsPage() {
           </div>
 
           {/* Tipo de Negocio / Independiente */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
+          <div className="flex flex-col md:flex-row md:items-start justify-between p-6 gap-4 border-b border-border">
             <div className="md:w-1/3">
               <label className="text-sm font-medium">Tipo de establecimiento</label>
               <p className="text-xs text-muted-foreground mt-0.5 font-medium">¿Es un local físico o un servicio a domicilio / independiente?</p>
             </div>
-            <div className="md:w-2/3 max-w-md w-full flex items-center justify-start gap-3">
-              <button
-                type="button"
-                onClick={() => setIsIndependent(!isIndependent)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isIndependent ? "bg-[#10b981]" : "bg-muted"
-                  }`}
-                disabled={isSubmitting}
+            <div className="md:w-2/3 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div
+                onClick={() => !isSubmitting && setIsIndependent(false)}
+                className={`p-4 border rounded-xl cursor-pointer transition-all duration-200 flex flex-col gap-1.5 select-none ${
+                  isIndependent === false
+                    ? "bg-[#10b981]/5 border-[#10b981] ring-1 ring-[#10b981]"
+                    : "bg-card border-border hover:border-border/80 hover:bg-muted/5"
+                }`}
               >
-                <span
-                  className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isIndependent ? "translate-x-4" : "translate-x-0"
-                    }`}
-                />
-              </button>
-              <span className="text-sm font-medium text-muted-foreground">
-                {isIndependent ? "Negocio Independiente / A domicilio (Sin local físico)" : "Establecimiento con Locales/Sucursales"}
-              </span>
+                <span className="font-semibold text-sm text-foreground">Local físico / Sucursal</span>
+                <span className="text-xs text-muted-foreground leading-normal">
+                  Tengo un local, consultorio, oficina o tienda física donde atiendo a mis clientes.
+                </span>
+              </div>
+
+              <div
+                onClick={() => !isSubmitting && setIsIndependent(true)}
+                className={`p-4 border rounded-xl cursor-pointer transition-all duration-200 flex flex-col gap-1.5 select-none ${
+                  isIndependent === true
+                    ? "bg-[#10b981]/5 border-[#10b981] ring-1 ring-[#10b981]"
+                    : "bg-card border-border hover:border-border/80 hover:bg-muted/5"
+                }`}
+              >
+                <span className="font-semibold text-sm text-foreground">Servicio a domicilio / Independiente</span>
+                <span className="text-xs text-muted-foreground leading-normal">
+                  Atiendo a domicilio, de forma virtual o no requiero un local físico para mis citas.
+                </span>
+              </div>
             </div>
           </div>
 
@@ -452,6 +546,72 @@ export function BusinessSettingsPage() {
             </div>
           </div>
 
+          {/* Redes Sociales */}
+          <div className="flex flex-col md:flex-row md:items-start justify-between p-6 gap-4 border-b border-border">
+            <div className="md:w-1/3">
+              <label className="text-sm font-medium">Redes sociales y enlaces</label>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">Agrega enlaces a tus perfiles de redes sociales o sitio web externo.</p>
+            </div>
+            <div className="md:w-2/3 max-w-md w-full space-y-3">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="url"
+                  value={newLink}
+                  onChange={(e) => setNewLink(e.target.value)}
+                  placeholder="Ej. https://instagram.com/mi_negocio"
+                  disabled={isSubmitting}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const trimmed = newLink.trim();
+                      if (trimmed) {
+                        if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+                          alert("El enlace debe comenzar con http:// o https://");
+                          return;
+                        }
+                        if (socialLinks.includes(trimmed)) {
+                          alert("Este enlace ya está agregado.");
+                          return;
+                        }
+                        setSocialLinks([...socialLinks, trimmed]);
+                        setNewLink("");
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={handleAddLink}
+                  disabled={isSubmitting || !newLink.trim()}
+                  className="bg-[#10b981] hover:bg-[#059669] text-white shrink-0"
+                >
+                  Agregar
+                </Button>
+              </div>
+
+              {socialLinks.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  {socialLinks.map((link, idx) => (
+                    <div
+                      key={`${link}-${idx}`}
+                      className="flex items-center justify-between px-3 py-2 bg-muted/50 border border-border rounded-lg text-xs font-medium animate-fade-in"
+                    >
+                      <span className="truncate max-w-[300px] text-muted-foreground">{link}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLink(idx)}
+                        disabled={isSubmitting}
+                        className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-0 cursor-pointer ml-2"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Submit panel */}
           <FormFooter>
             <Button
@@ -466,7 +626,7 @@ export function BusinessSettingsPage() {
       </div>
 
       {/* Locales y Sucursales (Only if business is NOT independent) */}
-      {!isIndependent && (
+      {isIndependent === false && (
         <div className="space-y-4">
           <h2 className="text-lg font-medium tracking-tight text-muted-foreground">Locales y Sucursales</h2>
 
@@ -503,9 +663,10 @@ export function BusinessSettingsPage() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {locations.slice(0, 3).map((loc) => {
-                      const firstContact = loc.contact_numbers && loc.contact_numbers.length > 0
+                      const rawContact = loc.contact_numbers && loc.contact_numbers.length > 0
                         ? loc.contact_numbers[0]
                         : loc.phone || "Sin contacto"
+                      const firstContact = rawContact.includes('|') ? rawContact.split('|')[1] : rawContact
                       return (
                         <tr key={loc.id} className="hover:bg-muted/5 transition-colors">
                           <td className="px-6 py-4">

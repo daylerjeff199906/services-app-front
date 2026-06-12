@@ -5,15 +5,15 @@ import { LayoutWrapper } from "@/components/layout-wrapper"
 import { PageHeader } from "@/components/page-header"
 import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
-import { 
-  Check, 
-  ChevronRight, 
-  Smartphone, 
-  Globe, 
-  Landmark, 
-  AlertTriangle, 
-  Clock, 
-  Plus, 
+import {
+  Check,
+  ChevronRight,
+  Smartphone,
+  Globe,
+  Landmark,
+  AlertTriangle,
+  Clock,
+  Plus,
   ArrowRight
 } from "lucide-react"
 
@@ -23,8 +23,12 @@ export function DashboardPage() {
 
   // Onboarding states
   const [onboardingStatus, setOnboardingStatus] = useState({
-    isIndependent: false,
+    isIndependent: null as boolean | null,
     isActive: false,
+    hasName: false,
+    hasDescription: false,
+    hasContacts: false,
+    hasSocials: false,
     locationsCount: 0,
     businessHoursCount: 0,
     servicesCount: 0,
@@ -42,14 +46,45 @@ export function DashboardPage() {
 
     try {
       // 1. Fetch business details
-      const { data: bizData } = await supabase
-        .from("businesses")
-        .select("is_independent, is_active")
-        .eq("id", selectedService.id)
-        .single()
+      let bizData: any = null
+      try {
+        const { data, error } = await supabase
+          .from("businesses")
+          .select("name, description, contact_numbers, social_links, is_independent, is_active")
+          .eq("id", selectedService.id)
+          .single()
+        
+        if (error) {
+          const { data: fbData, error: fbError } = await supabase
+            .from("businesses")
+            .select("name, description, contact_numbers, is_independent, is_active")
+            .eq("id", selectedService.id)
+            .single()
+          
+          if (fbError) {
+            const { data: minData, error: minError } = await supabase
+              .from("businesses")
+              .select("name, description, is_independent, is_active")
+              .eq("id", selectedService.id)
+              .single()
+            if (minError) throw minError
+            bizData = minData
+          } else {
+            bizData = fbData
+          }
+        } else {
+          bizData = data
+        }
+      } catch (bizErr) {
+        console.error("Error fetching business details:", bizErr)
+      }
 
-      const isIndependent = bizData?.is_independent ?? false
+      const isIndependent = bizData?.is_independent ?? null
       const isActive = bizData?.is_active ?? false
+      const hasName = !!bizData?.name?.trim()
+      const hasDescription = !!bizData?.description?.trim()
+      const hasContacts = bizData?.contact_numbers && bizData.contact_numbers.length > 0
+      const hasSocials = bizData?.social_links && bizData.social_links.length > 0
 
       // 2. Fetch locations count
       let locationsCount = 0
@@ -132,6 +167,10 @@ export function DashboardPage() {
       setOnboardingStatus({
         isIndependent,
         isActive,
+        hasName,
+        hasDescription,
+        hasContacts,
+        hasSocials,
         locationsCount,
         businessHoursCount,
         servicesCount,
@@ -154,16 +193,30 @@ export function DashboardPage() {
   const steps = [
     {
       id: 1,
-      title: "Dirección del negocio / Sucursales",
-      description: onboardingStatus.isIndependent 
-        ? "Configurado como negocio independiente/a domicilio (sin local físico)."
-        : "Registra los locales y sucursales donde atiendes.",
-      isCompleted: onboardingStatus.isIndependent || onboardingStatus.locationsCount > 0,
-      path: "/dashboard/agenda/locations",
-      actionLabel: "Configurar locales",
+      title: "Información básica del negocio",
+      description: "Configura el nombre, descripción, números de contacto y opcionalmente enlaces de redes sociales.",
+      isCompleted: onboardingStatus.hasName && onboardingStatus.hasDescription && onboardingStatus.hasContacts,
+      path: "/dashboard/settings/business?return_to=/dashboard",
+      actionLabel: "Completar perfil",
     },
     {
       id: 2,
+      title: "Dirección del negocio / Sucursales",
+      description: onboardingStatus.isIndependent === true
+        ? "Configurado como negocio independiente/a domicilio (sin local físico)."
+        : onboardingStatus.isIndependent === false
+        ? "Registra los locales y sucursales donde atiendes."
+        : "Configura si tu negocio tiene locales físicos o es a domicilio.",
+      isCompleted: onboardingStatus.isIndependent === true
+        ? true
+        : onboardingStatus.isIndependent === false
+        ? onboardingStatus.locationsCount > 0
+        : false,
+      path: onboardingStatus.isIndependent === null ? "/dashboard/settings/business?return_to=/dashboard" : "/dashboard/agenda/locations?return_to=/dashboard",
+      actionLabel: onboardingStatus.isIndependent === null ? "Configurar tipo de negocio" : "Configurar locales",
+    },
+    {
+      id: 3,
       title: "Establecer horarios del negocio",
       description: "Indica los días y horarios de disponibilidad operativa del negocio.",
       isCompleted: onboardingStatus.businessHoursCount > 0,
@@ -171,7 +224,7 @@ export function DashboardPage() {
       actionLabel: "Definir horarios",
     },
     {
-      id: 3,
+      id: 4,
       title: "Agregar primer servicio",
       description: "Crea al menos un servicio en tu catálogo de ofertas.",
       isCompleted: onboardingStatus.servicesCount > 0,
@@ -179,7 +232,7 @@ export function DashboardPage() {
       actionLabel: "Añadir servicio",
     },
     {
-      id: 4,
+      id: 5,
       title: "Agregar miembros del equipo",
       description: "Invita o registra a los colaboradores y profesionales.",
       isCompleted: true, // Completado por defecto (dueño)
@@ -187,7 +240,7 @@ export function DashboardPage() {
       actionLabel: "Gestionar equipo",
     },
     {
-      id: 5,
+      id: 6,
       title: "Publicar negocio",
       description: "Activa la publicación de tu negocio en la plataforma para recibir reservas reales.",
       isCompleted: onboardingStatus.isActive,
@@ -199,11 +252,12 @@ export function DashboardPage() {
   const completedCount = steps.filter(s => s.isCompleted).length
   const progressPercent = Math.round((completedCount / steps.length) * 100)
 
-  // Minimum functional config check (Steps 1 to 3 are the only incomplete requirements)
-  const isMinimumFunctionalComplete = 
-    (onboardingStatus.isIndependent || onboardingStatus.locationsCount > 0) && // Step 1
-    (onboardingStatus.businessHoursCount > 0) && // Step 2
-    (onboardingStatus.servicesCount > 0) // Step 3
+  // Minimum functional config check (Steps 1 to 4 are the only incomplete requirements)
+  const isMinimumFunctionalComplete =
+    (onboardingStatus.hasName && onboardingStatus.hasDescription && onboardingStatus.hasContacts) && // Step 1
+    (onboardingStatus.isIndependent === true || (onboardingStatus.isIndependent === false && onboardingStatus.locationsCount > 0)) && // Step 2
+    (onboardingStatus.businessHoursCount > 0) && // Step 3
+    (onboardingStatus.servicesCount > 0) // Step 4
 
   // Metrics
   const metrics = [
@@ -228,9 +282,9 @@ export function DashboardPage() {
   return (
     <LayoutWrapper sectionTitle="Inicio">
       <div className="space-y-8 text-foreground">
-        
+
         {isMinimumFunctionalComplete && (
-          <PageHeader 
+          <PageHeader
             title={`Bienvenido a la consola de ${selectedService?.name || ""}`}
             description="Aquí puedes configurar tu cartera de ofertas, interactuar con clientes y revisar métricas de negocio."
             actionButton={
@@ -254,7 +308,7 @@ export function DashboardPage() {
             <div className="space-y-1">
               <p className="font-bold">Tablas pendientes de migración SQL</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Aún no has ejecutado el script SQL en Supabase para crear las tablas de locales, horarios y citas. 
+                Aún no has ejecutado el script SQL en Supabase para crear las tablas de locales, horarios y citas.
                 El checklist mostrará el estado simulado en 0 hasta que configures el esquema de base de datos.
               </p>
             </div>
@@ -266,10 +320,10 @@ export function DashboardPage() {
           <div className="flex justify-center w-full py-4">
             <div className="w-full max-w-3xl border border-border rounded-2xl bg-card overflow-hidden shadow-md space-y-6 p-6 md:p-8">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-border">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-bold tracking-tight text-foreground">Guía de configuración básica</h2>
-                  <p className="text-sm text-muted-foreground">Completa los 5 pasos esenciales mínimos para desbloquear el dashboard.</p>
-                </div>
+                <PageHeader
+                  title="Configura tu negocio"
+                  description="Completa los pasos para configurar tu negocio y empezar a recibir reservas."
+                />
                 <div className="flex items-center gap-4 bg-muted/20 px-4 py-2.5 rounded-xl border border-border">
                   <div className="text-right">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Progreso</span>
@@ -286,8 +340,8 @@ export function DashboardPage() {
 
               {/* Progress line */}
               <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-                <div 
-                  className="bg-[#10b981] h-full rounded-full transition-all duration-500" 
+                <div
+                  className="bg-[#10b981] h-full rounded-full transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -295,21 +349,19 @@ export function DashboardPage() {
               {/* List items (1-7) */}
               <div className="space-y-3 pt-2">
                 {steps.map((step) => (
-                  <div 
-                    key={step.id} 
-                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-xl transition-all duration-200 gap-4 ${
-                      step.isCompleted 
-                        ? "bg-[#10b981]/5 border-[#10b981]/15 opacity-80" 
-                        : "bg-card border-border hover:border-border/80 hover:bg-muted/5 shadow-2xs"
-                    }`}
+                  <div
+                    key={step.id}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-xl transition-all duration-200 gap-4 ${step.isCompleted
+                      ? "bg-[#10b981]/5 border-[#10b981]/15 opacity-80"
+                      : "bg-card border-border hover:border-border/80 hover:bg-muted/5 shadow-2xs"
+                      }`}
                   >
                     <div className="flex items-start gap-4">
                       {/* Circle number or Check */}
-                      <div className={`size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none ${
-                        step.isCompleted 
-                          ? "bg-[#10b981] text-white" 
-                          : "bg-muted text-muted-foreground border border-border"
-                      }`}>
+                      <div className={`size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none ${step.isCompleted
+                        ? "bg-[#10b981] text-white"
+                        : "bg-muted text-muted-foreground border border-border"
+                        }`}>
                         {step.isCompleted ? <Check className="size-4" /> : step.id}
                       </div>
                       <div className="space-y-0.5">
@@ -319,11 +371,11 @@ export function DashboardPage() {
                         <p className="text-xs text-muted-foreground leading-normal max-w-xl">{step.description}</p>
                       </div>
                     </div>
-                    
+
                     {/* Action Link/Btn */}
                     {!step.isCompleted ? (
-                      <button 
-                        onClick={() => navigate(step.path || "/")} 
+                      <button
+                        onClick={() => navigate(step.path || "/")}
                         className="flex items-center gap-1 text-xs text-[#10b981] hover:underline font-bold shrink-0 self-end sm:self-center bg-transparent border-0 outline-none cursor-pointer"
                       >
                         {step.actionLabel}
@@ -396,7 +448,7 @@ export function DashboardPage() {
                 <h3 className="text-lg font-bold tracking-tight">Tus herramientas Gesti</h3>
                 <p className="text-xs text-muted-foreground">Potencia el alcance de tu marca utilizando nuestras herramientas y canales exclusivos.</p>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Card 1 */}
                 <div className="p-6 border border-border bg-card rounded-2xl flex flex-col justify-between gap-6 hover:shadow-md transition-shadow group">
@@ -427,7 +479,7 @@ export function DashboardPage() {
                       <h4 className="font-bold text-sm text-foreground">Sitio Web y Reservas</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         Obtén tu enlace personalizado de reservas online para compartirlo directamente en tu perfil de Instagram o WhatsApp.
-                  </p>
+                      </p>
                     </div>
                   </div>
                   <button className="flex items-center gap-1.5 text-xs text-[#10b981] bg-transparent border-0 outline-none cursor-pointer group-hover:underline font-semibold self-start">

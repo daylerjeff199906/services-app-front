@@ -19,7 +19,7 @@ export interface TenantService {
   slug: string
   description?: string
   isActive?: boolean
-  isIndependent?: boolean
+  isIndependent?: boolean | null
 }
 
 export interface AuthState {

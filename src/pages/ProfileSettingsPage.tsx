@@ -28,15 +28,43 @@ export function ProfileSettingsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
-  // Fetch current profile data
+  // Fetch current profile data from database on mount
   useEffect(() => {
-    if (user) {
-      setFirstName(user.first_name || "")
-      setLastName(user.last_name || "")
-      setUsername(user.username || "")
-      setEmail(user.email || "")
+    const fetchLatestProfile = async () => {
+      if (!user?.id) return
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("first_name, last_name, username, full_name")
+          .eq("id", user.id)
+          .single()
+
+        if (error) throw error
+
+        if (data) {
+          setFirstName(data.first_name || "")
+          setLastName(data.last_name || "")
+          setUsername(data.username || "")
+          
+          // Sync with auth store
+          setUser({
+            ...user,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            username: data.username,
+            full_name: data.full_name,
+          })
+        }
+      } catch (err) {
+        console.error("Error loading latest profile:", err)
+      }
     }
-  }, [user])
+
+    if (user) {
+      setEmail(user.email || "")
+      fetchLatestProfile()
+    }
+  }, [user?.id])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()

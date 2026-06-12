@@ -28,7 +28,7 @@ export function ProtectedRoute({
 
   if (requireSelectedService && !selectedService) {
     // Service selector is required but no service has been selected
-    return <Navigate to="/services" replace />
+    return <Navigate to="/intranet/businesses" replace />
   }
 
   return <>{children}</>

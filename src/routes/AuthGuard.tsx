@@ -78,7 +78,7 @@ export function AuthGuard({
 
   // 4. Check active service selection if required
   if (requireSelectedService && !selectedService) {
-    return <Navigate to="/services" replace />
+    return <Navigate to="/intranet/businesses" replace />
   }
 
   return <>{children}</>

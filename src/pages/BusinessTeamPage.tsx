@@ -32,7 +32,6 @@ export function BusinessTeamPage() {
       const { data, error } = await supabase
         .from("business_user_roles")
         .select(`
-          id,
           role,
           user_id,
           profiles:user_id (
@@ -59,6 +58,20 @@ export function BusinessTeamPage() {
           profile: profileData,
         }
       })
+
+      // Ensure the logged-in user is always in the list
+      if (user && !formatted.some((m) => m.userId === user.id)) {
+        formatted.push({
+          role: "OWNER",
+          userId: user.id,
+          profile: {
+            id: user.id,
+            full_name: user.full_name || null,
+            username: user.email?.split("@")[0] || "usuario",
+          },
+        })
+      }
+
       setMembers(formatted)
     } catch (err) {
       console.error("Error loading team members:", err)

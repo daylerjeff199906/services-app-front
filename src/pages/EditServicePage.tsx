@@ -27,6 +27,7 @@ export function EditServicePage() {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("0.00")
+  const [currency, setCurrency] = useState("USD")
   const [duration, setDuration] = useState("30")
   const [categoryId, setCategoryId] = useState("")
   const [imageUrl, setImageUrl] = useState("")
@@ -64,6 +65,7 @@ export function EditServicePage() {
         setName(serviceData.name)
         setDescription(serviceData.description || "")
         setPrice(String(serviceData.price))
+        setCurrency(serviceData.currency || "USD")
         setDuration(String(serviceData.duration_minutes ?? serviceData.duration ?? 30))
         setCategoryId(serviceData.category_id || "")
         setImageUrl(serviceData.image_url || "")
@@ -134,6 +136,7 @@ export function EditServicePage() {
           name: name.trim(),
           description: description.trim() || null,
           price: parseFloat(price) || 0,
+          currency: currency,
           duration: parseInt(duration, 10) || 30,
           duration_minutes: parseInt(duration, 10) || 30,
           category_id: categoryId || null,
@@ -217,7 +220,7 @@ export function EditServicePage() {
           {/* Price */}
           <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
             <div className="md:w-1/3">
-              <label className="text-sm font-medium">Precio ($ USD) *</label>
+              <label className="text-sm font-medium">Precio *</label>
               <p className="text-xs text-muted-foreground mt-0.5 font-medium">Costo del servicio para el público.</p>
             </div>
             <div className="md:w-2/3 max-w-md w-full">
@@ -229,6 +232,25 @@ export function EditServicePage() {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
               />
+            </div>
+          </div>
+
+          {/* Currency */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
+            <div className="md:w-1/3">
+              <label className="text-sm font-medium">Moneda *</label>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">Tipo de divisa para este servicio.</p>
+            </div>
+            <div className="md:w-2/3 max-w-md w-full">
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring text-foreground"
+              >
+                <option value="USD" className="bg-card text-foreground">Dólares (USD - $)</option>
+                <option value="PEN" className="bg-card text-foreground">Soles (PEN - S/.)</option>
+                <option value="EUR" className="bg-card text-foreground">Euros (EUR - €)</option>
+              </select>
             </div>
           </div>
 

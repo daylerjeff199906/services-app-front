@@ -23,7 +23,7 @@ export function DashboardPage() {
 
   // Onboarding states
   const [onboardingStatus, setOnboardingStatus] = useState({
-    isIndependent: false,
+    isIndependent: null as boolean | null,
     isActive: false,
     locationsCount: 0,
     businessHoursCount: 0,
@@ -48,7 +48,7 @@ export function DashboardPage() {
         .eq("id", selectedService.id)
         .single()
 
-      const isIndependent = bizData?.is_independent ?? false
+      const isIndependent = bizData?.is_independent ?? null
       const isActive = bizData?.is_active ?? false
 
       // 2. Fetch locations count
@@ -155,12 +155,18 @@ export function DashboardPage() {
     {
       id: 1,
       title: "Dirección del negocio / Sucursales",
-      description: onboardingStatus.isIndependent
+      description: onboardingStatus.isIndependent === true
         ? "Configurado como negocio independiente/a domicilio (sin local físico)."
-        : "Registra los locales y sucursales donde atiendes.",
-      isCompleted: onboardingStatus.isIndependent || onboardingStatus.locationsCount > 0,
-      path: "/dashboard/agenda/locations",
-      actionLabel: "Configurar locales",
+        : onboardingStatus.isIndependent === false
+        ? "Registra los locales y sucursales donde atiendes."
+        : "Configura si tu negocio tiene locales físicos o es a domicilio.",
+      isCompleted: onboardingStatus.isIndependent === true
+        ? true
+        : onboardingStatus.isIndependent === false
+        ? onboardingStatus.locationsCount > 0
+        : false,
+      path: onboardingStatus.isIndependent === null ? "/dashboard/settings/business" : "/dashboard/agenda/locations",
+      actionLabel: onboardingStatus.isIndependent === null ? "Configurar tipo de negocio" : "Configurar locales",
     },
     {
       id: 2,
@@ -201,7 +207,7 @@ export function DashboardPage() {
 
   // Minimum functional config check (Steps 1 to 3 are the only incomplete requirements)
   const isMinimumFunctionalComplete =
-    (onboardingStatus.isIndependent || onboardingStatus.locationsCount > 0) && // Step 1
+    (onboardingStatus.isIndependent === true || (onboardingStatus.isIndependent === false && onboardingStatus.locationsCount > 0)) && // Step 1
     (onboardingStatus.businessHoursCount > 0) && // Step 2
     (onboardingStatus.servicesCount > 0) // Step 3
 
@@ -266,10 +272,10 @@ export function DashboardPage() {
           <div className="flex justify-center w-full py-4">
             <div className="w-full max-w-3xl border border-border rounded-2xl bg-card overflow-hidden shadow-md space-y-6 p-6 md:p-8">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-border">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-bold tracking-tight text-foreground">Guía de configuración básica</h2>
-                  <p className="text-sm text-muted-foreground">Completa los 5 pasos esenciales mínimos para desbloquear el dashboard.</p>
-                </div>
+                <PageHeader
+                  title="Configura tu negocio"
+                  description="Completa los pasos para configurar tu negocio y empezar a recibir reservas."
+                />
                 <div className="flex items-center gap-4 bg-muted/20 px-4 py-2.5 rounded-xl border border-border">
                   <div className="text-right">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Progreso</span>

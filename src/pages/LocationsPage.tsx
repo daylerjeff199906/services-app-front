@@ -14,6 +14,7 @@ export function LocationsPage() {
 
   const [locations, setLocations] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isIndependent, setIsIndependent] = useState<boolean | null>(null)
 
   // Custom delete confirmation dialog state
   const [deleteLocId, setDeleteLocId] = useState<string | null>(null)
@@ -24,6 +25,15 @@ export function LocationsPage() {
     if (!selectedService) return
     setIsLoading(true)
     try {
+      // Fetch business is_independent status
+      const { data: bizData } = await supabase
+        .from("businesses")
+        .select("is_independent")
+        .eq("id", selectedService.id)
+        .single()
+      
+      setIsIndependent(bizData?.is_independent ?? null)
+
       const { data, error } = await supabase
         .from("business_locations")
         .select("*")
@@ -95,14 +105,29 @@ export function LocationsPage() {
           description="Administra los locales físicos y sucursales donde ofreces tus servicios."
         />
 
-        <Button
-          onClick={() => navigate("new")}
-          className="bg-[#10b981] hover:bg-[#059669] text-white font-medium shrink-0"
-        >
-          <Plus className="size-4 mr-2" />
-          Nuevo Local
-        </Button>
+        {isIndependent === false && (
+          <Button
+            onClick={() => navigate("new")}
+            className="bg-[#10b981] hover:bg-[#059669] text-white font-medium shrink-0"
+          >
+            <Plus className="size-4 mr-2" />
+            Nuevo Local
+          </Button>
+        )}
       </div>
+
+      {isIndependent === true && (
+        <div className="p-4 border border-amber-500/20 bg-amber-500/5 text-amber-600 rounded-xl text-sm font-medium flex items-start gap-3 animate-fade-in">
+          <AlertTriangle className="size-5 shrink-0 text-amber-500 mt-0.5" />
+          <div>
+            <p className="font-bold">Ubicaciones deshabilitadas</p>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              Este negocio está configurado como <strong>Servicio a domicilio / Independiente</strong> (sin local físico). 
+              Si deseas registrar locales o sucursales físicas, cambia el tipo de establecimiento en los <span className="underline cursor-pointer font-bold text-[#10b981]" onClick={() => navigate("/dashboard/settings/business")}>Ajustes del Negocio</span>.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="border border-border rounded-xl bg-card overflow-hidden">
         <div className="p-6">
@@ -110,10 +135,12 @@ export function LocationsPage() {
           
           {locations.length === 0 ? (
             <EmptyState
-              title="No hay locales registrados"
-              description="Agrega tu primera sucursal física para empezar a recibir citas en locales específicos."
+              title={isIndependent === true ? "Establecimiento independiente" : "No hay locales registrados"}
+              description={isIndependent === true 
+                ? "No necesitas locales registrados ya que atiendes de forma independiente o a domicilio."
+                : "Agrega tu primera sucursal física para empezar a recibir citas en locales específicos."}
               icon={MapPin}
-              action={
+              action={isIndependent === false ? (
                 <Button
                   onClick={() => navigate("new")}
                   className="bg-[#10b981] hover:bg-[#059669] text-white text-xs font-semibold"
@@ -121,7 +148,7 @@ export function LocationsPage() {
                   <Plus className="size-3.5 mr-1.5" />
                   Agregar primer local
                 </Button>
-              }
+              ) : undefined}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -163,7 +190,15 @@ export function LocationsPage() {
                           <div className="text-xs text-muted-foreground/85 mt-2 flex flex-wrap gap-x-1.5 gap-y-1 items-center font-medium">
                             <span className="text-muted-foreground">📞</span>
                             {loc.contact_numbers && loc.contact_numbers.length > 0 ? (
-                              <span className="font-mono">{loc.contact_numbers.join(" | ")}</span>
+                              <span className="font-mono">
+                                {loc.contact_numbers.map((c: string) => {
+                                  if (c.includes('|')) {
+                                    const [lbl, num] = c.split('|');
+                                    return `${lbl}: ${num}`;
+                                  }
+                                  return c;
+                                }).join(" | ")}
+                              </span>
                             ) : (
                               <span className="font-mono">{loc.phone}</span>
                             )}

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Layers, Map, ClipboardList, AudioLines, Settings2 } from "lucide-react"
+import { LayoutDashboard, Layers, Map, ClipboardList, Settings2 } from "lucide-react"
 
 export interface AdminRouteItem {
   title: string
@@ -71,17 +71,6 @@ export const getAdminRoutes = (_locale?: string): AdminRouteItem[] => {
         {
           title: "Lista de Clientes",
           url: `/dashboard/bookings/clients`,
-        },
-      ],
-    },
-    {
-      title: "Mediateca",
-      url: "#",
-      icon: AudioLines,
-      items: [
-        {
-          title: "Archivos Multimedia",
-          url: `/dashboard/multimedia`,
         },
       ],
     },

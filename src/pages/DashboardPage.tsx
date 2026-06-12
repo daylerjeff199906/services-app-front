@@ -5,15 +5,15 @@ import { LayoutWrapper } from "@/components/layout-wrapper"
 import { PageHeader } from "@/components/page-header"
 import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
-import { 
-  Check, 
-  ChevronRight, 
-  Smartphone, 
-  Globe, 
-  Landmark, 
-  AlertTriangle, 
-  Clock, 
-  Plus, 
+import {
+  Check,
+  ChevronRight,
+  Smartphone,
+  Globe,
+  Landmark,
+  AlertTriangle,
+  Clock,
+  Plus,
   ArrowRight
 } from "lucide-react"
 
@@ -155,7 +155,7 @@ export function DashboardPage() {
     {
       id: 1,
       title: "Dirección del negocio / Sucursales",
-      description: onboardingStatus.isIndependent 
+      description: onboardingStatus.isIndependent
         ? "Configurado como negocio independiente/a domicilio (sin local físico)."
         : "Registra los locales y sucursales donde atiendes.",
       isCompleted: onboardingStatus.isIndependent || onboardingStatus.locationsCount > 0,
@@ -200,7 +200,7 @@ export function DashboardPage() {
   const progressPercent = Math.round((completedCount / steps.length) * 100)
 
   // Minimum functional config check (Steps 1 to 3 are the only incomplete requirements)
-  const isMinimumFunctionalComplete = 
+  const isMinimumFunctionalComplete =
     (onboardingStatus.isIndependent || onboardingStatus.locationsCount > 0) && // Step 1
     (onboardingStatus.businessHoursCount > 0) && // Step 2
     (onboardingStatus.servicesCount > 0) // Step 3
@@ -228,9 +228,9 @@ export function DashboardPage() {
   return (
     <LayoutWrapper sectionTitle="Inicio">
       <div className="space-y-8 text-foreground">
-        
+
         {isMinimumFunctionalComplete && (
-          <PageHeader 
+          <PageHeader
             title={`Bienvenido a la consola de ${selectedService?.name || ""}`}
             description="Aquí puedes configurar tu cartera de ofertas, interactuar con clientes y revisar métricas de negocio."
             actionButton={
@@ -254,7 +254,7 @@ export function DashboardPage() {
             <div className="space-y-1">
               <p className="font-bold">Tablas pendientes de migración SQL</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Aún no has ejecutado el script SQL en Supabase para crear las tablas de locales, horarios y citas. 
+                Aún no has ejecutado el script SQL en Supabase para crear las tablas de locales, horarios y citas.
                 El checklist mostrará el estado simulado en 0 hasta que configures el esquema de base de datos.
               </p>
             </div>
@@ -286,8 +286,8 @@ export function DashboardPage() {
 
               {/* Progress line */}
               <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-                <div 
-                  className="bg-[#10b981] h-full rounded-full transition-all duration-500" 
+                <div
+                  className="bg-[#10b981] h-full rounded-full transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -295,21 +295,19 @@ export function DashboardPage() {
               {/* List items (1-7) */}
               <div className="space-y-3 pt-2">
                 {steps.map((step) => (
-                  <div 
-                    key={step.id} 
-                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-xl transition-all duration-200 gap-4 ${
-                      step.isCompleted 
-                        ? "bg-[#10b981]/5 border-[#10b981]/15 opacity-80" 
-                        : "bg-card border-border hover:border-border/80 hover:bg-muted/5 shadow-2xs"
-                    }`}
+                  <div
+                    key={step.id}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-xl transition-all duration-200 gap-4 ${step.isCompleted
+                      ? "bg-[#10b981]/5 border-[#10b981]/15 opacity-80"
+                      : "bg-card border-border hover:border-border/80 hover:bg-muted/5 shadow-2xs"
+                      }`}
                   >
                     <div className="flex items-start gap-4">
                       {/* Circle number or Check */}
-                      <div className={`size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none ${
-                        step.isCompleted 
-                          ? "bg-[#10b981] text-white" 
-                          : "bg-muted text-muted-foreground border border-border"
-                      }`}>
+                      <div className={`size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none ${step.isCompleted
+                        ? "bg-[#10b981] text-white"
+                        : "bg-muted text-muted-foreground border border-border"
+                        }`}>
                         {step.isCompleted ? <Check className="size-4" /> : step.id}
                       </div>
                       <div className="space-y-0.5">
@@ -319,11 +317,11 @@ export function DashboardPage() {
                         <p className="text-xs text-muted-foreground leading-normal max-w-xl">{step.description}</p>
                       </div>
                     </div>
-                    
+
                     {/* Action Link/Btn */}
                     {!step.isCompleted ? (
-                      <button 
-                        onClick={() => navigate(step.path || "/")} 
+                      <button
+                        onClick={() => navigate(step.path || "/")}
                         className="flex items-center gap-1 text-xs text-[#10b981] hover:underline font-bold shrink-0 self-end sm:self-center bg-transparent border-0 outline-none cursor-pointer"
                       >
                         {step.actionLabel}
@@ -396,7 +394,7 @@ export function DashboardPage() {
                 <h3 className="text-lg font-bold tracking-tight">Tus herramientas Gesti</h3>
                 <p className="text-xs text-muted-foreground">Potencia el alcance de tu marca utilizando nuestras herramientas y canales exclusivos.</p>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Card 1 */}
                 <div className="p-6 border border-border bg-card rounded-2xl flex flex-col justify-between gap-6 hover:shadow-md transition-shadow group">
@@ -427,7 +425,7 @@ export function DashboardPage() {
                       <h4 className="font-bold text-sm text-foreground">Sitio Web y Reservas</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         Obtén tu enlace personalizado de reservas online para compartirlo directamente en tu perfil de Instagram o WhatsApp.
-                  </p>
+                      </p>
                     </div>
                   </div>
                   <button className="flex items-center gap-1.5 text-xs text-[#10b981] bg-transparent border-0 outline-none cursor-pointer group-hover:underline font-semibold self-start">

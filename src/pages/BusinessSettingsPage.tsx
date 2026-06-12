@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Copy, Check, ShieldAlert, Trash2 } from "lucide-react"
 
 interface Member {
-  id: string
   role: string
+  userId: string
   profile: {
     id: string
     full_name: string | null
@@ -63,8 +63,8 @@ export function BusinessSettingsPage() {
         const { data: membersData, error: membersError } = await supabase
           .from("business_user_roles")
           .select(`
-            id,
             role,
+            user_id,
             profiles:user_id (
               id,
               full_name,
@@ -76,8 +76,8 @@ export function BusinessSettingsPage() {
         if (membersError) throw membersError
 
         const formatted = (membersData || []).map((m: any) => ({
-          id: m.id,
           role: m.role,
+          userId: m.user_id,
           profile: m.profiles,
         }))
         setMembers(formatted)
@@ -316,7 +316,7 @@ export function BusinessSettingsPage() {
                 {members.map((m) => {
                   const isCurrentUser = m.profile?.id === user?.id
                   return (
-                    <tr key={m.id} className="hover:bg-muted/5 transition-colors">
+                    <tr key={`${m.userId}-${m.role}`} className="hover:bg-muted/5 transition-colors">
                       <td className="px-6 py-4 flex items-center gap-3">
                         <span className="font-medium text-foreground">
                           {m.profile?.full_name || "Usuario Gesti"}

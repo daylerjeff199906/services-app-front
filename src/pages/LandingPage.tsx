@@ -357,7 +357,7 @@ export function LandingPage() {
             <div className="flex items-center gap-2">
               {isAuthenticated ? (
                 <Link
-                  to="/services"
+                  to="/intranet/businesses"
                   className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all shadow-sm"
                 >
                   {user?.full_name || "Panel"}

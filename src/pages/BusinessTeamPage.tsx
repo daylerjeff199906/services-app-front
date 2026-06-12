@@ -8,7 +8,6 @@ import { Search, Plus } from "lucide-react"
 import { PageHeader } from "@/components/page-header"
 
 interface Member {
-  id: string
   role: string
   userId: string
   profile: {
@@ -55,7 +54,6 @@ export function BusinessTeamPage() {
         } : null)
 
         return {
-          id: m.id,
           role: m.role,
           userId: m.user_id,
           profile: profileData,
@@ -80,7 +78,7 @@ export function BusinessTeamPage() {
   const myRole = members.find((m) => m.userId === user?.id)?.role
   const isOwner = myRole === "OWNER"
 
-  const handleRemoveMember = async (memberId: string, memberName: string) => {
+  const handleRemoveMember = async (targetUserId: string, role: string, memberName: string) => {
     if (!isOwner) {
       alert("No tienes permisos de Propietario para remover colaboradores.")
       return
@@ -91,11 +89,13 @@ export function BusinessTeamPage() {
         const { error } = await supabase
           .from("business_user_roles")
           .delete()
-          .eq("id", memberId)
+          .eq("business_id", selectedService!.id)
+          .eq("user_id", targetUserId)
+          .eq("role", role)
 
         if (error) throw error
 
-        setMembers(members.filter((m) => m.id !== memberId))
+        setMembers(members.filter((m) => !(m.userId === targetUserId && m.role === role)))
         alert("Colaborador removido exitosamente.")
       } catch (err) {
         console.error("Error removing team member:", err)
@@ -179,7 +179,7 @@ export function BusinessTeamPage() {
                 filteredMembers.map((m) => {
                   const isCurrentUser = m.userId === user?.id
                   return (
-                    <tr key={m.id} className="hover:bg-muted/10 transition-colors">
+                    <tr key={`${m.userId}-${m.role}`} className="hover:bg-muted/10 transition-colors">
                       <td className="p-4 flex items-center gap-3">
                         <div className="size-8 rounded-full border border-border bg-muted/30 flex items-center justify-center font-medium select-none">
                           {m.profile?.full_name?.charAt(0) || m.profile?.username?.charAt(0) || "U"}
@@ -211,7 +211,7 @@ export function BusinessTeamPage() {
                           variant="outline"
                           size="sm"
                           disabled={isCurrentUser || m.role === "OWNER" || !isOwner}
-                          onClick={() => handleRemoveMember(m.id, m.profile?.full_name || "Usuario")}
+                          onClick={() => handleRemoveMember(m.userId, m.role, m.profile?.full_name || "Usuario")}
                           className="text-xs text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
                         >
                           Remover

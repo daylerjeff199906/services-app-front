@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/page-header"
 import { FormFooter } from "@/components/ui/form-footer"
 import { Trash2, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
+import { MapPicker } from "@/components/map-picker"
 
 export function CreateLocationPage() {
   const navigate = useNavigate()
@@ -219,35 +220,47 @@ export function CreateLocationPage() {
         <div className="flex flex-col md:flex-row md:items-start justify-between p-6 gap-4 border-b border-border">
           <div className="md:w-1/3">
             <label className="text-sm font-semibold">Coordenadas GPS</label>
-            <p className="text-xs text-muted-foreground mt-0.5 font-medium">Latitud y Longitud para geolocalización en mapas.</p>
+            <p className="text-xs text-muted-foreground mt-0.5 font-medium font-sans">Latitud y Longitud para geolocalización en mapas. Puedes ingresar los valores manualmente o seleccionarlos en el mapa.</p>
           </div>
-          <div className="md:w-2/3 max-w-md w-full grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground font-sans">Latitud</span>
-              <Input
-                type="number"
-                step="any"
-                placeholder="Ej. -12.0463"
-                value={latitude}
-                onChange={(e) => {
-                  setLatitude(e.target.value)
-                  setHasChanges(true)
-                }}
-              />
+          <div className="md:w-2/3 max-w-md w-full space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground font-sans">Latitud</span>
+                <Input
+                  type="number"
+                  step="any"
+                  placeholder="Ej. -12.0463"
+                  value={latitude}
+                  onChange={(e) => {
+                    setLatitude(e.target.value)
+                    setHasChanges(true)
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground font-sans">Longitud</span>
+                <Input
+                  type="number"
+                  step="any"
+                  placeholder="Ej. -77.0310"
+                  value={longitude}
+                  onChange={(e) => {
+                    setLongitude(e.target.value)
+                    setHasChanges(true)
+                  }}
+                />
+              </div>
             </div>
-            <div className="space-y-1">
-              <span className="text-[10px] uppercase font-bold text-muted-foreground font-sans">Longitud</span>
-              <Input
-                type="number"
-                step="any"
-                placeholder="Ej. -77.0310"
-                value={longitude}
-                onChange={(e) => {
-                  setLongitude(e.target.value)
-                  setHasChanges(true)
-                }}
-              />
-            </div>
+            
+            <MapPicker
+              lat={latitude}
+              lng={longitude}
+              onChange={(newLat, newLng) => {
+                setLatitude(newLat)
+                setLongitude(newLng)
+                setHasChanges(true)
+              }}
+            />
           </div>
         </div>
 

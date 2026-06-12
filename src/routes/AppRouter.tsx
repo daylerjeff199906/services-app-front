@@ -14,6 +14,7 @@ import { ProfileOnboardingPage } from "@/pages/ProfileOnboardingPage"
 import { ProfileSettingsPage } from "@/pages/ProfileSettingsPage"
 import { BusinessesPage } from "@/pages/BusinessesPage"
 import { CreateBusinessPage } from "@/pages/CreateBusinessPage"
+import { BusinessSettingsPage } from "@/pages/BusinessSettingsPage"
 
 export function AppRouter() {
   return (
@@ -110,6 +111,16 @@ export function AppRouter() {
                   <h2 className="text-xl font-bold mb-2">Facturación y Planes</h2>
                   <p className="text-muted-foreground">Esta sección es visible para SAAS_ADMIN y SERVICE_OWNER.</p>
                 </div>
+              </AuthGuard>
+            }
+          />
+
+          {/* Business Settings Route */}
+          <Route
+            path="settings/business"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <BusinessSettingsPage />
               </AuthGuard>
             }
           />

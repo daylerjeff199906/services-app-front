@@ -16,6 +16,10 @@ import { CreateBusinessPage } from "@/pages/CreateBusinessPage"
 import { BusinessSettingsPage } from "@/pages/BusinessSettingsPage"
 import { BusinessTeamPage } from "@/pages/BusinessTeamPage"
 import { BusinessTeamInvitePage } from "@/pages/BusinessTeamInvitePage"
+import { ServicesPage } from "@/pages/ServicesPage"
+import { CreateServicePage } from "@/pages/CreateServicePage"
+import { EditServicePage } from "@/pages/EditServicePage"
+import { CategoriesPage } from "@/pages/CategoriesPage"
 
 export function AppRouter() {
   return (
@@ -130,6 +134,40 @@ export function AppRouter() {
             element={
               <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
                 <BusinessTeamInvitePage />
+              </AuthGuard>
+            }
+          />
+
+          {/* Services & Categories Routes */}
+          <Route
+            path="services"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <ServicesPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="services/new"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <CreateServicePage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="services/edit/:id"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <EditServicePage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="services/categories"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <CategoriesPage />
               </AuthGuard>
             }
           />

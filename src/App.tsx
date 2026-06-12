@@ -5,6 +5,7 @@ import { AppRouter } from "./routes/AppRouter"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useThemeStore } from "./store/theme.store"
 import { PageHeaderProvider } from "@/components/providers/page-header-provider"
+import { Toaster } from "sonner"
 
 function App() {
   const theme = useThemeStore((state) => state.theme)
@@ -20,6 +21,7 @@ function App() {
       <TooltipProvider>
         <PageHeaderProvider>
           <AppRouter />
+          <Toaster position="top-right" richColors closeButton />
         </PageHeaderProvider>
       </TooltipProvider>
     </QueryClientProvider>

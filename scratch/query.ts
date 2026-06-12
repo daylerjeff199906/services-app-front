@@ -16,16 +16,21 @@ envContent.split('\n').forEach((line) => {
 const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_PUBLISHABLE_KEY)
 
 async function run() {
-  // We can query pg_enum via Supabaserpc or a standard query if allowed,
-  // or we can select from information_schema, or we can try to insert a dummy value and read the error,
-  // or query existing business_user_roles to see what roles exist.
-  const { data, error } = await supabase
-    .from('business_user_roles')
-    .select('role')
+  const { data: services, error: sError } = await supabase
+    .from('services')
+    .select('*')
     .limit(10)
 
-  console.log('Existing roles:', data)
-  console.log('Query error:', error)
+  console.log('Services:', services)
+  console.log('Services error:', sError)
+
+  const { data: categories, error: cError } = await supabase
+    .from('service_categories')
+    .select('*')
+    .limit(10)
+
+  console.log('Categories:', categories)
+  console.log('Categories error:', cError)
 }
 
 run()

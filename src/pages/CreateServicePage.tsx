@@ -113,6 +113,7 @@ export function CreateServicePage() {
           description: description.trim() || null,
           price: parseFloat(price) || 0,
           duration: parseInt(duration, 10) || 30,
+          duration_minutes: parseInt(duration, 10) || 30,
           category_id: categoryId || null,
           is_active: isActive,
         })

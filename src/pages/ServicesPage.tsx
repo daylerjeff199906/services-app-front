@@ -9,12 +9,9 @@ import { toast } from "sonner"
 import { 
   Search, 
   Plus, 
-  Clock, 
-  DollarSign, 
   FolderEdit, 
   Edit3, 
-  Trash2, 
-  Layers
+  Trash2
 } from "lucide-react"
 
 interface Category {
@@ -29,6 +26,7 @@ interface Service {
   name: string
   description: string | null
   price: number
+  currency: string
   duration: number
   is_active: boolean
   category_id: string | null
@@ -44,6 +42,10 @@ export function ServicesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
+
+  // Delete confirmation dialog states
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [deleteConfirmName, setDeleteConfirmName] = useState("")
 
   const loadData = async (search: string, status: string) => {
     if (!selectedService) return
@@ -67,10 +69,10 @@ export function ServicesPage() {
           name,
           description,
           price,
-          duration,
+          currency,
+          duration_minutes,
           is_active,
-          category_id,
-          image_url
+          category_id
         `)
         .eq("business_id", selectedService.id)
 
@@ -87,7 +89,20 @@ export function ServicesPage() {
       const { data: servs, error: servsError } = await query
 
       if (servsError) throw servsError
-      setServices(servs || [])
+
+      const mapped = (servs || []).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        price: s.price,
+        currency: s.currency || "USD",
+        duration: s.duration_minutes ?? s.duration ?? 30,
+        is_active: s.is_active,
+        category_id: s.category_id,
+        image_url: null,
+      }))
+
+      setServices(mapped)
     } catch (err) {
       console.error("Error loading services:", err)
       toast.error("Error de carga", {
@@ -110,50 +125,35 @@ export function ServicesPage() {
     return () => clearTimeout(handler)
   }, [searchQuery, statusFilter, selectedService, navigate])
 
-  const handleDeleteService = async (id: string, name: string) => {
-    if (window.confirm(`¿Estás seguro de que deseas eliminar permanentemente el servicio "${name}"?`)) {
-      try {
-        const { error } = await supabase
-          .from("services")
-          .delete()
-          .eq("id", id)
+  const executeDeleteService = async () => {
+    if (!deleteConfirmId) return
+    try {
+      const { error } = await supabase
+        .from("services")
+        .delete()
+        .eq("id", deleteConfirmId)
 
-        if (error) throw error
+      if (error) throw error
 
-        toast.success("Servicio eliminado", {
-          description: `El servicio "${name}" ha sido eliminado del catálogo.`
-        })
+      toast.success("Servicio eliminado", {
+        description: `El servicio "${deleteConfirmName}" ha sido eliminado del catálogo.`
+      })
 
-        setServices(services.filter((s) => s.id !== id))
-      } catch (err) {
-        console.error("Error deleting service:", err)
-        toast.error("Error de eliminación", {
-          description: "Ocurrió un error al intentar eliminar el servicio."
-        })
-      }
+      setServices(services.filter((s) => s.id !== deleteConfirmId))
+    } catch (err) {
+      console.error("Error deleting service:", err)
+      toast.error("Error de eliminación", {
+        description: "Ocurrió un error al intentar eliminar el servicio."
+      })
+    } finally {
+      setDeleteConfirmId(null)
+      setDeleteConfirmName("")
     }
   }
 
-  // Group services by category
-  const servicesByCategory = categories.reduce((acc, cat) => {
-    const catServices = services.filter((s) => s.category_id === cat.id)
-    acc[cat.id] = catServices
-    return acc
-  }, {} as Record<string, Service[]>)
-
-  // Uncategorized services
-  const uncategorizedServices = services.filter(
-    (s) => !s.category_id || !categories.some((c) => c.id === s.category_id)
-  )
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-muted rounded w-1/4" />
-        <div className="h-4 bg-muted rounded w-1/3" />
-        <div className="h-64 bg-muted border border-border rounded-xl mt-8" />
-      </div>
-    )
+  const formatPrice = (price: number, currency: string) => {
+    const symbol = currency === "PEN" ? "S/ " : currency === "EUR" ? "€" : "$";
+    return `${symbol}${Number(price).toFixed(2)}`;
   }
 
   return (
@@ -211,140 +211,153 @@ export function ServicesPage() {
         </div>
       </div>
 
-      {/* Services Grid grouped by Categories */}
-      <div className="space-y-10">
-        {categories.map((cat) => {
-          const catServices = servicesByCategory[cat.id] || []
-          if (catServices.length === 0) return null // Hide empty categories to avoid displaying "No hay servicios..."
-
-          return (
-            <div key={cat.id} className="space-y-4">
-              <div className="border-b border-border pb-2 flex items-baseline justify-between">
-                <div className="flex items-center gap-2">
-                  <Layers className="size-4 text-muted-foreground" />
-                  <h3 className="text-lg font-bold tracking-tight">{cat.name}</h3>
-                </div>
-                {cat.description && (
-                  <p className="text-xs text-muted-foreground italic">{cat.description}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {catServices.map((service) => (
-                  <ServiceCardItem
-                    key={service.id}
-                    service={service}
-                    onEdit={() => navigate(`/dashboard/services/edit/${service.id}`)}
-                    onDelete={() => handleDeleteService(service.id, service.name)}
-                  />
-                ))}
-              </div>
-            </div>
-          )
-        })}
-
-        {/* Uncategorized services if any exist */}
-        {uncategorizedServices.length > 0 && (
-          <div className="space-y-4">
-            <div className="border-b border-border pb-2">
-              <h3 className="text-lg font-bold tracking-tight">Sin Categoría</h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {uncategorizedServices.map((service) => (
-                <ServiceCardItem
-                  key={service.id}
-                  service={service}
-                  onEdit={() => navigate(`/dashboard/services/edit/${service.id}`)}
-                  onDelete={() => handleDeleteService(service.id, service.name)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {services.length === 0 && (
-          <div className="py-16 text-center border border-border rounded-xl bg-card">
-            <p className="text-sm text-muted-foreground font-medium">
-              No se encontraron servicios cargados o que coincidan con la búsqueda.
-            </p>
-          </div>
-        )}
+      {/* Services Table List */}
+      <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+        <table className="w-full border-collapse text-left text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/10 text-muted-foreground text-xs uppercase font-semibold">
+              <th className="p-4 w-12 text-center">
+                <input type="checkbox" className="rounded border-input text-primary focus:ring-primary/20" disabled />
+              </th>
+              <th className="p-4">Nombre del Servicio</th>
+              <th className="p-4">Precio</th>
+              <th className="p-4">Duración</th>
+              <th className="p-4">Estado</th>
+              <th className="p-4 text-right">Acción</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <tr key={index} className="animate-pulse">
+                  <td className="p-4 text-center">
+                    <div className="size-4 bg-muted rounded mx-auto" />
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="size-10 bg-muted rounded" />
+                      <div className="space-y-2">
+                        <div className="h-4 bg-muted rounded w-40" />
+                        <div className="h-3 bg-muted rounded w-24" />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="h-4 bg-muted rounded w-16" />
+                  </td>
+                  <td className="p-4">
+                    <div className="h-4 bg-muted rounded w-12" />
+                  </td>
+                  <td className="p-4">
+                    <div className="h-6 bg-muted rounded w-20" />
+                  </td>
+                  <td className="p-4 text-right">
+                    <div className="h-8 bg-muted rounded w-24 ml-auto" />
+                  </td>
+                </tr>
+              ))
+            ) : services.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="p-16 text-center text-muted-foreground font-medium">
+                  No se encontraron servicios cargados o que coincidan con la búsqueda.
+                </td>
+              </tr>
+            ) : (
+              services.map((service) => {
+                const categoryName = categories.find(c => c.id === service.category_id)?.name || "Sin Categoría"
+                const fallbackImage = `https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=100&q=80`
+                return (
+                  <tr key={service.id} className="hover:bg-muted/5 transition-colors">
+                    <td className="p-4 text-center">
+                      <input type="checkbox" className="rounded border-input text-primary focus:ring-primary/20" />
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={service.image_url || fallbackImage}
+                          alt={service.name}
+                          className="size-10 rounded-md object-cover border border-border"
+                        />
+                        <div>
+                          <p className="font-semibold text-foreground text-sm">{service.name}</p>
+                          <p className="text-[11px] text-muted-foreground">Cat: {categoryName}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 font-semibold text-foreground">
+                      {formatPrice(service.price, service.currency)}
+                    </td>
+                    <td className="p-4 text-muted-foreground text-sm">
+                      {service.duration} min
+                    </td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span className={`size-2 rounded-full ${service.is_active ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        <span className="text-xs font-semibold text-muted-foreground select-none">
+                          {service.is_active ? "Activo" : "Borrador"}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          onClick={() => navigate(`/dashboard/services/edit/${service.id}`)}
+                          className="bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium text-xs px-3 h-8 flex items-center gap-1.5"
+                        >
+                          <Edit3 className="size-3.5" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setDeleteConfirmId(service.id)
+                            setDeleteConfirmName(service.name)
+                          }}
+                          className="size-8 p-0 text-muted-foreground hover:text-destructive hover:border-destructive/30"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
       </div>
-    </div>
-  )
-}
 
-function ServiceCardItem({ 
-  service, 
-  onEdit, 
-  onDelete 
-}: { 
-  service: Service
-  onEdit: () => void
-  onDelete: () => void 
-}) {
-  const fallbackImage = `https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=600&q=80`
-
-  return (
-    <div className="group border border-border rounded-xl bg-card overflow-hidden shadow-sm hover:shadow-md hover:border-muted-foreground/30 transition-all duration-200 flex flex-col justify-between h-[360px]">
-      <div>
-        {/* Cover Image */}
-        <div className="relative h-40 bg-muted overflow-hidden">
-          <img
-            src={service.image_url || fallbackImage}
-            alt={service.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          {/* Status Badge */}
-          <span className={`absolute top-3 right-3 text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${
-            service.is_active 
-              ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
-              : "bg-amber-500/10 text-amber-500 border-amber-500/20"
-          }`}>
-            {service.is_active ? "Activo" : "Borrador"}
-          </span>
-        </div>
-
-        {/* Content Info */}
-        <div className="p-4 space-y-2">
-          <h4 className="font-bold text-sm text-foreground line-clamp-1">{service.name}</h4>
-          <p className="text-xs text-muted-foreground line-clamp-2 min-h-[32px]">
-            {service.description || "Sin descripción proporcionada."}
-          </p>
-        </div>
-      </div>
-
-      <div className="p-4 border-t border-border bg-muted/5 flex items-center justify-between mt-auto">
-        <div className="flex gap-4 text-xs text-muted-foreground select-none">
-          <div className="flex items-center gap-1">
-            <Clock className="size-3.5 text-muted-foreground" />
-            <span>{service.duration} min</span>
-          </div>
-          <div className="flex items-center gap-1 font-semibold text-foreground">
-            <DollarSign className="size-3.5 text-muted-foreground -mr-0.5" />
-            <span>{Number(service.price).toFixed(2)}</span>
+      {/* Alert Dialog de Confirmación de Eliminación */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="bg-card border border-border rounded-xl shadow-lg max-w-md w-full overflow-hidden p-6 space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-lg font-bold text-foreground">¿Eliminar servicio?</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                ¿Estás seguro de que deseas eliminar permanentemente el servicio <strong>"{deleteConfirmName}"</strong>? Esta acción no se puede deshacer.
+              </p>
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setDeleteConfirmId(null)
+                  setDeleteConfirmName("")
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={executeDeleteService}
+                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium"
+              >
+                Eliminar
+              </Button>
+            </div>
           </div>
         </div>
-
-        <div className="flex items-center gap-1">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onEdit}
-            className="size-8 p-0 text-muted-foreground hover:text-foreground"
-          >
-            <Edit3 className="size-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={onDelete}
-            className="size-8 p-0 text-muted-foreground hover:text-destructive hover:border-destructive/30"
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   )
 }

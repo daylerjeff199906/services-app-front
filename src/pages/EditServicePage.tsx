@@ -64,7 +64,7 @@ export function EditServicePage() {
         setName(serviceData.name)
         setDescription(serviceData.description || "")
         setPrice(String(serviceData.price))
-        setDuration(String(serviceData.duration))
+        setDuration(String(serviceData.duration_minutes ?? serviceData.duration ?? 30))
         setCategoryId(serviceData.category_id || "")
         setImageUrl(serviceData.image_url || "")
         setIsActive(serviceData.is_active ?? true)
@@ -135,6 +135,7 @@ export function EditServicePage() {
           description: description.trim() || null,
           price: parseFloat(price) || 0,
           duration: parseInt(duration, 10) || 30,
+          duration_minutes: parseInt(duration, 10) || 30,
           category_id: categoryId || null,
           image_url: imageUrl.trim() || null,
           is_active: isActive,

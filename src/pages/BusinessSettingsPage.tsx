@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/auth.store"
 import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Copy, Check, ShieldAlert, Users, Trash2 } from "lucide-react"
+import { Copy, Check, ShieldAlert, Trash2 } from "lucide-react"
 
 interface Member {
   id: string
@@ -28,7 +28,6 @@ export function BusinessSettingsPage() {
 
   const [members, setMembers] = useState<Member[]>([])
   const [copiedId, setCopiedId] = useState(false)
-  const [copiedSlug, setCopiedSlug] = useState(false)
 
   // Danger Zone Deletion states
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -92,15 +91,10 @@ export function BusinessSettingsPage() {
     loadData()
   }, [selectedService, navigate])
 
-  const copyToClipboard = (text: string, type: "id" | "slug") => {
+  const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-    if (type === "id") {
-      setCopiedId(true)
-      setTimeout(() => setCopiedId(false), 2000)
-    } else {
-      setCopiedSlug(true)
-      setTimeout(() => setCopiedSlug(false), 2000)
-    }
+    setCopiedId(true)
+    setTimeout(() => setCopiedId(false), 2000)
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -180,27 +174,27 @@ export function BusinessSettingsPage() {
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-10 text-foreground">
+    <div className="px-8 max-w-4xl mx-auto space-y-10 text-foreground">
       {/* Page Header */}
       <div className="space-y-1">
-        <h1 className="text-2xl font-medium tracking-tight flex items-center gap-2">
+        <h1 className="text-3xl font-medium tracking-tight">
           Ajustes del Proyecto
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Configuración general, acceso de colaboradores y ciclo de vida de tu espacio de trabajo.
+          Configuración general y ciclo de vida de tu espacio de trabajo.
         </p>
       </div>
 
       {/* General Settings Card */}
       <div className="space-y-4">
-        <h2 className="text-lg font-medium tracking-tight">General settings</h2>
+        <h2 className="text-lg font-medium tracking-tight text-muted-foreground">Configuración general</h2>
 
         <form onSubmit={handleSave} className="border border-border rounded-xl bg-card overflow-hidden">
           {/* Project Name */}
           <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
             <div className="md:w-1/3">
-              <label className="text-sm font-medium">Project name</label>
-              <p className="text-xs text-muted-foreground mt-0.5">Displayed throughout the dashboard.</p>
+              <label className="text-sm font-medium">Nombre del proyecto</label>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">Se muestra en todo el panel de control.</p>
             </div>
             <div className="md:w-2/3 max-w-md w-full">
               <Input
@@ -216,8 +210,8 @@ export function BusinessSettingsPage() {
           {/* Project ID (Read Only) */}
           <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
             <div className="md:w-1/3">
-              <label className="text-sm font-medium">Project ID</label>
-              <p className="text-xs text-muted-foreground mt-0.5">Reference used in APIs and URLs.</p>
+              <label className="text-sm font-medium">ID del proyecto</label>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">Referencia única utilizada en APIs y URLs.</p>
             </div>
             <div className="md:w-2/3 max-w-md w-full flex items-center gap-2">
               <Input
@@ -230,35 +224,10 @@ export function BusinessSettingsPage() {
                 type="button"
                 variant="outline"
                 size="icon"
-                onClick={() => copyToClipboard(selectedService?.id || "", "id")}
+                onClick={() => copyToClipboard(selectedService?.id || "")}
                 className="shrink-0 size-9"
               >
                 {copiedId ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* Project Region (Read Only / Mocked) */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
-            <div className="md:w-1/3">
-              <label className="text-sm font-medium">Project region</label>
-              <p className="text-xs text-muted-foreground mt-0.5">East US (Ohio)</p>
-            </div>
-            <div className="md:w-2/3 max-w-md w-full flex items-center gap-2">
-              <Input
-                type="text"
-                value="us-east-2"
-                readOnly
-                className="font-mono text-xs bg-muted/30"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => copyToClipboard("us-east-2", "slug")}
-                className="shrink-0 size-9"
-              >
-                {copiedSlug ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
               </Button>
             </div>
           </div>
@@ -267,7 +236,7 @@ export function BusinessSettingsPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
             <div className="md:w-1/3">
               <label className="text-sm font-medium">Descripción</label>
-              <p className="text-xs text-muted-foreground mt-0.5">Resumen de los servicios de este espacio.</p>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">Resumen del propósito y servicios ofrecidos.</p>
             </div>
             <div className="md:w-2/3 max-w-md w-full">
               <textarea
@@ -284,7 +253,7 @@ export function BusinessSettingsPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
             <div className="md:w-1/3">
               <label className="text-sm font-medium">Estado de publicación</label>
-              <p className="text-xs text-muted-foreground mt-0.5">Determina si el negocio es público.</p>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">Determina si el negocio está activo y es público.</p>
             </div>
             <div className="md:w-2/3 max-w-md w-full flex items-center gap-2">
               <select
@@ -306,59 +275,60 @@ export function BusinessSettingsPage() {
               disabled={isSubmitting}
               className="bg-[#10b981] hover:bg-[#059669] text-white font-medium"
             >
-              {isSubmitting ? "Guardando..." : "Save changes"}
+              {isSubmitting ? "Guardando..." : "Guardar cambios"}
             </Button>
           </div>
         </form>
       </div>
 
-      {/* Access Section (Team Members List) */}
+      {/* Project Access Section */}
       <div className="space-y-4">
-        <h2 className="text-lg font-medium tracking-tight flex items-center gap-2">
-          <Users className="size-5 text-muted-foreground" />
-          Miembros del Equipo
-        </h2>
+        <h2 className="text-lg font-medium tracking-tight text-muted-foreground">Acceso al proyecto</h2>
 
         <div className="border border-border rounded-xl bg-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
+          <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="font-medium text-sm text-foreground">Acceso a toda la organización</h3>
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+                Todos los {members.length} miembros de la organización pueden acceder a este proyecto.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/dashboard/settings/business/team")}
+              className="shrink-0 font-medium"
+            >
+              Gestionar miembros
+            </Button>
+          </div>
+
+          <div className="border-t border-border">
+            <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-border bg-muted/10 text-muted-foreground text-xs uppercase font-semibold">
-                  <th className="p-4">Miembro</th>
-                  <th className="p-4">MFA</th>
-                  <th className="p-4">Rol</th>
+                <tr className="border-b border-border bg-muted/5 text-muted-foreground text-xs uppercase font-semibold">
+                  <th className="px-6 py-3">Miembro</th>
+                  <th className="px-6 py-3 text-right">Rol</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {members.map((m) => {
                   const isCurrentUser = m.profile?.id === user?.id
                   return (
-                    <tr key={m.id} className="hover:bg-muted/10 transition-colors">
-                      <td className="p-4 flex items-center gap-3">
-                        <div className="size-8 rounded-full border border-border bg-muted/30 flex items-center justify-center font-medium">
-                          {m.profile?.full_name?.charAt(0) || m.profile?.username?.charAt(0) || "U"}
-                        </div>
-                        <div>
-                          <p className="font-medium">
-                            {m.profile?.full_name || "Usuario"}
-                            {isCurrentUser && (
-                              <span className="ml-2 text-[9px] font-semibold bg-muted px-1.5 py-0.5 rounded border border-border uppercase tracking-wider text-muted-foreground">
-                                Tú
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            @{m.profile?.username || "sin_username"}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="p-4 text-xs text-muted-foreground">
-                        Disabled
-                      </td>
-                      <td className="p-4 font-medium text-xs">
-                        <span className="px-2 py-0.5 bg-muted rounded border border-border uppercase tracking-wider">
-                          {m.role}
+                    <tr key={m.id} className="hover:bg-muted/5 transition-colors">
+                      <td className="px-6 py-4 flex items-center gap-3">
+                        <span className="font-medium text-foreground">
+                          {m.profile?.full_name || "Usuario Gesti"}
                         </span>
+                        {isCurrentUser && (
+                          <span className="text-[9px] font-semibold bg-muted px-1.5 py-0.5 rounded border border-border uppercase tracking-wider text-muted-foreground">
+                            Tú
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right font-medium text-xs text-muted-foreground">
+                        {m.role === "OWNER" ? "Owner" : m.role === "MANAGER" ? "Administrator" : "Developer"}
                       </td>
                     </tr>
                   )
@@ -373,13 +343,13 @@ export function BusinessSettingsPage() {
       <div className="space-y-4">
         <h2 className="text-lg font-medium text-destructive tracking-tight flex items-center gap-2">
           <ShieldAlert className="size-5 text-destructive" />
-          Zona de Peligro (Danger Zone)
+          Zona de Peligro
         </h2>
 
         <div className="border border-destructive/20 rounded-xl bg-destructive/5 overflow-hidden p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-1">
             <h3 className="font-semibold text-sm text-foreground">Eliminar este proyecto</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-xl">
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-xl font-medium">
               Una vez que elimines este negocio, se eliminarán permanentemente todas las configuraciones, colaboradores, registros y servicios asociados. No se puede recuperar.
             </p>
           </div>
@@ -399,13 +369,13 @@ export function BusinessSettingsPage() {
       {/* Delete Confirmation Modal Dialog Overlay */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-card border border-border rounded-xl max-w-md w-full p-6 space-y-6 shadow-2xl relative">
+          <div className="bg-card border border-border rounded-xl max-w-md w-full p-6 space-y-6 shadow-2xl relative animate-scale-in">
             <div className="space-y-2">
               <h3 className="text-lg font-medium text-foreground tracking-tight flex items-center gap-2">
                 <ShieldAlert className="size-5 text-destructive shrink-0" />
                 ¿Estás completamente seguro?
               </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
                 Esta acción <strong>NO</strong> se puede deshacer. Se eliminará de forma irreversible el negocio <strong>{selectedService?.name}</strong> de los servidores de Gesti.
               </p>
             </div>
@@ -417,7 +387,7 @@ export function BusinessSettingsPage() {
             )}
 
             <div className="space-y-2">
-              <label className="text-xs text-muted-foreground">
+              <label className="text-xs text-muted-foreground font-medium">
                 Por favor, escribe <strong className="text-foreground">{selectedService?.name}</strong> para confirmar:
               </label>
               <Input

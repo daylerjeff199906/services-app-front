@@ -15,6 +15,8 @@ import { ProfileSettingsPage } from "@/pages/ProfileSettingsPage"
 import { BusinessesPage } from "@/pages/BusinessesPage"
 import { CreateBusinessPage } from "@/pages/CreateBusinessPage"
 import { BusinessSettingsPage } from "@/pages/BusinessSettingsPage"
+import { BusinessTeamPage } from "@/pages/BusinessTeamPage"
+import { BusinessTeamInvitePage } from "@/pages/BusinessTeamInvitePage"
 
 export function AppRouter() {
   return (
@@ -121,6 +123,24 @@ export function AppRouter() {
             element={
               <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
                 <BusinessSettingsPage />
+              </AuthGuard>
+            }
+          />
+
+          {/* Business Team Routes */}
+          <Route
+            path="settings/business/team"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <BusinessTeamPage />
+              </AuthGuard>
+            }
+          />
+          <Route
+            path="settings/business/team/invite"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <BusinessTeamInvitePage />
               </AuthGuard>
             }
           />

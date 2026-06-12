@@ -25,6 +25,10 @@ export function DashboardPage() {
   const [onboardingStatus, setOnboardingStatus] = useState({
     isIndependent: null as boolean | null,
     isActive: false,
+    hasName: false,
+    hasDescription: false,
+    hasContacts: false,
+    hasSocials: false,
     locationsCount: 0,
     businessHoursCount: 0,
     servicesCount: 0,
@@ -42,14 +46,45 @@ export function DashboardPage() {
 
     try {
       // 1. Fetch business details
-      const { data: bizData } = await supabase
-        .from("businesses")
-        .select("is_independent, is_active")
-        .eq("id", selectedService.id)
-        .single()
+      let bizData: any = null
+      try {
+        const { data, error } = await supabase
+          .from("businesses")
+          .select("name, description, contact_numbers, social_links, is_independent, is_active")
+          .eq("id", selectedService.id)
+          .single()
+        
+        if (error) {
+          const { data: fbData, error: fbError } = await supabase
+            .from("businesses")
+            .select("name, description, contact_numbers, is_independent, is_active")
+            .eq("id", selectedService.id)
+            .single()
+          
+          if (fbError) {
+            const { data: minData, error: minError } = await supabase
+              .from("businesses")
+              .select("name, description, is_independent, is_active")
+              .eq("id", selectedService.id)
+              .single()
+            if (minError) throw minError
+            bizData = minData
+          } else {
+            bizData = fbData
+          }
+        } else {
+          bizData = data
+        }
+      } catch (bizErr) {
+        console.error("Error fetching business details:", bizErr)
+      }
 
       const isIndependent = bizData?.is_independent ?? null
       const isActive = bizData?.is_active ?? false
+      const hasName = !!bizData?.name?.trim()
+      const hasDescription = !!bizData?.description?.trim()
+      const hasContacts = bizData?.contact_numbers && bizData.contact_numbers.length > 0
+      const hasSocials = bizData?.social_links && bizData.social_links.length > 0
 
       // 2. Fetch locations count
       let locationsCount = 0
@@ -132,6 +167,10 @@ export function DashboardPage() {
       setOnboardingStatus({
         isIndependent,
         isActive,
+        hasName,
+        hasDescription,
+        hasContacts,
+        hasSocials,
         locationsCount,
         businessHoursCount,
         servicesCount,
@@ -154,6 +193,14 @@ export function DashboardPage() {
   const steps = [
     {
       id: 1,
+      title: "Información básica del negocio",
+      description: "Configura el nombre, descripción, números de contacto y opcionalmente enlaces de redes sociales.",
+      isCompleted: onboardingStatus.hasName && onboardingStatus.hasDescription && onboardingStatus.hasContacts,
+      path: "/dashboard/settings/business?return_to=/dashboard",
+      actionLabel: "Completar perfil",
+    },
+    {
+      id: 2,
       title: "Dirección del negocio / Sucursales",
       description: onboardingStatus.isIndependent === true
         ? "Configurado como negocio independiente/a domicilio (sin local físico)."
@@ -169,7 +216,7 @@ export function DashboardPage() {
       actionLabel: onboardingStatus.isIndependent === null ? "Configurar tipo de negocio" : "Configurar locales",
     },
     {
-      id: 2,
+      id: 3,
       title: "Establecer horarios del negocio",
       description: "Indica los días y horarios de disponibilidad operativa del negocio.",
       isCompleted: onboardingStatus.businessHoursCount > 0,
@@ -177,7 +224,7 @@ export function DashboardPage() {
       actionLabel: "Definir horarios",
     },
     {
-      id: 3,
+      id: 4,
       title: "Agregar primer servicio",
       description: "Crea al menos un servicio en tu catálogo de ofertas.",
       isCompleted: onboardingStatus.servicesCount > 0,
@@ -185,7 +232,7 @@ export function DashboardPage() {
       actionLabel: "Añadir servicio",
     },
     {
-      id: 4,
+      id: 5,
       title: "Agregar miembros del equipo",
       description: "Invita o registra a los colaboradores y profesionales.",
       isCompleted: true, // Completado por defecto (dueño)
@@ -193,7 +240,7 @@ export function DashboardPage() {
       actionLabel: "Gestionar equipo",
     },
     {
-      id: 5,
+      id: 6,
       title: "Publicar negocio",
       description: "Activa la publicación de tu negocio en la plataforma para recibir reservas reales.",
       isCompleted: onboardingStatus.isActive,
@@ -205,11 +252,12 @@ export function DashboardPage() {
   const completedCount = steps.filter(s => s.isCompleted).length
   const progressPercent = Math.round((completedCount / steps.length) * 100)
 
-  // Minimum functional config check (Steps 1 to 3 are the only incomplete requirements)
+  // Minimum functional config check (Steps 1 to 4 are the only incomplete requirements)
   const isMinimumFunctionalComplete =
-    (onboardingStatus.isIndependent === true || (onboardingStatus.isIndependent === false && onboardingStatus.locationsCount > 0)) && // Step 1
-    (onboardingStatus.businessHoursCount > 0) && // Step 2
-    (onboardingStatus.servicesCount > 0) // Step 3
+    (onboardingStatus.hasName && onboardingStatus.hasDescription && onboardingStatus.hasContacts) && // Step 1
+    (onboardingStatus.isIndependent === true || (onboardingStatus.isIndependent === false && onboardingStatus.locationsCount > 0)) && // Step 2
+    (onboardingStatus.businessHoursCount > 0) && // Step 3
+    (onboardingStatus.servicesCount > 0) // Step 4
 
   // Metrics
   const metrics = [

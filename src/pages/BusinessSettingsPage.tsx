@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuthStore } from "@/store/auth.store"
 import { supabase } from "@/utils/supabase"
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,7 @@ interface Member {
 
 export function BusinessSettingsPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { selectedService, selectService, services, setServices, user } = useAuthStore()
 
   const [name, setName] = useState("")
@@ -281,6 +282,11 @@ export function BusinessSettingsPage() {
       )
       setServices(updatedServices)
       selectService({ ...selectedService, name, description, isActive, isIndependent })
+
+      const returnTo = searchParams.get("return_to")
+      if (returnTo) {
+        navigate(returnTo)
+      }
     } catch (err) {
       console.error("Error saving business details:", err)
       toast.error("Error al guardar los cambios.")

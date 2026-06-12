@@ -332,124 +332,202 @@ export function HoursPage() {
         description="Establece los días de la semana y horarios en los que tu negocio está operativo."
       />
 
-      <div className="border border-border rounded-xl bg-card overflow-hidden">
-        <div className="p-6">
-          <h3 className="font-bold text-sm border-b border-border pb-4 mb-4">Disponibilidad semanal</h3>
-          
-          <div className="space-y-4">
-            {DAYS_OF_WEEK.map((day) => {
-              const daySched = schedule[day.value]
-              if (!daySched) return null
+      {/* Visual Weekly Timeline Preview */}
+      <div className="bg-card border border-border rounded-xl p-5 space-y-4 shadow-sm animate-fade-in">
+        <div className="space-y-1">
+          <h3 className="font-bold text-sm text-foreground">Vista Previa del Horario Semanal</h3>
+          <p className="text-xs text-muted-foreground">Línea de tiempo visual de tus turnos de atención activos.</p>
+        </div>
+        
+        <div className="space-y-2.5 pt-2">
+          {DAYS_OF_WEEK.map((day) => {
+            const daySched = schedule[day.value]
+            const isClosed = !daySched || daySched.is_closed
+            
+            return (
+              <div key={day.value} className="flex items-center gap-3">
+                <span className="w-10 text-xs font-semibold text-foreground shrink-0">{day.label.substring(0, 3)}</span>
+                <div className="flex-1 h-3 bg-muted rounded-full relative overflow-hidden flex">
+                  {isClosed ? (
+                    <div className="w-full h-full bg-muted-foreground/5 flex items-center justify-center">
+                      <span className="text-[7px] text-muted-foreground/60 uppercase tracking-widest font-bold font-sans">Cerrado</span>
+                    </div>
+                  ) : (
+                    daySched.intervals.map((interval, idx) => {
+                      const [startH, startM] = interval.open_time.split(":").map(Number)
+                      const [endH, endM] = interval.close_time.split(":").map(Number)
+                      
+                      const timelineStart = 6 * 60
+                      const timelineEnd = 24 * 60
+                      const totalMinutes = timelineEnd - timelineStart
+                      
+                      const startMin = startH * 60 + startM
+                      const endMin = endH * 60 + endM
+                      
+                      const clampedStart = Math.max(timelineStart, Math.min(timelineEnd, startMin))
+                      const clampedEnd = Math.max(timelineStart, Math.min(timelineEnd, endMin))
+                      
+                      const leftPercent = ((clampedStart - timelineStart) / totalMinutes) * 100
+                      const widthPercent = ((clampedEnd - clampedStart) / totalMinutes) * 100
+                      
+                      if (widthPercent <= 0) return null
+                      
+                      return (
+                        <div
+                          key={idx}
+                          className="absolute h-full bg-[#10b981] rounded-full shadow-inner opacity-90 transition-all duration-300"
+                          style={{
+                            left: `${leftPercent}%`,
+                            width: `${widthPercent}%`,
+                          }}
+                          title={`Turno ${idx + 1}: ${interval.open_time} - ${interval.close_time}`}
+                        />
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        
+        <div className="flex justify-between items-center text-[9px] text-muted-foreground px-1 pt-1 font-mono">
+          <span>06:00 AM</span>
+          <span>10:00 AM</span>
+          <span>02:00 PM</span>
+          <span>06:00 PM</span>
+          <span>10:00 PM</span>
+          <span>12:00 AM</span>
+        </div>
+      </div>
 
-              return (
-                <div 
-                  key={day.value}
-                  className={`flex flex-col md:flex-row md:items-start justify-between p-4 border rounded-xl gap-4 transition-colors ${
-                    daySched.is_closed ? "bg-muted/10 border-border opacity-70" : "bg-muted/5 border-border"
-                  }`}
-                >
-                  {/* Day Info (Label & duration) */}
-                  <div className="flex flex-col min-w-[150px]">
-                    <span className="font-bold text-sm">{day.label}</span>
+      {/* Grid of Days */}
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <h3 className="font-bold text-sm text-foreground">Configurar días de atención</h3>
+          <p className="text-xs text-muted-foreground">Configura los turnos de apertura y cierre de cada día de la semana.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {DAYS_OF_WEEK.map((day) => {
+            const daySched = schedule[day.value]
+            if (!daySched) return null
+
+            return (
+              <div 
+                key={day.value}
+                className={`p-5 border rounded-xl bg-card border-border flex flex-col justify-between gap-4 transition-all duration-200 ${
+                  daySched.is_closed ? "opacity-60 bg-muted/10" : "hover:border-foreground/30 shadow-2xs"
+                }`}
+              >
+                {/* Card Header: Day and Toggle */}
+                <div className="flex items-start justify-between gap-2 border-b border-border pb-3">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-sm text-foreground">{day.label}</span>
                     {!daySched.is_closed && (
                       <span className="text-[11px] text-muted-foreground font-medium mt-0.5 animate-fade-in">
-                        {calculateDayDuration(daySched.intervals)} de jornada
+                        {calculateDayDuration(daySched.intervals)}
                       </span>
                     )}
                   </div>
-
-                  {/* Switch and Shifts List */}
-                  <div className="flex flex-col sm:flex-row sm:items-start md:justify-end gap-6 flex-1 w-full">
-                    {/* Toggle closed switch */}
-                    <div className="flex items-center gap-2 pt-2 sm:pt-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleClosed(day.value)}
-                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                          !daySched.is_closed ? "bg-[#10b981]" : "bg-muted"
+                  
+                  {/* Toggle closed switch */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleClosed(day.value)}
+                      className={`relative inline-flex h-4.5 w-8 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        !daySched.is_closed ? "bg-[#10b981]" : "bg-muted"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block size-3.5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          !daySched.is_closed ? "translate-x-3.5" : "translate-x-0"
                         }`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            !daySched.is_closed ? "translate-x-4" : "translate-x-0"
-                          }`}
-                        />
-                      </button>
-                      <span className="text-xs font-semibold select-none w-16">
-                        {daySched.is_closed ? "Cerrado" : "Abierto"}
-                      </span>
-                    </div>
+                      />
+                    </button>
+                    <span className="text-[10px] font-bold select-none w-10 text-muted-foreground">
+                      {!daySched.is_closed ? "Abierto" : "Cerrado"}
+                    </span>
+                  </div>
+                </div>
 
-                    {/* Shifts/Intervals listing */}
-                    {!daySched.is_closed && (
-                      <div className="flex-1 space-y-3 w-full">
-                        <div className="space-y-2">
-                          {daySched.intervals.map((interval, idx) => (
-                            <div key={idx} className="flex items-center gap-2 animate-fade-in flex-wrap sm:flex-nowrap">
+                {/* Card Body: Shifts list */}
+                <div className="flex-1 flex flex-col justify-between gap-4">
+                  {daySched.is_closed ? (
+                    <div className="flex-1 flex items-center justify-center py-6 text-xs text-muted-foreground/40 font-medium">
+                      Cerrado todo el día
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        {daySched.intervals.map((interval, idx) => (
+                          <div key={idx} className="flex items-center gap-1.5 animate-fade-in justify-between">
+                            <div className="flex items-center gap-1">
                               <select
                                 value={interval.open_time}
                                 onChange={(e) => handleTimeChange(day.value, idx, "open_time", e.target.value)}
-                                className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
+                                className="flex h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
                               >
                                 {timeOptions.map((opt) => (
                                   <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
                                 ))}
                               </select>
-                              <span className="text-xs text-muted-foreground font-medium">a</span>
+                              <span className="text-[10px] text-muted-foreground font-medium">a</span>
                               <select
                                 value={interval.close_time}
                                 onChange={(e) => handleTimeChange(day.value, idx, "close_time", e.target.value)}
-                                className="flex h-9 rounded-md border border-input bg-transparent px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
+                                className="flex h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring text-foreground font-mono"
                               >
                                 {timeOptions.map((opt) => (
                                   <option key={opt} value={opt} className="bg-card text-foreground">{opt}</option>
                                 ))}
                               </select>
-                              
-                              {/* Remove shift button */}
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveInterval(day.value, idx)}
-                                className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-1.5 cursor-pointer rounded hover:bg-destructive/5"
-                                title="Eliminar turno"
-                              >
-                                <Trash2 className="size-4" />
-                              </button>
                             </div>
-                          ))}
-                        </div>
-
-                        {/* Add shift action */}
-                        <button
-                          type="button"
-                          onClick={() => handleAddInterval(day.value)}
-                          className="flex items-center gap-1 text-[11px] text-[#10b981] hover:underline font-bold bg-transparent border-0 outline-none cursor-pointer pt-1"
-                        >
-                          <Plus className="size-3" />
-                          Agregar turno / rango
-                        </button>
+                            
+                            {/* Remove shift button */}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveInterval(day.value, idx)}
+                              className="text-muted-foreground hover:text-destructive transition-colors border-0 bg-transparent p-1 cursor-pointer rounded hover:bg-destructive/5"
+                              title="Eliminar turno"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
 
-        {/* Footer save row */}
-        <div className="bg-muted/10 px-6 py-4 flex justify-between items-center border-t border-border">
-          <Button variant="outline" onClick={handleCancel}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSaveTrigger}
-            disabled={isSaving}
-            className="bg-[#10b981] hover:bg-[#059669] text-white font-medium"
-          >
-            {isSaving ? "Guardando..." : "Guardar Horarios"}
-          </Button>
+                      {/* Add shift action */}
+                      <button
+                        type="button"
+                        onClick={() => handleAddInterval(day.value)}
+                        className="flex items-center gap-1 text-[10px] text-[#10b981] hover:underline font-bold bg-transparent border-0 outline-none cursor-pointer pt-1"
+                      >
+                        <Plus className="size-3" />
+                        Agregar turno
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
+      </div>
+
+      {/* Footer save row */}
+      <div className="pt-6 border-t border-border flex justify-between items-center">
+        <Button variant="outline" onClick={handleCancel}>
+          Cancelar
+        </Button>
+        <Button
+          onClick={handleSaveTrigger}
+          disabled={isSaving}
+          className="bg-[#10b981] hover:bg-[#059669] text-white font-medium"
+        >
+          {isSaving ? "Guardando..." : "Guardar Horarios"}
+        </Button>
       </div>
 
       {/* Cancel Confirmation Dialog Overlay */}

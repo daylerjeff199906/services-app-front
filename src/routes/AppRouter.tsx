@@ -3,7 +3,6 @@ import { AuthGuard } from "@/routes/AuthGuard"
 import { LandingPage } from "@/pages/LandingPage"
 import { LoginPage } from "@/pages/LoginPage"
 import { RegisterPage } from "@/pages/RegisterPage"
-import { ServiceSelectorPage } from "@/pages/ServiceSelectorPage"
 import { DashboardPage } from "@/pages/DashboardPage"
 import { PrivateLayout } from "@/layouts/PrivateLayout"
 import { OfferServicesPage } from "@/pages/OfferServicesPage"
@@ -66,16 +65,6 @@ export function AppRouter() {
           element={
             <AuthGuard requireSelectedService={false}>
               <ProfileSettingsPage />
-            </AuthGuard>
-          }
-        />
-
-        {/* Auth Required, but No Selected Service Needed yet */}
-        <Route
-          path="/services"
-          element={
-            <AuthGuard>
-              <ServiceSelectorPage />
             </AuthGuard>
           }
         />

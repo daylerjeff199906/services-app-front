@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/page-header"
 interface Member {
   id: string
   role: string
+  userId: string
   profile: {
     id: string
     full_name: string | null
@@ -25,45 +26,83 @@ export function BusinessTeamPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
 
+  const fetchMembers = async () => {
+    if (!selectedService) return
+    setIsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from("business_user_roles")
+        .select(`
+          id,
+          role,
+          user_id,
+          profiles:user_id (
+            id,
+            full_name,
+            username
+          )
+        `)
+        .eq("business_id", selectedService.id)
+
+      if (error) throw error
+
+      const formatted = (data || []).map((m: any) => {
+        const isMe = m.user_id === user?.id
+        const profileData = m.profiles || (isMe ? {
+          id: user.id,
+          full_name: user.full_name,
+          username: user.email?.split("@")[0] || "usuario",
+        } : null)
+
+        return {
+          id: m.id,
+          role: m.role,
+          userId: m.user_id,
+          profile: profileData,
+        }
+      })
+      setMembers(formatted)
+    } catch (err) {
+      console.error("Error loading team members:", err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (!selectedService) {
       navigate("/intranet/businesses")
       return
     }
+    fetchMembers()
+  }, [selectedService, navigate])
 
-    const fetchMembers = async () => {
-      setIsLoading(true)
+  const myRole = members.find((m) => m.userId === user?.id)?.role
+  const isOwner = myRole === "OWNER"
+
+  const handleRemoveMember = async (memberId: string, memberName: string) => {
+    if (!isOwner) {
+      alert("No tienes permisos de Propietario para remover colaboradores.")
+      return
+    }
+
+    if (window.confirm(`¿Estás seguro de que deseas remover a "${memberName}" del equipo?`)) {
       try {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("business_user_roles")
-          .select(`
-            id,
-            role,
-            profiles:user_id (
-              id,
-              full_name,
-              username
-            )
-          `)
-          .eq("business_id", selectedService.id)
+          .delete()
+          .eq("id", memberId)
 
         if (error) throw error
 
-        const formatted = (data || []).map((m: any) => ({
-          id: m.id,
-          role: m.role,
-          profile: m.profiles,
-        }))
-        setMembers(formatted)
+        setMembers(members.filter((m) => m.id !== memberId))
+        alert("Colaborador removido exitosamente.")
       } catch (err) {
-        console.error("Error loading team members:", err)
-      } finally {
-        setIsLoading(false)
+        console.error("Error removing team member:", err)
+        alert("Ocurrió un error al intentar remover al colaborador.")
       }
     }
-
-    fetchMembers()
-  }, [selectedService, navigate])
+  }
 
   const filteredMembers = members.filter((m) => {
     const fullName = (m.profile?.full_name || "").toLowerCase()
@@ -83,7 +122,7 @@ export function BusinessTeamPage() {
   }
 
   return (
-    <div className="mx-auto space-y-8 text-foreground">
+    <div className="px-8 w-full mx-auto space-y-8 text-foreground">
       {/* Header and Back Button */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-1">
@@ -138,7 +177,7 @@ export function BusinessTeamPage() {
                 </tr>
               ) : (
                 filteredMembers.map((m) => {
-                  const isCurrentUser = m.profile?.id === user?.id
+                  const isCurrentUser = m.userId === user?.id
                   return (
                     <tr key={m.id} className="hover:bg-muted/10 transition-colors">
                       <td className="p-4 flex items-center gap-3">
@@ -171,14 +210,11 @@ export function BusinessTeamPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={isCurrentUser || m.role === "OWNER"}
-                          onClick={() => {
-                            // Leave team/remove logic (can be expanded later if user requests it)
-                            alert("Acción no implementada. Solo los propietarios pueden gestionar la remoción.")
-                          }}
+                          disabled={isCurrentUser || m.role === "OWNER" || !isOwner}
+                          onClick={() => handleRemoveMember(m.id, m.profile?.full_name || "Usuario")}
                           className="text-xs text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
                         >
-                          Abandonar equipo
+                          Remover
                         </Button>
                       </td>
                     </tr>

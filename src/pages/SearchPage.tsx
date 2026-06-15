@@ -218,79 +218,33 @@ export function SearchPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between font-sans transition-colors duration-200">
       {/* Top Navbar Header */}
       <header className="bg-background border-b border-border sticky top-0 z-50 transition-colors">
-        <div className="h-20 px-8 flex items-center justify-between gap-6 container mx-auto">
+        <div className="h-16 px-6 flex items-center justify-between gap-6 container mx-auto">
           {/* Logo */}
-          <Link to="/" className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 flex-shrink-0">
+          <Link to="/" className="font-semibold text-xl text-[#059669] tracking-tight flex items-center gap-1.5 flex-shrink-0">
             Gesti
           </Link>
 
-          {/* Airbnb-style Advanced Search Pill Widget */}
-          <div className="hidden md:flex items-center bg-card border border-border rounded-full py-1.5 pl-6 pr-2 shadow-sm hover:shadow-md transition-shadow duration-200 divide-x divide-border max-w-2xl w-full mx-4">
-            {/* Search Input Block */}
-            <div className="flex-1 pr-4 text-left flex flex-col min-w-[120px]">
-              <label className="text-[10px] font-extrabold uppercase tracking-wider text-foreground">Qué buscas</label>
-              <input
-                type="text"
-                placeholder="Buscar servicios o proveedores..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-                className="bg-transparent border-none outline-none text-xs text-foreground placeholder-muted-foreground w-full font-medium mt-0.5"
-              />
-            </div>
-
-            {/* Date Block */}
-            <div className="flex-1 px-4 text-left flex flex-col min-w-[120px]">
-              <label className="text-[10px] font-extrabold uppercase tracking-wider text-foreground">Disponibilidad</label>
-              <select
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent border-none outline-none text-xs text-foreground font-medium mt-0.5 cursor-pointer"
-              >
-                <option value="">Cualquier fecha</option>
-                <option value="today">Hoy mismo</option>
-                <option value="week">Esta semana</option>
-                <option value="next-week">Próxima semana</option>
-              </select>
-            </div>
-
-            {/* Category Dropdown Block */}
-            <div className="flex-1 pl-4 pr-2 text-left flex flex-col min-w-[120px]">
-              <label className="text-[10px] font-extrabold uppercase tracking-wider text-foreground">Categoría</label>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="bg-transparent border-none outline-none text-xs text-foreground font-medium mt-0.5 cursor-pointer"
-              >
-                <option value="Todo">Todas</option>
-                <option value="Salud">Salud</option>
-                <option value="Legal">Legal</option>
-                <option value="Tecnología">Tecnología</option>
-                <option value="Diseño">Diseño</option>
-                <option value="Estética">Estética</option>
-                <option value="Oficios">Oficios</option>
-                <option value="Educación">Educación</option>
-                <option value="Negocios">Negocios</option>
-              </select>
-            </div>
-
-            {/* Circular Search Button */}
-            <button 
-              onClick={handleSearchSubmit}
-              className="p-3 bg-[#059669] hover:bg-[#047857] text-white rounded-full transition-colors flex items-center justify-center cursor-pointer shadow-sm ml-2 flex-shrink-0"
-            >
-              <Search className="size-4" />
-            </button>
+          {/* Minimalist Professional Search Widget */}
+          <div className="hidden md:flex items-center bg-card border border-border/80 rounded-full py-1.5 px-4 shadow-sm hover:shadow-md hover:border-border transition-all duration-200 max-w-md w-full mx-4">
+            <Search className="size-4 text-muted-foreground mr-2.5 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Buscar servicios o proveedores..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
+              className="bg-transparent border-none outline-none text-xs text-foreground placeholder-muted-foreground w-full font-medium"
+            />
           </div>
 
           {/* Right Navigation Controls */}
-          <div className="flex items-center gap-6 flex-shrink-0">
+          <div className="flex items-center gap-5 flex-shrink-0">
             <ThemeSwitch />
             <div className="flex items-center gap-2">
               {isAuthenticated ? (
                 <Link
-                  to="/services"
-                  className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all shadow-sm"
+                  to="/intranet/businesses"
+                  className="py-1.5 px-3.5 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-medium text-xs transition-all shadow-sm"
                 >
                   {user?.full_name || "Panel"}
                 </Link>
@@ -298,13 +252,13 @@ export function SearchPage() {
                 <>
                   <Link
                     to="/login"
-                    className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all"
+                    className="py-1.5 px-3.5 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-medium text-xs transition-all"
                   >
                     Entrar
                   </Link>
                   <Link
                     to="/register"
-                    className="py-1.5 px-4 bg-primary text-primary-foreground hover:bg-primary/95 rounded-full font-bold text-xs transition-all shadow-sm"
+                    className="py-1.5 px-3.5 bg-primary text-primary-foreground hover:bg-primary/95 rounded-full font-medium text-xs transition-all shadow-sm"
                   >
                     Registrarse
                   </Link>
@@ -316,19 +270,19 @@ export function SearchPage() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 container mx-auto px-8 py-8">
+      <main className="flex-1 container mx-auto px-6 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           
           {/* Left Sidebar Filters (Hidden on Mobile) */}
-          <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 bg-card border border-border rounded-2xl p-6 h-fit text-left">
-            <div className="flex items-center gap-2 border-b border-border pb-3">
-              <SlidersHorizontal className="size-4.5 text-[#059669]" />
-              <h3 className="font-extrabold text-sm uppercase tracking-wider text-foreground">Filtros de Búsqueda</h3>
+          <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 bg-card border border-border/60 rounded-2xl p-6 h-fit text-left">
+            <div className="flex items-center gap-2 border-b border-border/80 pb-3">
+              <SlidersHorizontal className="size-4 text-[#059669]" />
+              <h3 className="font-semibold text-xs uppercase tracking-wider text-foreground">Filtros de Búsqueda</h3>
             </div>
 
             {/* Category Filter */}
-            <div className="space-y-3">
-              <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Categoría Principal</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Categoría Principal</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => {
@@ -339,7 +293,7 @@ export function SearchPage() {
                     date: selectedDate
                   })
                 }}
-                className="w-full p-2.5 bg-background border border-border rounded-lg text-xs outline-none text-foreground focus:border-[#059669] transition-colors"
+                className="w-full p-2.5 bg-background border border-border/80 rounded-lg text-xs outline-none text-foreground focus:border-[#059669] transition-colors"
               >
                 <option value="Todo">Todas las categorías</option>
                 <option value="Salud">Salud</option>
@@ -354,10 +308,10 @@ export function SearchPage() {
             </div>
 
             {/* Price Filter */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <label className="font-extrabold uppercase tracking-wider text-muted-foreground">Precio Máximo</label>
-                <span className="font-bold text-[#059669]">${priceMax} USD</span>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Precio Máximo</label>
+                <span className="font-medium text-[#059669]">${priceMax} USD</span>
               </div>
               <input
                 type="range"
@@ -366,18 +320,18 @@ export function SearchPage() {
                 step="10"
                 value={priceMax}
                 onChange={(e) => setPriceMax(Number(e.target.value))}
-                className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-[#059669]"
+                className="w-full h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-[#059669]"
               />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between text-[9px] text-muted-foreground">
                 <span>$20 USD</span>
                 <span>$500 USD</span>
               </div>
             </div>
 
             {/* Rating Filter */}
-            <div className="space-y-3">
-              <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Valoración Mínima</label>
-              <div className="space-y-2">
+            <div className="space-y-2">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Valoración Mínima</label>
+              <div className="space-y-1.5">
                 {[0, 4.5, 4.8, 4.9].map((ratingVal) => (
                   <button
                     key={ratingVal}
@@ -385,23 +339,23 @@ export function SearchPage() {
                     className={`w-full text-left px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center justify-between transition-all cursor-pointer bg-transparent ${
                       minRating === ratingVal 
                         ? "border-[#059669] text-[#059669] bg-[#059669]/5" 
-                        : "border-border text-foreground hover:bg-muted"
+                        : "border-border/60 text-foreground hover:bg-muted"
                     }`}
                   >
                     <span>{ratingVal === 0 ? "Cualquier calificación" : `★ ${ratingVal.toFixed(1)} o más`}</span>
-                    {ratingVal > 0 && <Star className="size-3 fill-yellow-500 text-yellow-500" />}
+                    {ratingVal > 0 && <Star className="size-3 fill-amber-450 text-amber-450" />}
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Sorting */}
-            <div className="space-y-3">
-              <label className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">Ordenar por</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Ordenar por</label>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full p-2.5 bg-background border border-border rounded-lg text-xs outline-none text-foreground focus:border-[#059669] transition-colors"
+                className="w-full p-2.5 bg-background border border-border/80 rounded-lg text-xs outline-none text-foreground focus:border-[#059669] transition-colors"
               >
                 <option value="rating">Mejor Calificados</option>
                 <option value="price-asc">Precio: de menor a mayor</option>
@@ -413,9 +367,9 @@ export function SearchPage() {
           {/* Right Main Grid */}
           <div className="flex-1 space-y-6 text-left">
             {/* Header info */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-4">
               <div>
-                <h1 className="text-2xl font-extrabold tracking-tight">
+                <h1 className="text-xl font-semibold tracking-tight">
                   {selectedCategory === "Todo" ? "Todos los Servicios" : `Servicios de ${selectedCategory}`}
                 </h1>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -431,7 +385,7 @@ export function SearchPage() {
                     setPriceMax(500)
                     setMinRating(0)
                   }}
-                  className="text-xs font-bold text-[#059669] hover:underline bg-transparent cursor-pointer"
+                  className="text-xs font-semibold text-[#059669] hover:underline bg-transparent cursor-pointer"
                 >
                   Restaurar búsqueda original
                 </button>
@@ -441,7 +395,7 @@ export function SearchPage() {
             {/* Grid display */}
             {filteredServices.length === 0 ? (
               <div className="text-center py-24 border border-dashed border-border rounded-2xl bg-muted/10 space-y-4">
-                <p className="text-muted-foreground font-bold text-base">No se encontraron servicios</p>
+                <p className="text-muted-foreground font-semibold text-base">No se encontraron servicios</p>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                   Prueba cambiando la categoría de búsqueda, disminuyendo la valoración mínima o aumentando el precio máximo en el panel de filtros.
                 </p>
@@ -471,10 +425,10 @@ export function SearchPage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-muted/40 border-t border-border py-8 text-xs text-muted-foreground mt-12 transition-colors">
-        <div className="container mx-auto px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="font-bold text-foreground">Gesti Marketplace</span>
-          <div className="flex gap-6 font-semibold">
+      <footer className="bg-muted/30 border-t border-border/60 py-8 text-xs text-muted-foreground mt-12 transition-colors">
+        <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <span className="font-semibold text-foreground">Gesti Marketplace</span>
+          <div className="flex gap-6 font-medium">
             <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>
             <Link to="/ofrecer" className="hover:text-foreground transition-colors">Ofrecer Servicios</Link>
             <a href="#" className="hover:text-foreground transition-colors">Términos de Uso</a>

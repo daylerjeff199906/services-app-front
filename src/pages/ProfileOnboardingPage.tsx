@@ -26,17 +26,17 @@ const stepTwoSchema = z.object({
 export function ProfileOnboardingPage() {
   const navigate = useNavigate()
   const { user, login } = useAuthStore()
-  
+
   const [currentStep, setCurrentStep] = useState(1)
-  
+
   // Step 1 State
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
-  
+
   // Step 2 State
   const [specialty, setSpecialty] = useState("")
   const [bio, setBio] = useState("")
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -54,7 +54,7 @@ export function ProfileOnboardingPage() {
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault()
     setErrors({})
-    
+
     const result = stepOneSchema.safeParse({ name, phone })
     if (!result.success) {
       const fieldErrors: Record<string, string> = {}
@@ -168,20 +168,20 @@ export function ProfileOnboardingPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row font-sans">
-      
+
       {/* Left Column: Containerless Open Form Area */}
       <div className="flex-1 flex flex-col justify-between p-8 md:p-16 lg:p-24 max-w-2xl w-full mx-auto md:mx-0">
-        
+
         {/* Brand Header */}
         <div>
-          <div className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
+          <div className="font-bold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
             Gesti
           </div>
         </div>
 
         {/* Form Body - Open layout, no card background, no shadows */}
         <div className="my-auto py-12 max-w-md w-full">
-          
+
           {/* Progress Indicators */}
           <div className="flex items-center gap-2 mb-8">
             <div className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${currentStep >= 1 ? "bg-[#059669]" : "bg-muted"}`} />
@@ -194,7 +194,7 @@ export function ProfileOnboardingPage() {
 
           {currentStep === 1 ? (
             <div className="animate-fade-in">
-              <h1 className="text-3xl font-extrabold tracking-tight mb-2">Ayúdanos a conocerte</h1>
+              <h1 className="text-3xl font-bold tracking-tight mb-2">Ayúdanos a conocerte</h1>
               <p className="text-sm text-muted-foreground mb-8">
                 Ingresa tu nombre completo y teléfono de contacto para configurar tu perfil.
               </p>
@@ -247,7 +247,7 @@ export function ProfileOnboardingPage() {
             </div>
           ) : (
             <div className="animate-fade-in">
-              <h1 className="text-3xl font-extrabold tracking-tight mb-2">Cuéntanos sobre tu negocio</h1>
+              <h1 className="text-3xl font-bold tracking-tight mb-2">Cuéntanos sobre tu negocio</h1>
               <p className="text-sm text-muted-foreground mb-8">
                 Define tu especialidad y agrega una breve descripción profesional para tus clientes.
               </p>
@@ -307,9 +307,9 @@ export function ProfileOnboardingPage() {
                     >
                       Atrás
                     </button>
-                    <Button 
-                      type="submit" 
-                      className="flex-1 font-semibold py-2.5 flex items-center justify-center" 
+                    <Button
+                      type="submit"
+                      className="flex-1 font-semibold py-2.5 flex items-center justify-center"
                       disabled={isSubmitting}
                     >
                       {isSubmitting ? (
@@ -340,9 +340,9 @@ export function ProfileOnboardingPage() {
         {/* Footer info */}
         <div className="flex justify-between items-center text-xs text-muted-foreground pt-4 border-t border-border">
           <span>{user?.email}</span>
-          <button 
-            type="button" 
-            onClick={handleLogout} 
+          <button
+            type="button"
+            onClick={handleLogout}
             className="text-destructive hover:underline font-semibold"
           >
             Cerrar Sesión
@@ -354,22 +354,22 @@ export function ProfileOnboardingPage() {
       {/* Right Column: Premium SVG Graphic Banner (Desktop Only) */}
       <div className="hidden md:flex flex-1 bg-muted border-l border-border relative overflow-hidden items-center justify-center p-12">
         <div className="max-w-md w-full text-center flex flex-col items-center select-none">
-          
+
           {/* Beautiful Custom Flat Dashboard SVG */}
           <svg className="w-64 h-64 mb-8" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
             {/* Background elements */}
             <rect x="20" y="40" width="160" height="120" rx="8" fill="var(--background)" stroke="var(--border)" strokeWidth="2" />
             <line x1="20" y1="70" x2="180" y2="70" stroke="var(--border)" strokeWidth="2" />
-            
+
             {/* Dots representing window controls */}
             <circle cx="35" cy="55" r="4" fill="var(--destructive)" />
             <circle cx="47" cy="55" r="4" fill="var(--accent-foreground)" />
             <circle cx="59" cy="55" r="4" fill="#059669" />
-            
+
             {/* Grid metrics (Flat layout representation) */}
             <rect x="35" y="85" width="40" height="30" rx="4" fill="var(--muted)" stroke="var(--border)" strokeWidth="1.5" />
             <rect x="85" y="85" width="80" height="30" rx="4" fill="var(--muted)" stroke="var(--border)" strokeWidth="1.5" />
-            
+
             {/* Flat graph vectors */}
             <rect x="35" y="125" width="130" height="20" rx="4" fill="var(--muted)" stroke="var(--border)" strokeWidth="1.5" />
             <circle cx="50" cy="135" r="5" fill="#059669" />

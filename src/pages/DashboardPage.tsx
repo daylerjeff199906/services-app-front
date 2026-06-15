@@ -53,14 +53,14 @@ export function DashboardPage() {
           .select("name, description, contact_numbers, social_links, is_independent, is_active")
           .eq("id", selectedService.id)
           .single()
-        
+
         if (error) {
           const { data: fbData, error: fbError } = await supabase
             .from("businesses")
             .select("name, description, contact_numbers, is_independent, is_active")
             .eq("id", selectedService.id)
             .single()
-          
+
           if (fbError) {
             const { data: minData, error: minError } = await supabase
               .from("businesses")
@@ -205,13 +205,13 @@ export function DashboardPage() {
       description: onboardingStatus.isIndependent === true
         ? "Configurado como negocio independiente/a domicilio (sin local físico)."
         : onboardingStatus.isIndependent === false
-        ? "Registra los locales y sucursales donde atiendes."
-        : "Configura si tu negocio tiene locales físicos o es a domicilio.",
+          ? "Registra los locales y sucursales donde atiendes."
+          : "Configura si tu negocio tiene locales físicos o es a domicilio.",
       isCompleted: onboardingStatus.isIndependent === true
         ? true
         : onboardingStatus.isIndependent === false
-        ? onboardingStatus.locationsCount > 0
-        : false,
+          ? onboardingStatus.locationsCount > 0
+          : false,
       path: onboardingStatus.isIndependent === null ? "/dashboard/settings/business?return_to=/dashboard" : "/dashboard/agenda/locations?return_to=/dashboard",
       actionLabel: onboardingStatus.isIndependent === null ? "Configurar tipo de negocio" : "Configurar locales",
     },
@@ -327,11 +327,11 @@ export function DashboardPage() {
                 <div className="flex items-center gap-4 bg-muted/20 px-4 py-2.5 rounded-xl border border-border">
                   <div className="text-right">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Progreso</span>
-                    <span className="text-lg font-black font-mono text-[#10b981]">{completedCount} <span className="text-muted-foreground font-normal text-sm font-sans">/ {steps.length}</span></span>
+                    <span className="text-lg font-bold font-mono text-[#10b981]">{completedCount} <span className="text-muted-foreground font-normal text-sm font-sans">/ {steps.length}</span></span>
                   </div>
                   {/* Progress Circle badge indicator */}
                   <div className="w-11 h-11 rounded-full border-4 border-muted flex items-center justify-center relative overflow-hidden bg-background">
-                    <span className="relative z-10 text-xs font-extrabold text-foreground font-mono">
+                    <span className="relative z-10 text-xs font-bold text-foreground font-mono">
                       {progressPercent}%
                     </span>
                   </div>
@@ -399,7 +399,7 @@ export function DashboardPage() {
               {metrics.map((metric) => (
                 <div key={metric.name} className="p-6 bg-card border border-border rounded-xl">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{metric.name}</span>
-                  <p className="text-3xl font-extrabold tracking-tight mt-2">{metric.value}</p>
+                  <p className="text-3xl font-bold tracking-tight mt-2">{metric.value}</p>
                   <span className="text-xs text-[#10b981] font-medium block mt-2">{metric.change}</span>
                 </div>
               ))}

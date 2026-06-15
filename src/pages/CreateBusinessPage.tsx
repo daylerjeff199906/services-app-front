@@ -48,7 +48,7 @@ export function CreateBusinessPage() {
       .replace(/[^a-z0-9\s-]/g, "")     // Keep only alphanumeric, spaces, and hyphens
       .replace(/\s+/g, "-")            // Replace spaces with hyphens
       .replace(/-+/g, "-")             // Deduplicate hyphens
-    
+
     setSlug(generatedSlug)
   }, [name])
 
@@ -128,21 +128,21 @@ export function CreateBusinessPage() {
       {/* Top Header */}
       <header className="h-16 bg-card border-b border-border flex items-center justify-between px-8 flex-shrink-0">
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => navigate("/intranet/businesses")}
             className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors py-1.5 px-3 border border-border rounded-md bg-muted/20"
           >
             <ArrowLeft className="size-3.5" />
             Volver
           </button>
-          <span className="font-extrabold text-xl text-[#059669] tracking-tighter ml-2">
+          <span className="font-bold text-xl text-[#059669] tracking-tighter ml-2">
             Gesti
           </span>
         </div>
 
         <div className="flex items-center gap-6 text-sm">
           <ThemeSwitch />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 outline-none p-1.5 rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border">
@@ -171,7 +171,7 @@ export function CreateBusinessPage() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => navigate("/profile/settings")}
                 className="gap-2 p-2 cursor-pointer"
               >
@@ -179,7 +179,7 @@ export function CreateBusinessPage() {
                 Mi Cuenta / Perfil
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={handleLogout}
                 className="gap-2 p-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
               >
@@ -209,7 +209,7 @@ export function CreateBusinessPage() {
         <form onSubmit={handleCreate} className="space-y-6">
           {/* Form Card Group */}
           <div className="border border-border rounded-xl bg-card overflow-hidden">
-            
+
             {/* Organization Row */}
             <div className="flex flex-col md:flex-row md:items-center justify-between p-6 gap-4 border-b border-border">
               <div className="md:w-1/3">
@@ -231,7 +231,7 @@ export function CreateBusinessPage() {
                 <label htmlFor="biz-name" className="text-sm font-medium text-foreground">Nombre del Negocio</label>
               </div>
               <div className="md:w-2/3 max-w-md w-full">
-                <Input 
+                <Input
                   id="biz-name"
                   type="text"
                   placeholder="Nombre de tu proyecto o empresa"
@@ -257,7 +257,7 @@ export function CreateBusinessPage() {
                   <span className="bg-muted px-3 border-r border-border text-xs text-muted-foreground flex items-center font-mono select-none">
                     /
                   </span>
-                  <input 
+                  <input
                     id="biz-slug"
                     type="text"
                     placeholder="dentalsmile"
@@ -279,7 +279,7 @@ export function CreateBusinessPage() {
                 <label htmlFor="biz-desc" className="text-sm font-medium text-foreground">Descripción (Opcional)</label>
               </div>
               <div className="md:w-2/3 max-w-md w-full">
-                <textarea 
+                <textarea
                   id="biz-desc"
                   rows={4}
                   placeholder="Describe los servicios que ofrece tu espacio de trabajo..."
@@ -301,8 +301,8 @@ export function CreateBusinessPage() {
               >
                 Cancelar
               </button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={isSubmitting}
                 className="bg-[#10b981] hover:bg-[#059669] text-white font-medium px-5 rounded-lg border-0 shadow-none transition-colors"
               >

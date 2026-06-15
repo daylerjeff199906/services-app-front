@@ -14,7 +14,7 @@ import {
   SheetDescription,
   SheetFooter,
 } from "@/components/ui/sheet"
-import { Trash2, ArrowUp, ArrowDown, Plus, Lock, Edit } from "lucide-react"
+import { Trash2, ArrowUp, ArrowDown, Plus, Lock, Edit, GripVertical } from "lucide-react"
 import { toast } from "sonner"
 
 interface Category {
@@ -41,6 +41,10 @@ export function CategoriesPage() {
   const [description, setDescription] = useState("")
   const [order, setOrder] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Drag and drop states
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   // Delete Alert Dialog states
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
@@ -171,33 +175,78 @@ export function CategoriesPage() {
     }
   }
 
+  const updateCategoryOrders = async (reorderedCategories: Category[]) => {
+    setCategories(reorderedCategories)
+    try {
+      const promises = reorderedCategories.map((cat, idx) =>
+        supabase
+          .from("service_categories")
+          .update({ display_order: idx })
+          .eq("id", cat.id)
+      )
+      const results = await Promise.all(promises)
+      const errorResult = results.find((r) => r.error)
+      if (errorResult?.error) throw errorResult.error
+      toast.success("Orden de categorías actualizado")
+    } catch (err) {
+      console.error("Error updating category order:", err)
+      toast.error("Error al guardar el nuevo orden", {
+        description: "No se pudieron actualizar los cambios en el servidor."
+      })
+      fetchCategories()
+    }
+  }
+
   const moveOrder = async (index: number, direction: "up" | "down") => {
     const targetIndex = direction === "up" ? index - 1 : index + 1
     if (targetIndex < 0 || targetIndex >= categories.length) return
 
-    const currentCat = categories[index]
-    const targetCat = categories[targetIndex]
+    const reordered = [...categories]
+    const [removed] = reordered.splice(index, 1)
+    reordered.splice(targetIndex, 0, removed)
 
-    try {
-      const { error: err1 } = await supabase
-        .from("service_categories")
-        .update({ display_order: targetCat.display_order })
-        .eq("id", currentCat.id)
+    const updated = reordered.map((cat, idx) => ({
+      ...cat,
+      display_order: idx,
+    }))
 
-      if (err1) throw err1
+    updateCategoryOrders(updated)
+  }
 
-      const { error: err2 } = await supabase
-        .from("service_categories")
-        .update({ display_order: currentCat.display_order })
-        .eq("id", targetCat.id)
+  // HTML5 Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = "move"
+  }
 
-      if (err2) throw err2
-
-      fetchCategories()
-    } catch (err) {
-      console.error("Error swapping category order:", err)
-      toast.error("Error al reordenar")
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index)
     }
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault()
+    if (draggedIndex === null || draggedIndex === targetIndex) return
+
+    const reordered = [...categories]
+    const [removed] = reordered.splice(draggedIndex, 1)
+    reordered.splice(targetIndex, 0, removed)
+
+    const updated = reordered.map((cat, idx) => ({
+      ...cat,
+      display_order: idx,
+    }))
+
+    updateCategoryOrders(updated)
+    setDraggedIndex(null)
+    setDragOverIndex(null)
   }
 
   if (isLoading) {
@@ -235,6 +284,7 @@ export function CategoriesPage() {
         <table className="w-full border-collapse text-left text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/10 text-muted-foreground text-xs uppercase font-semibold">
+              <th className="p-4 w-12 text-center"></th>
               <th className="p-4 w-20 text-center">Orden</th>
               <th className="p-4">Categoría</th>
               <th className="p-4">Descripción</th>
@@ -244,33 +294,58 @@ export function CategoriesPage() {
           <tbody className="divide-y divide-border">
             {categories.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-16 text-center text-muted-foreground font-medium">
+                <td colSpan={5} className="p-16 text-center text-muted-foreground font-medium">
                   No hay categorías registradas en este negocio.
                 </td>
               </tr>
             ) : (
               categories.map((cat, index) => {
                 const isDefault = cat.name.toLowerCase() === "servicios generales"
+                const isDragging = draggedIndex === index
+                const isOver = dragOverIndex === index
                 return (
-                  <tr key={cat.id} className="hover:bg-muted/5 transition-colors">
+                  <tr
+                    key={cat.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                    onDrop={(e) => handleDrop(e, index)}
+                    className={`transition-all duration-150 ${
+                      isDragging
+                        ? "opacity-30 bg-muted/40 cursor-grabbing"
+                        : "hover:bg-muted/5 cursor-grab active:cursor-grabbing"
+                    } ${
+                      isOver ? "bg-emerald-500/5 ring-1 ring-emerald-500/20" : ""
+                    }`}
+                  >
+                    <td className="p-4 text-center text-muted-foreground hover:text-foreground transition-colors">
+                      <GripVertical className="size-4 inline-block" />
+                    </td>
                     <td className="p-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <span className="font-bold text-foreground text-sm">{cat.display_order}</span>
                         <div className="flex flex-col">
                           <button
                             type="button"
-                            onClick={() => moveOrder(index, "up")}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              moveOrder(index, "up")
+                            }}
                             disabled={index === 0}
-                            className="p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground rounded disabled:opacity-30 transition-colors"
+                            className="p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground rounded disabled:opacity-30 transition-colors cursor-pointer"
                             title="Subir prioridad"
                           >
                             <ArrowUp className="size-3" />
                           </button>
                           <button
                             type="button"
-                            onClick={() => moveOrder(index, "down")}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              moveOrder(index, "down")
+                            }}
                             disabled={index === categories.length - 1}
-                            className="p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground rounded disabled:opacity-30 transition-colors"
+                            className="p-0.5 hover:bg-muted text-muted-foreground hover:text-foreground rounded disabled:opacity-30 transition-colors cursor-pointer"
                             title="Bajar prioridad"
                           >
                             <ArrowDown className="size-3" />
@@ -278,18 +353,21 @@ export function CategoriesPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 font-semibold text-foreground">
+                    <td className="p-4 font-semibold text-foreground cursor-default" onMouseDown={(e) => e.stopPropagation()}>
                       {cat.name}
                     </td>
-                    <td className="p-4 text-muted-foreground max-w-md truncate">
+                    <td className="p-4 text-muted-foreground max-w-md truncate cursor-default" onMouseDown={(e) => e.stopPropagation()}>
                       {cat.description || "Sin descripción"}
                     </td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right cursor-default" onMouseDown={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="outline"
-                          onClick={() => openEditSheet(cat)}
-                          className="size-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openEditSheet(cat)
+                          }}
+                          className="size-8 p-0 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                         >
                           <Edit className="size-3.5" />
                         </Button>
@@ -306,11 +384,12 @@ export function CategoriesPage() {
                         ) : (
                           <Button
                             variant="outline"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               setDeleteConfirmId(cat.id)
                               setDeleteConfirmName(cat.name)
                             }}
-                            className="size-8 p-0 text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/5"
+                            className="size-8 p-0 text-muted-foreground hover:text-destructive hover:border-destructive/30 hover:bg-destructive/5 cursor-pointer"
                           >
                             <Trash2 className="size-3.5" />
                           </Button>

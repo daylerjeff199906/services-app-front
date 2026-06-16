@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useAuthStore } from "../store/auth.store"
-import { ThemeSwitch } from "@/components/ui/theme-switch"
 import { Header } from "../components/Header"
 import {
   ShieldCheck,

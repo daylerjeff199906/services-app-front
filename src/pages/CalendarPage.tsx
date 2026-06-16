@@ -2,26 +2,18 @@ import React, { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthStore } from "@/store/auth.store"
 import { supabase } from "@/utils/supabase"
-import { LayoutWrapper } from "@/components/layout-wrapper"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
+import { ThemeSwitch } from "@/components/ui/theme-switch"
 import {
   ChevronLeft,
   ChevronRight,
-  Plus,
   RefreshCw,
   Printer,
   Calendar,
-  Clock,
-  MapPin,
-  User,
-  Share2,
   X,
-  Check,
-  AlertTriangle,
-  Lock,
-  ClipboardList
+  Lock
 } from "lucide-react"
 
 // Types
@@ -507,147 +499,35 @@ export function CalendarPage() {
     setIsPrintModalOpen(false)
   }
 
-  // Share link helper
-  const handleCopyShareLink = () => {
-    const slug = selectedService?.slug || selectedService?.name?.toLowerCase().replace(/[^a-z0-9]+/g, "") || "negocio"
-    const link = `https://gesti.app/reservar/${slug}`
-    navigator.clipboard.writeText(link)
-    toast.success("¡Enlace copiado al portapapeles!")
-  }
 
   return (
-    <LayoutWrapper sectionTitle="Agenda">
-      <div className="w-full text-foreground space-y-6">
-        
-        {/* TOP BAR / CALENDAR HEADER */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-4 rounded-xl border border-border">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Calendario de Reservas</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="p-1 px-2.5 rounded bg-muted font-bold text-xs uppercase select-none text-foreground">Semana</span>
-              <div className="flex border border-border rounded-md overflow-hidden bg-background">
-                <button 
-                  onClick={handlePrevWeek}
-                  className="p-1.5 hover:bg-muted text-muted-foreground border-r border-border transition-colors outline-none"
-                  title="Semana anterior"
-                >
-                  <ChevronLeft className="size-4" />
-                </button>
-                <button 
-                  onClick={handleNextWeek}
-                  className="p-1.5 hover:bg-muted text-muted-foreground transition-colors outline-none"
-                  title="Siguiente semana"
-                >
-                  <ChevronRight className="size-4" />
-                </button>
-              </div>
-              <span className="text-xs text-muted-foreground font-medium pl-1 hidden sm:inline-block">
-                {getHeaderDateRangeString()}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleSetToday}
-              className="text-xs font-medium"
-            >
-              Hoy
-            </Button>
-            <button 
-              onClick={() => toast.success("Agenda actualizada")}
-              className="p-2 border border-border hover:bg-muted bg-background text-muted-foreground rounded-lg transition-colors outline-none"
-              title="Actualizar agenda"
-            >
-              <RefreshCw className="size-4" />
-            </button>
-            <button 
-              onClick={() => {
-                if (locations.length > 0) setPrintLocationId(locations[0].id)
-                if (staffList.length > 0) setPrintStaffId(staffList[0].id)
-                setIsPrintModalOpen(true)
-              }}
-              className="p-2 border border-border hover:bg-muted bg-background text-muted-foreground rounded-lg transition-colors outline-none"
-              title="Imprimir horarios"
-            >
-              <Printer className="size-4" />
-            </button>
-
-            {/* Nuevo Dropdown Trigger */}
-            <div className="relative" ref={dropdownRef}>
-              <button 
-                onClick={() => setIsNewDropdownOpen(!isNewDropdownOpen)}
-                className="flex items-center gap-1.5 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-colors outline-none"
-              >
-                Nuevo
-                <span className="text-[10px]">▼</span>
-              </button>
-              
-              {isNewDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-30 py-1.5 animate-scale-in">
-                  <button
-                    onClick={() => {
-                      setIsBookingModalOpen(true)
-                      setIsNewDropdownOpen(false)
-                    }}
-                    className="w-full text-left px-4 py-2 text-xs text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer font-medium"
-                  >
-                    <Calendar className="size-4 text-violet-500" />
-                    Reserva
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsBlockModalOpen(true)
-                      setIsNewDropdownOpen(false)
-                    }}
-                    className="w-full text-left px-4 py-2 text-xs text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer border-t border-border/60 font-medium"
-                  >
-                    <Lock className="size-4 text-amber-500" />
-                    Bloquear horario
-                  </button>
-                </div>
-              )}
-            </div>
+    <div className="w-screen h-screen flex flex-col bg-background text-foreground overflow-hidden font-sans">
+      {/* Top Header */}
+      <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6 flex-shrink-0 select-none">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-semibold py-1.5 px-3 rounded-lg border border-border bg-background transition-colors outline-none cursor-pointer"
+          >
+            ← Volver al Panel
+          </button>
+          <div className="h-4 w-[1px] bg-border" />
+          <span className="text-sm font-semibold tracking-tight">Agenda / Calendario Semanal</span>
+        </div>
+        <div className="flex items-center gap-4 text-xs">
+          <ThemeSwitch />
+          <div className="flex items-center gap-2 font-medium">
+            <span className="text-muted-foreground">Entorno de Producción</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           </div>
         </div>
+      </header>
 
-        {/* MAIN BODY GRID */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
-          
-          {/* LEFT SIDEBAR FILTERS */}
-          <div className="xl:col-span-1 space-y-6">
+      {/* Main Container with flex layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* LEFT SIDEBAR FIXED */}
+        <aside className="w-80 border-r border-border bg-card p-5 overflow-y-auto flex-shrink-0 hidden xl:flex flex-col gap-6 select-none">
             
-            {/* Share Link Card */}
-            <div className="p-4 bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/20 rounded-xl relative overflow-hidden">
-              <div className="absolute -right-6 -bottom-6 size-20 rounded-full bg-emerald-500/10 blur-xl pointer-events-none" />
-              <div className="space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-xs text-emerald-600 dark:text-emerald-400">¡Comparte tu link y recibe citas!</h4>
-                    <p className="text-[10px] text-muted-foreground leading-relaxed">Permite a tus clientes agendar de forma virtual 24/7 sin llamadas intermedias.</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 bg-background/80 dark:bg-zinc-950/80 border border-border p-1.5 rounded-lg">
-                  <input
-                    type="text"
-                    readOnly
-                    value={`negociode${selectedService?.slug || "josejefferson"}`}
-                    className="w-full text-[11px] text-muted-foreground bg-transparent border-0 focus:outline-none font-mono truncate px-1 select-all"
-                  />
-                  <button 
-                    onClick={handleCopyShareLink}
-                    className="p-1 hover:bg-muted rounded text-[#10b981] transition-colors outline-none cursor-pointer"
-                    title="Copiar enlace"
-                  >
-                    <Share2 className="size-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
 
             {/* Filters Selection Card */}
             <div className="p-5 bg-card border border-border rounded-xl space-y-4">
@@ -749,10 +629,108 @@ export function CalendarPage() {
                 })}
               </div>
             </div>
+        </aside>
+
+        {/* MAIN CALENDAR CONTENT */}
+        <div className="flex-1 overflow-y-auto p-6 bg-muted/5 space-y-6 animate-fade-in">
+          {/* TOP BAR / CALENDAR HEADER (Clean, no padding, no border) */}
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 select-none">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Calendario de Reservas</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="p-1 px-2.5 rounded bg-muted font-bold text-xs uppercase select-none text-foreground">Semana</span>
+                <div className="flex border border-border rounded-md overflow-hidden bg-background">
+                  <button 
+                    onClick={handlePrevWeek}
+                    className="p-1.5 hover:bg-muted text-muted-foreground border-r border-border transition-colors outline-none cursor-pointer"
+                    title="Semana anterior"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </button>
+                  <button 
+                    onClick={handleNextWeek}
+                    className="p-1.5 hover:bg-muted text-muted-foreground transition-colors outline-none cursor-pointer"
+                    title="Siguiente semana"
+                  >
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
+                <span className="text-xs text-muted-foreground font-medium pl-1 hidden sm:inline-block">
+                  {getHeaderDateRangeString()}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-end">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSetToday}
+                className="text-xs font-medium"
+              >
+                Hoy
+              </Button>
+              <button 
+                onClick={() => toast.success("Agenda actualizada")}
+                className="p-2 border border-border hover:bg-muted bg-background text-muted-foreground rounded-lg transition-colors outline-none cursor-pointer"
+                title="Actualizar agenda"
+              >
+                <RefreshCw className="size-4" />
+              </button>
+              <button 
+                onClick={() => {
+                  if (locations.length > 0) setPrintLocationId(locations[0].id)
+                  if (staffList.length > 0) setPrintStaffId(staffList[0].id)
+                  setIsPrintModalOpen(true)
+                }}
+                className="p-2 border border-border hover:bg-muted bg-background text-muted-foreground rounded-lg transition-colors outline-none cursor-pointer"
+                title="Imprimir horarios"
+              >
+                <Printer className="size-4" />
+              </button>
+
+              {/* Nuevo Dropdown Trigger */}
+              <div className="relative" ref={dropdownRef}>
+                <button 
+                  onClick={() => setIsNewDropdownOpen(!isNewDropdownOpen)}
+                  className="flex items-center gap-1.5 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-colors outline-none"
+                >
+                  Nuevo
+                  <span className="text-[10px]">▼</span>
+                </button>
+                
+                {isNewDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-30 py-1.5 animate-scale-in">
+                    <button
+                      onClick={() => {
+                        setIsBookingModalOpen(true)
+                        setIsNewDropdownOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-xs text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer font-medium"
+                    >
+                      <Calendar className="size-4 text-violet-500" />
+                      Reserva
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsBlockModalOpen(true)
+                        setIsNewDropdownOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-2 text-xs text-foreground hover:bg-muted flex items-center gap-2 cursor-pointer border-t border-border/60 font-medium"
+                    >
+                      <Lock className="size-4 text-amber-500" />
+                      Bloquear horario
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* CALENDAR WEEKLY GRID */}
-          <div className="xl:col-span-3 border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+          <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
             
             {/* GRID HEADER */}
             <div className="bg-muted/10 border-b border-border/80 p-3 text-center font-bold text-xs uppercase text-muted-foreground flex justify-between items-center">
@@ -802,7 +780,6 @@ export function CalendarPage() {
                       {/* Day columns */}
                       {weekDates.map((dayDate, dayIdx) => {
                         const dayStr = formatDateISO(dayDate)
-                        const cellId = `${dayStr}-${hour}`
 
                         // Check if this slot has a booking
                         const cellBookings = bookings.filter(b => 
@@ -1295,6 +1272,6 @@ export function CalendarPage() {
         )}
 
       </div>
-    </LayoutWrapper>
+    </div>
   )
 }

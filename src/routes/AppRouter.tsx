@@ -78,6 +78,15 @@ export function AppRouter() {
           }
         />
 
+        <Route
+          path="/dashboard/agenda/calendar"
+          element={
+            <AuthGuard requireSelectedService allowedRoles={["SERVICE_OWNER"]}>
+              <CalendarPage />
+            </AuthGuard>
+          }
+        />
+
         {/* Intranet Dashboard (Requires Auth, Complete Profile AND Active Service Selection) */}
         <Route
           path="/dashboard"
@@ -178,14 +187,6 @@ export function AppRouter() {
           />
 
           {/* Agenda & Hours Routes */}
-          <Route
-            path="agenda/calendar"
-            element={
-              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
-                <CalendarPage />
-              </AuthGuard>
-            }
-          />
           <Route
             path="agenda/hours"
             element={

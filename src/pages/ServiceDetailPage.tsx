@@ -1,7 +1,5 @@
 import { useState } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
-import { useAuthStore } from "../store/auth.store"
-import { ThemeSwitch } from "@/components/ui/theme-switch"
 import { ServiceCard } from "@/components/ServiceCard"
 import { Header } from "../components/Header"
 import {
@@ -27,7 +25,6 @@ import {
 export function ServiceDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAuthenticated, user } = useAuthStore()
 
 
 

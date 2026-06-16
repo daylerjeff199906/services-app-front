@@ -1,36 +1,24 @@
 import { useState, useRef, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { useAuthStore } from "../store/auth.store"
-import { ThemeSwitch } from "@/components/ui/theme-switch"
 import { ServiceCard } from "@/components/ServiceCard"
-import { 
-  Search, 
-  ChevronLeft, 
+import { Header } from "../components/Header"
+import {
+  ChevronLeft,
   ChevronRight,
-  ChevronDown,
   TrendingUp,
   UserCheck,
   ShieldCheck,
-  Scale, 
-  HeartPulse, 
-  Palette, 
-  Code, 
-  GraduationCap, 
+  Scale,
+  HeartPulse,
+  Palette,
+  Code,
+  GraduationCap,
   Megaphone,
-  Grid,
   Sparkles,
-  Scissors,
-  Wrench
 } from "lucide-react"
 
 export function LandingPage() {
-  const { isAuthenticated, user } = useAuthStore()
   const navigate = useNavigate()
-  
-  // Search & Filter State
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedDate, setSelectedDate] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("Todo")
 
   // Refs for functional carousels
   const carousel1Ref = useRef<HTMLDivElement>(null)
@@ -39,7 +27,7 @@ export function LandingPage() {
 
   // Carousel Banner State (auto loop, min 3 slides)
   const [currentSlide, setCurrentSlide] = useState(0)
-  
+
   const slides = [
     {
       id: 0,
@@ -99,18 +87,7 @@ export function LandingPage() {
     }
   }
 
-  // Categories list matching Airbnb filters layout
-  const categoriesList = [
-    { name: "Todo", icon: <Grid className="size-5" /> },
-    { name: "Salud", icon: <HeartPulse className="size-5" /> },
-    { name: "Legal", icon: <Scale className="size-5" /> },
-    { name: "Tecnología", icon: <Code className="size-5" /> },
-    { name: "Diseño", icon: <Palette className="size-5" /> },
-    { name: "Estética", icon: <Scissors className="size-5" /> },
-    { name: "Oficios", icon: <Wrench className="size-5" /> },
-    { name: "Educación", icon: <GraduationCap className="size-5" /> },
-    { name: "Negocios", icon: <Megaphone className="size-5" /> },
-  ]
+
 
   // Master services dataset
   const allServices = [
@@ -256,23 +233,7 @@ export function LandingPage() {
     },
   ]
 
-  // Redirect to search page with selected params
-  const handleSearchSubmit = () => {
-    const params = new URLSearchParams()
-    if (searchQuery) params.append("q", searchQuery)
-    if (selectedCategory && selectedCategory !== "Todo") params.append("category", selectedCategory)
-    if (selectedDate) params.append("date", selectedDate)
-    navigate(`/buscar?${params.toString()}`)
-  }
 
-  // Handle category tab click - redirect to search page directly
-  const handleTabClick = (categoryName: string) => {
-    if (categoryName === "Todo") {
-      navigate("/buscar")
-    } else {
-      navigate(`/buscar?category=${categoryName}`)
-    }
-  }
 
   // Grouped datasets for landing page carousels
   const row1Services = allServices.filter(s => s.category === "Salud" || s.category === "Legal" || s.featured)
@@ -282,99 +243,12 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between font-sans transition-colors duration-200">
       {/* Top Navbar Header */}
-      <header className="bg-background border-b border-border sticky top-0 z-50 transition-colors">
-        {/* Top Header Row */}
-        <div className="h-16 px-6 flex items-center justify-between gap-6 container mx-auto">
-          {/* Logo */}
-          <Link to="/" className="font-semibold text-xl text-[#059669] tracking-tight flex items-center gap-1.5 flex-shrink-0">
-            Gesti
-          </Link>
-
-          {/* Minimalist Professional Search Widget */}
-          <div className="hidden md:flex items-center bg-card border border-border/80 rounded-full py-1.5 px-4 shadow-sm hover:shadow-md hover:border-border transition-all duration-200 max-w-md w-full mx-4">
-            <Search className="size-4 text-muted-foreground mr-2.5 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Buscar servicios o proveedores..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-              className="bg-transparent border-none outline-none text-xs text-foreground placeholder-muted-foreground w-full font-medium"
-            />
-          </div>
-
-          {/* Right Navigation Controls */}
-          <div className="flex items-center gap-5 flex-shrink-0">
-            <ThemeSwitch />
-            <nav className="hidden lg:flex items-center gap-4 text-xs font-medium text-muted-foreground">
-              <Link to="/ofrecer" className="hover:text-foreground transition-colors">Ofrecer Servicio</Link>
-            </nav>
-            <div className="flex items-center gap-2">
-              {isAuthenticated ? (
-                <Link
-                  to="/intranet/businesses"
-                  className="py-1.5 px-3.5 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-medium text-xs transition-all shadow-sm"
-                >
-                  {user?.full_name || "Panel"}
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="py-1.5 px-3.5 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-medium text-xs transition-all"
-                  >
-                    Entrar
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="py-1.5 px-3.5 bg-primary text-primary-foreground hover:bg-primary/95 rounded-full font-medium text-xs transition-all shadow-sm"
-                  >
-                    Registrarse
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Search Widget Bar */}
-        <div className="block md:hidden px-6 pb-3">
-          <div className="flex items-center bg-card border border-border/85 rounded-full py-2 px-3.5 shadow-sm">
-            <Search className="size-4 text-muted-foreground mr-2.5" />
-            <input
-              type="text"
-              placeholder="Buscar servicios..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-              className="bg-transparent border-none outline-none text-xs text-foreground placeholder-muted-foreground w-full font-medium"
-            />
-          </div>
-        </div>
-
-        {/* Minimal Category Icon Bar */}
-        <div className="border-t border-border/60 bg-card/65 backdrop-blur-sm px-6 overflow-x-auto scrollbar-none transition-colors">
-          <div className="container mx-auto flex items-center justify-start md:justify-center gap-8 py-2">
-            {categoriesList.map((cat) => (
-              <button
-                key={cat.name}
-                onClick={() => handleTabClick(cat.name)}
-                className="flex flex-col items-center gap-1 py-1 border-b-2 border-transparent text-[11px] font-medium tracking-tight text-muted-foreground opacity-75 hover:opacity-100 hover:border-foreground/30 transition-all cursor-pointer bg-transparent focus:outline-none flex-shrink-0"
-              >
-                <div className="p-0.5 transition-transform duration-200">
-                  {cat.icon}
-                </div>
-                <span>{cat.name}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main listings area */}
       <main id="main-listings" className="flex-1 container mx-auto px-6 py-10 space-y-16">
         {/* Promotional Brand Banner Slider (Taller height, modern gradient overlay) */}
-        <div 
+        <div
           className="relative rounded-2xl overflow-hidden border border-border flex flex-col md:flex-row h-[420px] shadow-sm transition-all duration-300 bg-cover bg-center"
           style={{ backgroundImage: `url(${slides[currentSlide].imageUrl})` }}
         >
@@ -382,15 +256,15 @@ export function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent z-0 pointer-events-none" />
 
           {/* Arrow Left */}
-          <button 
+          <button
             onClick={handlePrevSlide}
             className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 hover:bg-black/55 text-white flex items-center justify-center shadow transition-all z-20 cursor-pointer border border-white/5"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          
+
           {/* Arrow Right */}
-          <button 
+          <button
             onClick={handleNextSlide}
             className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 hover:bg-black/55 text-white flex items-center justify-center shadow transition-all z-20 cursor-pointer border border-white/5"
           >
@@ -458,16 +332,16 @@ export function LandingPage() {
                 </span>
               </h2>
             </div>
-            
+
             {/* Arrow navigation triggers */}
             <div className="flex items-center gap-1.5">
-              <button 
+              <button
                 onClick={() => handleScroll(carousel1Ref, 'left')}
                 className="p-2 border border-border/60 hover:bg-muted text-foreground rounded-full transition-all cursor-pointer shadow-sm bg-card"
               >
                 <ChevronLeft className="size-4" />
               </button>
-              <button 
+              <button
                 onClick={() => handleScroll(carousel1Ref, 'right')}
                 className="p-2 border border-border/60 hover:bg-muted text-foreground rounded-full transition-all cursor-pointer shadow-sm bg-card"
               >
@@ -476,7 +350,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div 
+          <div
             ref={carousel1Ref}
             className="flex gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 px-1"
           >
@@ -511,16 +385,16 @@ export function LandingPage() {
                 </span>
               </h2>
             </div>
-            
+
             {/* Arrow navigation triggers */}
             <div className="flex items-center gap-1.5">
-              <button 
+              <button
                 onClick={() => handleScroll(carousel2Ref, 'left')}
                 className="p-2 border border-border/60 hover:bg-muted text-foreground rounded-full transition-all cursor-pointer shadow-sm bg-card"
               >
                 <ChevronLeft className="size-4" />
               </button>
-              <button 
+              <button
                 onClick={() => handleScroll(carousel2Ref, 'right')}
                 className="p-2 border border-border/60 hover:bg-muted text-foreground rounded-full transition-all cursor-pointer shadow-sm bg-card"
               >
@@ -529,7 +403,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div 
+          <div
             ref={carousel2Ref}
             className="flex gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 px-1"
           >
@@ -564,16 +438,16 @@ export function LandingPage() {
                 </span>
               </h2>
             </div>
-            
+
             {/* Arrow navigation triggers */}
             <div className="flex items-center gap-1.5">
-              <button 
+              <button
                 onClick={() => handleScroll(carousel3Ref, 'left')}
                 className="p-2 border border-border/60 hover:bg-muted text-foreground rounded-full transition-all cursor-pointer shadow-sm bg-card"
               >
                 <ChevronLeft className="size-4" />
               </button>
-              <button 
+              <button
                 onClick={() => handleScroll(carousel3Ref, 'right')}
                 className="p-2 border border-border/60 hover:bg-muted text-foreground rounded-full transition-all cursor-pointer shadow-sm bg-card"
               >
@@ -582,7 +456,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          <div 
+          <div
             ref={carousel3Ref}
             className="flex gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 px-1"
           >

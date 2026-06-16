@@ -3,8 +3,8 @@ import { useParams, Link, useNavigate } from "react-router-dom"
 import { useAuthStore } from "../store/auth.store"
 import { ThemeSwitch } from "@/components/ui/theme-switch"
 import { ServiceCard } from "@/components/ServiceCard"
+import { Header } from "../components/Header"
 import {
-  Search,
   Star,
   ArrowLeft,
   ShieldCheck,
@@ -29,8 +29,7 @@ export function ServiceDetailPage() {
   const navigate = useNavigate()
   const { isAuthenticated, user } = useAuthStore()
 
-  // Search pill state
-  const [searchQuery, setSearchQuery] = useState("")
+
 
   // Booking widget state
   const [bookingDate, setBookingDate] = useState("")
@@ -228,12 +227,7 @@ export function ServiceDetailPage() {
     recommendations = allServices.filter((s) => s.id !== currentService.id).slice(0, 4)
   }
 
-  // Handle Search Pill Submit - Redirect to search page
-  const handleSearchSubmit = () => {
-    if (searchQuery) {
-      navigate(`/buscar?q=${searchQuery}`)
-    }
-  }
+
 
   // Handle book click
   const handleBooking = (e: React.FormEvent) => {
@@ -249,63 +243,7 @@ export function ServiceDetailPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between font-sans transition-colors duration-200">
 
       {/* Top Navbar Header */}
-      <header className="bg-background border-b border-border sticky top-0 z-50 transition-colors">
-        <div className="h-20 px-8 flex items-center justify-between gap-6 container mx-auto">
-          {/* Logo */}
-          <Link to="/" className="font-bold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 flex-shrink-0">
-            Gesti
-          </Link>
-
-          {/* Airbnb-style Advanced Search Pill Widget */}
-          <div className="hidden md:flex items-center bg-card border border-border rounded-full py-1.5 pl-6 pr-2 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-lg w-full mx-4">
-            <Search className="size-4 text-muted-foreground mr-2 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Buscar otros servicios o profesionales..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-              className="bg-transparent border-none outline-none text-xs text-foreground placeholder-muted-foreground w-full font-medium"
-            />
-            <button
-              onClick={handleSearchSubmit}
-              className="py-1.5 px-4 bg-[#059669] hover:bg-[#047857] text-white rounded-full font-bold text-xs transition-colors cursor-pointer shadow-sm flex-shrink-0 ml-2"
-            >
-              Buscar
-            </button>
-          </div>
-
-          {/* Right Navigation Controls */}
-          <div className="flex items-center gap-6 flex-shrink-0">
-            <ThemeSwitch />
-            <div className="flex items-center gap-2">
-              {isAuthenticated ? (
-                <Link
-                  to="/services"
-                  className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all shadow-sm"
-                >
-                  {user?.full_name || "Panel"}
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all"
-                  >
-                    Entrar
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="py-1.5 px-4 bg-primary text-primary-foreground hover:bg-primary/95 rounded-full font-bold text-xs transition-all shadow-sm"
-                  >
-                    Registrarse
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main details content */}
       <main className="flex-1 container mx-auto px-8 py-8 space-y-8 text-left">

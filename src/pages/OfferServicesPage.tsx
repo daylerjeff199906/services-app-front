@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useAuthStore } from "../store/auth.store"
 import { ThemeSwitch } from "@/components/ui/theme-switch"
+import { Header } from "../components/Header"
 import {
   ShieldCheck,
   TrendingUp,
@@ -57,52 +58,7 @@ export function OfferServicesPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between font-sans transition-colors duration-200">
       {/* Navbar Header */}
-      <header className="bg-background/80 backdrop-blur border-b border-border flex flex-col z-10 sticky top-0">
-        <div className="h-16 px-8 flex items-center justify-between gap-6 container mx-auto">
-          {/* Logo */}
-          <Link to="/" className="font-bold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 flex-shrink-0">
-            Gesti <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#059669]/10 text-[#059669]">Pro</span>
-          </Link>
-
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-muted-foreground">
-            <Link to="/" className="hover:text-foreground transition-colors">Buscar Servicios</Link>
-            <a href="#beneficios" className="hover:text-foreground transition-colors">Beneficios</a>
-            <a href="#calculadora" className="hover:text-foreground transition-colors">Calculadora</a>
-            <a href="#faqs" className="hover:text-foreground transition-colors">Ayuda</a>
-          </nav>
-
-          {/* Right Section */}
-          <div className="flex items-center gap-6">
-            <ThemeSwitch />
-            <div className="flex items-center gap-2">
-              {isAuthenticated ? (
-                <Link
-                  to="/services"
-                  className="py-1.5 px-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-bold text-xs transition-all shadow-sm"
-                >
-                  Ir a mis Proyectos
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="py-1.5 px-4 bg-transparent hover:bg-muted text-foreground rounded-md font-semibold text-xs transition-all"
-                  >
-                    Entrar
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="py-1.5 px-4 bg-[#059669] text-white hover:bg-[#047857] rounded-md font-bold text-xs transition-all shadow-sm"
-                  >
-                    Empezar Gratis
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden border-b border-border bg-muted/10">

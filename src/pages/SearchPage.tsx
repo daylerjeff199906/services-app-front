@@ -1,22 +1,19 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { useAuthStore } from "../store/auth.store"
-import { ThemeSwitch } from "@/components/ui/theme-switch"
 import { ServiceCard } from "@/components/ServiceCard"
-import { 
-  Search, 
-  Scale, 
-  HeartPulse, 
-  Palette, 
-  Code, 
-  GraduationCap, 
+import { Header } from "../components/Header"
+import {
+  Scale,
+  HeartPulse,
+  Palette,
+  Code,
+  GraduationCap,
   Megaphone,
   SlidersHorizontal,
   Star
 } from "lucide-react"
 
 export function SearchPage() {
-  const { isAuthenticated, user } = useAuthStore()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -29,7 +26,8 @@ export function SearchPage() {
   const [searchQuery, setSearchQuery] = useState(qParam)
   const [selectedCategory, setSelectedCategory] = useState(categoryParam)
   const [selectedDate, setSelectedDate] = useState(dateParam)
-  
+
+
   // Sidebar Filters State
   const [priceMax, setPriceMax] = useState(500)
   const [minRating, setMinRating] = useState(0) // 0 = all
@@ -186,20 +184,11 @@ export function SearchPage() {
     },
   ]
 
-  // Submit search query update to URL search params
-  const handleSearchSubmit = () => {
-    const params: Record<string, string> = {}
-    if (searchQuery) params.q = searchQuery
-    if (selectedCategory && selectedCategory !== "Todo") params.category = selectedCategory
-    if (selectedDate) params.date = selectedDate
-    setSearchParams(params)
-  }
-
   // Filter and Sort dataset based on inputs
   const filteredServices = allServices
     .filter((service) => {
-      const matchesSearch = searchQuery === "" || 
-        service.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const matchesSearch = searchQuery === "" ||
+        service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         service.provider.toLowerCase().includes(searchQuery.toLowerCase())
 
       const matchesCategory = selectedCategory === "Todo" || service.category === selectedCategory
@@ -217,62 +206,12 @@ export function SearchPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between font-sans transition-colors duration-200">
       {/* Top Navbar Header */}
-      <header className="bg-background border-b border-border sticky top-0 z-50 transition-colors">
-        <div className="h-16 px-6 flex items-center justify-between gap-6 container mx-auto">
-          {/* Logo */}
-          <Link to="/" className="font-semibold text-xl text-[#059669] tracking-tight flex items-center gap-1.5 flex-shrink-0">
-            Gesti
-          </Link>
-
-          {/* Minimalist Professional Search Widget */}
-          <div className="hidden md:flex items-center bg-card border border-border/80 rounded-full py-1.5 px-4 shadow-sm hover:shadow-md hover:border-border transition-all duration-200 max-w-md w-full mx-4">
-            <Search className="size-4 text-muted-foreground mr-2.5 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Buscar servicios o proveedores..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-              className="bg-transparent border-none outline-none text-xs text-foreground placeholder-muted-foreground w-full font-medium"
-            />
-          </div>
-
-          {/* Right Navigation Controls */}
-          <div className="flex items-center gap-5 flex-shrink-0">
-            <ThemeSwitch />
-            <div className="flex items-center gap-2">
-              {isAuthenticated ? (
-                <Link
-                  to="/intranet/businesses"
-                  className="py-1.5 px-3.5 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-medium text-xs transition-all shadow-sm"
-                >
-                  {user?.full_name || "Panel"}
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="py-1.5 px-3.5 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-medium text-xs transition-all"
-                  >
-                    Entrar
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="py-1.5 px-3.5 bg-primary text-primary-foreground hover:bg-primary/95 rounded-full font-medium text-xs transition-all shadow-sm"
-                  >
-                    Registrarse
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Container */}
       <main className="flex-1 container mx-auto px-6 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
-          
+
           {/* Left Sidebar Filters (Hidden on Mobile) */}
           <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 bg-card border border-border/60 rounded-2xl p-6 h-fit text-left">
             <div className="flex items-center gap-2 border-b border-border/80 pb-3">
@@ -336,11 +275,10 @@ export function SearchPage() {
                   <button
                     key={ratingVal}
                     onClick={() => setMinRating(ratingVal)}
-                    className={`w-full text-left px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center justify-between transition-all cursor-pointer bg-transparent ${
-                      minRating === ratingVal 
-                        ? "border-[#059669] text-[#059669] bg-[#059669]/5" 
-                        : "border-border/60 text-foreground hover:bg-muted"
-                    }`}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center justify-between transition-all cursor-pointer bg-transparent ${minRating === ratingVal
+                      ? "border-[#059669] text-[#059669] bg-[#059669]/5"
+                      : "border-border/60 text-foreground hover:bg-muted"
+                      }`}
                   >
                     <span>{ratingVal === 0 ? "Cualquier calificación" : `★ ${ratingVal.toFixed(1)} o más`}</span>
                     {ratingVal > 0 && <Star className="size-3 fill-amber-450 text-amber-450" />}

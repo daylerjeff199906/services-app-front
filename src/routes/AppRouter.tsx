@@ -24,6 +24,7 @@ import { HoursPage } from "@/pages/HoursPage"
 import { LocationsPage } from "@/pages/LocationsPage"
 import { CreateLocationPage } from "@/pages/CreateLocationPage"
 import { EditLocationPage } from "@/pages/EditLocationPage"
+import { CalendarPage } from "@/pages/CalendarPage"
 
 export function AppRouter() {
   return (
@@ -177,6 +178,14 @@ export function AppRouter() {
           />
 
           {/* Agenda & Hours Routes */}
+          <Route
+            path="agenda/calendar"
+            element={
+              <AuthGuard allowedRoles={["SERVICE_OWNER"]}>
+                <CalendarPage />
+              </AuthGuard>
+            }
+          />
           <Route
             path="agenda/hours"
             element={

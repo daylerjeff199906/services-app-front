@@ -24,6 +24,7 @@ import { HoursPage } from "@/pages/HoursPage"
 import { LocationsPage } from "@/pages/LocationsPage"
 import { CreateLocationPage } from "@/pages/CreateLocationPage"
 import { EditLocationPage } from "@/pages/EditLocationPage"
+import { CalendarPage } from "@/pages/CalendarPage"
 
 export function AppRouter() {
   return (
@@ -73,6 +74,15 @@ export function AppRouter() {
           element={
             <AuthGuard requireSelectedService={false}>
               <ProfileSettingsPage />
+            </AuthGuard>
+          }
+        />
+
+        <Route
+          path="/dashboard/agenda/calendar"
+          element={
+            <AuthGuard requireSelectedService allowedRoles={["SERVICE_OWNER"]}>
+              <CalendarPage />
             </AuthGuard>
           }
         />

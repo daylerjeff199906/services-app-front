@@ -45,7 +45,7 @@ export function ProfileSettingsPage() {
           setFirstName(data.first_name || "")
           setLastName(data.last_name || "")
           setUsername(data.username || "")
-          
+
           // Sync with auth store
           setUser({
             ...user,
@@ -133,7 +133,7 @@ export function ProfileSettingsPage() {
             <ArrowLeft className="size-3.5" />
             Volver
           </button>
-          <span className="font-extrabold text-xl text-[#059669] tracking-tighter ml-2">
+          <span className="font-bold text-xl text-[#059669] tracking-tighter ml-2">
             Gesti
           </span>
         </div>
@@ -192,8 +192,8 @@ export function ProfileSettingsPage() {
 
         {message && (
           <div className={`mb-6 p-4 border rounded-lg text-sm font-medium ${message.type === "success"
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-              : "bg-destructive/10 border-destructive/20 text-destructive"
+            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+            : "bg-destructive/10 border-destructive/20 text-destructive"
             }`}>
             {message.text}
           </div>

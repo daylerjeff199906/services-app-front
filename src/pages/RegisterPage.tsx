@@ -21,7 +21,7 @@ export function RegisterPage() {
       <div className="flex-1 flex flex-col justify-between p-8 md:p-12 lg:p-16 max-w-xl mx-auto w-full">
         {/* Top Header Branding */}
         <div>
-          <Link to="/" className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
+          <Link to="/" className="font-bold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
             Gesti
           </Link>
         </div>
@@ -39,9 +39,9 @@ export function RegisterPage() {
 
       {/* Right side: Image banner */}
       <div className="hidden md:block flex-1 relative bg-muted overflow-hidden">
-        <img 
-          src="/images/register_banner.png" 
-          alt="Register banner" 
+        <img
+          src="/images/register_banner.png"
+          alt="Register banner"
           className="absolute inset-0 w-full h-full object-cover"
         />
         {/* Subtle overlay shading for depth */}

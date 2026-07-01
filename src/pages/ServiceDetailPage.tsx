@@ -1,36 +1,32 @@
 import { useState } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
-import { useAuthStore } from "../store/auth.store"
-import { ThemeSwitch } from "@/components/ui/theme-switch"
 import { ServiceCard } from "@/components/ServiceCard"
-import { 
-  Search, 
-  Star, 
-  ArrowLeft, 
-  ShieldCheck, 
-  Calendar, 
-  Clock, 
-  User, 
+import { Header } from "../components/Header"
+import {
+  Star,
+  ArrowLeft,
+  ShieldCheck,
+  Calendar,
+  Clock,
+  User,
   MessageSquare,
   Sparkles,
   Share2,
   Heart,
   CheckCircle,
-  Scale, 
-  HeartPulse, 
-  Palette, 
-  Code, 
-  GraduationCap, 
+  Scale,
+  HeartPulse,
+  Palette,
+  Code,
+  GraduationCap,
   Megaphone
 } from "lucide-react"
 
 export function ServiceDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { isAuthenticated, user } = useAuthStore()
 
-  // Search pill state
-  const [searchQuery, setSearchQuery] = useState("")
+
 
   // Booking widget state
   const [bookingDate, setBookingDate] = useState("")
@@ -222,18 +218,13 @@ export function ServiceDetailPage() {
 
   // Find recommended services (same category, excluding current)
   let recommendations = allServices.filter((s) => s.category === currentService.category && s.id !== currentService.id)
-  
+
   // Fallback to general featured if no services in same category
   if (recommendations.length === 0) {
     recommendations = allServices.filter((s) => s.id !== currentService.id).slice(0, 4)
   }
 
-  // Handle Search Pill Submit - Redirect to search page
-  const handleSearchSubmit = () => {
-    if (searchQuery) {
-      navigate(`/buscar?q=${searchQuery}`)
-    }
-  }
+
 
   // Handle book click
   const handleBooking = (e: React.FormEvent) => {
@@ -247,72 +238,16 @@ export function ServiceDetailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between font-sans transition-colors duration-200">
-      
+
       {/* Top Navbar Header */}
-      <header className="bg-background border-b border-border sticky top-0 z-50 transition-colors">
-        <div className="h-20 px-8 flex items-center justify-between gap-6 container mx-auto">
-          {/* Logo */}
-          <Link to="/" className="font-extrabold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 flex-shrink-0">
-            Gesti
-          </Link>
-
-          {/* Airbnb-style Advanced Search Pill Widget */}
-          <div className="hidden md:flex items-center bg-card border border-border rounded-full py-1.5 pl-6 pr-2 shadow-sm hover:shadow-md transition-shadow duration-200 max-w-lg w-full mx-4">
-            <Search className="size-4 text-muted-foreground mr-2 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Buscar otros servicios o profesionales..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
-              className="bg-transparent border-none outline-none text-xs text-foreground placeholder-muted-foreground w-full font-medium"
-            />
-            <button 
-              onClick={handleSearchSubmit}
-              className="py-1.5 px-4 bg-[#059669] hover:bg-[#047857] text-white rounded-full font-bold text-xs transition-colors cursor-pointer shadow-sm flex-shrink-0 ml-2"
-            >
-              Buscar
-            </button>
-          </div>
-
-          {/* Right Navigation Controls */}
-          <div className="flex items-center gap-6 flex-shrink-0">
-            <ThemeSwitch />
-            <div className="flex items-center gap-2">
-              {isAuthenticated ? (
-                <Link
-                  to="/services"
-                  className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all shadow-sm"
-                >
-                  {user?.full_name || "Panel"}
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="py-1.5 px-4 bg-transparent border border-border hover:bg-muted text-foreground rounded-full font-bold text-xs transition-all"
-                  >
-                    Entrar
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="py-1.5 px-4 bg-primary text-primary-foreground hover:bg-primary/95 rounded-full font-bold text-xs transition-all shadow-sm"
-                  >
-                    Registrarse
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main details content */}
       <main className="flex-1 container mx-auto px-8 py-8 space-y-8 text-left">
-        
+
         {/* Back Button & Breadcrumbs */}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-1.5 hover:text-foreground transition-colors bg-transparent border-none cursor-pointer"
           >
@@ -330,7 +265,7 @@ export function ServiceDetailPage() {
 
         {/* Title, rating and action badges */}
         <div className="space-y-3">
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground leading-tight">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground leading-tight">
             {currentService.title}
           </h1>
 
@@ -364,12 +299,12 @@ export function ServiceDetailPage() {
           {/* Main Left Side Gallery */}
           {currentService.imageUrl ? (
             <div className="md:col-span-2 relative">
-              <img 
-                src={currentService.imageUrl} 
-                alt={currentService.title} 
+              <img
+                src={currentService.imageUrl}
+                alt={currentService.title}
                 className="w-full h-full object-cover"
               />
-              <span className="absolute left-6 bottom-6 px-3 py-1 bg-background/90 text-foreground font-extrabold text-[10px] tracking-wider uppercase rounded-lg shadow border border-border">
+              <span className="absolute left-6 bottom-6 px-3 py-1 bg-background/90 text-foreground font-bold text-[10px] tracking-wider uppercase rounded-lg shadow border border-border">
                 {currentService.badge}
               </span>
             </div>
@@ -378,7 +313,7 @@ export function ServiceDetailPage() {
               <div className="p-8 rounded-full bg-background/90 shadow-lg scale-125 border border-border/40">
                 {currentService.icon}
               </div>
-              <span className="absolute left-6 bottom-6 px-3 py-1 bg-background/90 text-foreground font-extrabold text-[10px] tracking-wider uppercase rounded-lg shadow border border-border">
+              <span className="absolute left-6 bottom-6 px-3 py-1 bg-background/90 text-foreground font-bold text-[10px] tracking-wider uppercase rounded-lg shadow border border-border">
                 {currentService.badge}
               </span>
             </div>
@@ -397,10 +332,10 @@ export function ServiceDetailPage() {
 
         {/* Content Section: details + booking card */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+
           {/* Left Column: descriptions, credentials, reviews */}
           <div className="lg:col-span-8 space-y-8 divide-y divide-border">
-            
+
             {/* Provider Meta Section */}
             <div className="flex items-center justify-between pb-6">
               <div className="space-y-1">
@@ -491,7 +426,7 @@ export function ServiceDetailPage() {
           {/* Right Column: Floating Booking Card Simulator */}
           <div className="lg:col-span-4 sticky top-28 bg-card border border-border rounded-2xl p-6 shadow-lg space-y-6">
             <div className="flex justify-between items-baseline">
-              <span className="text-2xl font-extrabold text-foreground">{currentService.price} <span className="text-xs text-muted-foreground font-normal">USD</span></span>
+              <span className="text-2xl font-bold text-foreground">{currentService.price} <span className="text-xs text-muted-foreground font-normal">USD</span></span>
               <div className="flex items-center gap-1 text-xs font-bold text-foreground">
                 <Star className="size-3.5 fill-yellow-500 text-yellow-500" />
                 <span>{currentService.rating.toFixed(1)}</span>
@@ -517,7 +452,7 @@ export function ServiceDetailPage() {
               <form onSubmit={handleBooking} className="space-y-4">
                 {/* Date Selection */}
                 <div className="space-y-1 text-left">
-                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">Fecha de Reserva</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Fecha de Reserva</label>
                   <input
                     type="date"
                     required
@@ -529,7 +464,7 @@ export function ServiceDetailPage() {
 
                 {/* Time Selection */}
                 <div className="space-y-1 text-left">
-                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">Hora Disponible</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Hora Disponible</label>
                   <select
                     value={bookingTime}
                     onChange={(e) => setBookingTime(e.target.value)}
@@ -545,7 +480,7 @@ export function ServiceDetailPage() {
                 {/* Reservation Action Button */}
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-[#059669] hover:bg-[#047857] text-white font-extrabold rounded-xl transition-all shadow-md cursor-pointer text-sm"
+                  className="w-full py-3 px-4 bg-[#059669] hover:bg-[#047857] text-white font-bold rounded-xl transition-all shadow-md cursor-pointer text-sm"
                 >
                   Solicitar Reserva
                 </button>
@@ -566,7 +501,7 @@ export function ServiceDetailPage() {
                 <span className="underline">Comisión de Servicio (0% Promo)</span>
                 <span className="text-emerald-500 font-bold">$0 USD</span>
               </div>
-              <div className="flex justify-between border-t border-border pt-3 text-sm font-extrabold text-foreground">
+              <div className="flex justify-between border-t border-border pt-3 text-sm font-bold text-foreground">
                 <span>Total estimado</span>
                 <span>{currentService.price} USD</span>
               </div>
@@ -579,7 +514,7 @@ export function ServiceDetailPage() {
           <h2 className="text-xl font-bold tracking-tight text-foreground">
             Otros servicios recomendados
           </h2>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
             {recommendations.map((service) => (
               <ServiceCard

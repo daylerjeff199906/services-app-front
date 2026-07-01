@@ -548,7 +548,7 @@ export function HoursPage() {
                         </>
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center py-20 text-center select-none">
-                          <span className="text-[9px] text-muted-foreground/30 uppercase font-extrabold tracking-wider">
+                          <span className="text-[9px] text-muted-foreground/30 uppercase font-bold tracking-wider">
                             Sin atención
                           </span>
                         </div>

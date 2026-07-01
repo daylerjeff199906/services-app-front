@@ -614,8 +614,8 @@ export function EditServicePage() {
             type="button"
             onClick={() => setSearchParams({ tab: "info" })}
             className={`flex items-center text-sm transition-all text-left outline-none cursor-pointer whitespace-nowrap ${activeTab === "info"
-                ? "border-b-2 md:border-b-0 md:border-l-[3px] border-foreground pl-0 md:pl-4 pb-2 md:pb-0 font-semibold text-foreground"
-                : "border-b-2 md:border-b-0 md:border-l-[3px] border-transparent pl-0 md:pl-4 pb-2 md:pb-0 text-muted-foreground hover:text-foreground font-medium"
+              ? "border-b-2 md:border-b-0 md:border-l-[3px] border-foreground pl-0 md:pl-4 pb-2 md:pb-0 font-semibold text-foreground"
+              : "border-b-2 md:border-b-0 md:border-l-[3px] border-transparent pl-0 md:pl-4 pb-2 md:pb-0 text-muted-foreground hover:text-foreground font-medium"
               }`}
           >
             Información Principal
@@ -624,8 +624,8 @@ export function EditServicePage() {
             type="button"
             onClick={() => setSearchParams({ tab: "multimedia" })}
             className={`flex items-center text-sm transition-all text-left outline-none cursor-pointer whitespace-nowrap ${activeTab === "multimedia"
-                ? "border-b-2 md:border-b-0 md:border-l-[3px] border-foreground pl-0 md:pl-4 pb-2 md:pb-0 font-semibold text-foreground"
-                : "border-b-2 md:border-b-0 md:border-l-[3px] border-transparent pl-0 md:pl-4 pb-2 md:pb-0 text-muted-foreground hover:text-foreground font-medium"
+              ? "border-b-2 md:border-b-0 md:border-l-[3px] border-foreground pl-0 md:pl-4 pb-2 md:pb-0 font-semibold text-foreground"
+              : "border-b-2 md:border-b-0 md:border-l-[3px] border-transparent pl-0 md:pl-4 pb-2 md:pb-0 text-muted-foreground hover:text-foreground font-medium"
               }`}
           >
             Galería Multimedia
@@ -757,7 +757,7 @@ export function EditServicePage() {
                       </div>
                     ) : (
                       <div className="space-y-2 border border-border p-3 rounded-lg bg-muted/10">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <p className="text-[10px]  uppercase tracking-wider text-muted-foreground">
                           Nueva Categoría Inline
                         </p>
                         <Input
@@ -961,7 +961,7 @@ export function EditServicePage() {
 
                             {/* Portada label */}
                             {item.is_main && !item.isUploading && (
-                              <span className="absolute top-2 left-2 text-[9px] font-bold px-2 py-0.5 bg-emerald-500 text-white rounded-md uppercase tracking-wider select-none shadow-xs z-10">
+                              <span className="absolute top-2 left-2 text-[9px]  px-2 py-0.5 bg-emerald-500 text-white rounded-md uppercase tracking-wider select-none shadow-xs z-10">
                                 Portada
                               </span>
                             )}

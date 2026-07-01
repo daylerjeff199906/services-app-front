@@ -306,7 +306,7 @@ export function DashboardPage() {
           <div className="p-4 border border-amber-500/20 bg-amber-500/5 rounded-xl flex gap-3 text-sm text-amber-500 max-w-4xl mx-auto">
             <AlertTriangle className="size-5 shrink-0 text-amber-500 mt-0.5" />
             <div className="space-y-1">
-              <p className="font-bold">Tablas pendientes de migración SQL</p>
+              <p className="">Tablas pendientes de migración SQL</p>
               <p className="text-xs text-muted-foreground leading-relaxed">
                 Aún no has ejecutado el script SQL en Supabase para crear las tablas de locales, horarios y citas.
                 El checklist mostrará el estado simulado en 0 hasta que configures el esquema de base de datos.
@@ -326,12 +326,12 @@ export function DashboardPage() {
                 />
                 <div className="flex items-center gap-4 bg-muted/20 px-4 py-2.5 rounded-xl border border-border">
                   <div className="text-right">
-                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Progreso</span>
-                    <span className="text-lg font-bold font-mono text-[#10b981]">{completedCount} <span className="text-muted-foreground font-normal text-sm font-sans">/ {steps.length}</span></span>
+                    <span className="text-xs  uppercase tracking-wider text-muted-foreground block">Progreso</span>
+                    <span className="text-lg  font-mono text-[#10b981]">{completedCount} <span className="text-muted-foreground font-normal text-sm font-sans">/ {steps.length}</span></span>
                   </div>
                   {/* Progress Circle badge indicator */}
                   <div className="w-11 h-11 rounded-full border-4 border-muted flex items-center justify-center relative overflow-hidden bg-background">
-                    <span className="relative z-10 text-xs font-bold text-foreground font-mono">
+                    <span className="relative z-10 text-xs  text-foreground font-mono">
                       {progressPercent}%
                     </span>
                   </div>
@@ -358,7 +358,7 @@ export function DashboardPage() {
                   >
                     <div className="flex items-start gap-4">
                       {/* Circle number or Check */}
-                      <div className={`size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 select-none ${step.isCompleted
+                      <div className={`size-8 rounded-full flex items-center justify-center  text-xs shrink-0 select-none ${step.isCompleted
                         ? "bg-[#10b981] text-white"
                         : "bg-muted text-muted-foreground border border-border"
                         }`}>
@@ -376,7 +376,7 @@ export function DashboardPage() {
                     {!step.isCompleted ? (
                       <button
                         onClick={() => navigate(step.path || "/")}
-                        className="flex items-center gap-1 text-xs text-[#10b981] hover:underline font-bold shrink-0 self-end sm:self-center bg-transparent border-0 outline-none cursor-pointer"
+                        className="flex items-center gap-1 text-xs text-[#10b981] hover:underline  shrink-0 self-end sm:self-center bg-transparent border-0 outline-none cursor-pointer"
                       >
                         {step.actionLabel}
                         <ChevronRight className="size-3.5" />
@@ -399,7 +399,7 @@ export function DashboardPage() {
               {metrics.map((metric) => (
                 <div key={metric.name} className="p-6 bg-card border border-border rounded-xl">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{metric.name}</span>
-                  <p className="text-3xl font-bold tracking-tight mt-2">{metric.value}</p>
+                  <p className="text-3xl  tracking-tight mt-2">{metric.value}</p>
                   <span className="text-xs text-[#10b981] font-medium block mt-2">{metric.change}</span>
                 </div>
               ))}
@@ -409,29 +409,29 @@ export function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Info panel */}
               <div className="bg-card border border-border rounded-xl p-6 lg:col-span-2 space-y-4">
-                <h3 className="font-bold text-lg border-b border-border pb-3">Resumen de Configuración</h3>
+                <h3 className=" text-lg border-b border-border pb-3">Resumen de Configuración</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 border border-border rounded-xl bg-muted/5 space-y-1">
                     <p className="text-xs font-medium text-muted-foreground uppercase">Locales Registrados</p>
-                    <p className="text-lg font-bold">{onboardingStatus.isIndependent ? "A domicilio / Independiente" : `${onboardingStatus.locationsCount} locales`}</p>
+                    <p className="text-lg ">{onboardingStatus.isIndependent ? "A domicilio / Independiente" : `${onboardingStatus.locationsCount} locales`}</p>
                   </div>
                   <div className="p-4 border border-border rounded-xl bg-muted/5 space-y-1">
                     <p className="text-xs font-medium text-muted-foreground uppercase">Servicios Creados</p>
-                    <p className="text-lg font-bold">{onboardingStatus.servicesCount} servicios</p>
+                    <p className="text-lg ">{onboardingStatus.servicesCount} servicios</p>
                   </div>
                   <div className="p-4 border border-border rounded-xl bg-muted/5 space-y-1">
                     <p className="text-xs font-medium text-muted-foreground uppercase">Miembros en Negocio</p>
-                    <p className="text-lg font-bold">{onboardingStatus.teamMembersCount} colaboradores</p>
+                    <p className="text-lg ">{onboardingStatus.teamMembersCount} colaboradores</p>
                   </div>
                   <div className="p-4 border border-border rounded-xl bg-muted/5 space-y-1">
                     <p className="text-xs font-medium text-muted-foreground uppercase">Citas Registradas</p>
-                    <p className="text-lg font-bold">{onboardingStatus.bookingsCount} reservas</p>
+                    <p className="text-lg ">{onboardingStatus.bookingsCount} reservas</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-                <h3 className="font-bold text-lg border-b border-border pb-3">Estado de Agenda</h3>
+                <h3 className=" text-lg border-b border-border pb-3">Estado de Agenda</h3>
                 <div className="py-8 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
                   <Clock className="size-8 text-muted-foreground/30 animate-pulse" />
                   <p>Puedes simular citas o registrar colaboradores para ver la agenda activa.</p>
@@ -445,7 +445,7 @@ export function DashboardPage() {
             {/* Your Gesti Tools Section */}
             <div className="space-y-4 pt-4 border-t border-border">
               <div className="space-y-1">
-                <h3 className="text-lg font-bold tracking-tight">Tus herramientas Gesti</h3>
+                <h3 className="text-lg  tracking-tight">Tus herramientas Gesti</h3>
                 <p className="text-xs text-muted-foreground">Potencia el alcance de tu marca utilizando nuestras herramientas y canales exclusivos.</p>
               </div>
 
@@ -457,7 +457,7 @@ export function DashboardPage() {
                       <Smartphone className="size-5" />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="font-bold text-sm text-foreground">Aplicación Móvil Propia</h4>
+                      <h4 className=" text-sm text-foreground">Aplicación Móvil Propia</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         Diseña, personaliza y publica tu app de agendamiento nativa en App Store y Google Play con tu marca.
                       </p>
@@ -476,7 +476,7 @@ export function DashboardPage() {
                       <Globe className="size-5" />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="font-bold text-sm text-foreground">Sitio Web y Reservas</h4>
+                      <h4 className=" text-sm text-foreground">Sitio Web y Reservas</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         Obtén tu enlace personalizado de reservas online para compartirlo directamente en tu perfil de Instagram o WhatsApp.
                       </p>
@@ -495,7 +495,7 @@ export function DashboardPage() {
                       <Landmark className="size-5" />
                     </div>
                     <div className="space-y-1">
-                      <h4 className="font-bold text-sm text-foreground">Sala de Espera y Check-in</h4>
+                      <h4 className=" text-sm text-foreground">Sala de Espera y Check-in</h4>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         Configura una fila virtual automatizada, lista de espera dinámica y un kiosko de auto-check-in para tus sucursales físicas.
                       </p>

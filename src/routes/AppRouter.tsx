@@ -25,10 +25,12 @@ import { LocationsPage } from "@/pages/LocationsPage"
 import { CreateLocationPage } from "@/pages/CreateLocationPage"
 import { EditLocationPage } from "@/pages/EditLocationPage"
 import { CalendarPage } from "@/pages/CalendarPage"
+import { MetadataManager } from "@/components/MetadataManager"
 
 export function AppRouter() {
   return (
     <BrowserRouter>
+      <MetadataManager />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
@@ -105,7 +107,7 @@ export function AppRouter() {
             element={
               <AuthGuard allowedRoles={["SAAS_ADMIN"]}>
                 <div className="p-6 bg-card rounded-lg border border-border">
-                  <h2 className="text-xl font-bold mb-2">Administración SaaS</h2>
+                  <h2 className="text-xl  mb-2">Administración SaaS</h2>
                   <p className="text-muted-foreground">Esta sección es visible únicamente para roles SAAS_ADMIN.</p>
                 </div>
               </AuthGuard>
@@ -117,7 +119,7 @@ export function AppRouter() {
             element={
               <AuthGuard allowedRoles={["SAAS_ADMIN", "SERVICE_OWNER"]}>
                 <div className="p-6 bg-card rounded-lg border border-border">
-                  <h2 className="text-xl font-bold mb-2">Facturación y Planes</h2>
+                  <h2 className="text-xl  mb-2">Facturación y Planes</h2>
                   <p className="text-muted-foreground">Esta sección es visible para SAAS_ADMIN y SERVICE_OWNER.</p>
                 </div>
               </AuthGuard>

@@ -26,7 +26,7 @@ export function LoginForm({
   const location = useLocation()
   const login = useAuthStore((state) => state.login)
   const setLoading = useAuthStore((state) => state.setLoading)
-  
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -184,7 +184,7 @@ export function LoginForm({
     <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold font-sans">Iniciar Sesión</h1>
+          <h1 className="text-2xl  font-sans">Iniciar Sesión</h1>
           <p className="text-sm text-balance text-muted-foreground font-sans">
             Ingresa tu correo abajo para acceder a tu cuenta
           </p>

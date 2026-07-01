@@ -158,10 +158,10 @@ export function LocationsPage() {
         <div className="p-4 border border-amber-500/20 bg-amber-500/5 text-amber-600 rounded-xl text-sm font-medium flex items-start gap-3 animate-fade-in">
           <AlertTriangle className="size-5 shrink-0 text-amber-500 mt-0.5" />
           <div>
-            <p className="font-bold">Ubicaciones deshabilitadas</p>
+            <p className="">Ubicaciones deshabilitadas</p>
             <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
               Este negocio está configurado como <strong>Servicio a domicilio / Independiente</strong> (sin local físico).
-              Si deseas registrar locales o sucursales físicas, cambia el tipo de establecimiento en los <span className="underline cursor-pointer font-bold text-[#10b981]" onClick={() => navigate("/dashboard/settings/business")}>Ajustes del Negocio</span>.
+              Si deseas registrar locales o sucursales físicas, cambia el tipo de establecimiento en los <span className="underline cursor-pointer  text-[#10b981]" onClick={() => navigate("/dashboard/settings/business")}>Ajustes del Negocio</span>.
             </p>
           </div>
         </div>
@@ -172,7 +172,7 @@ export function LocationsPage() {
           <div className="flex items-start gap-3">
             <AlertTriangle className="size-5 shrink-0 text-[#10b981] mt-0.5" />
             <div>
-              <p className="font-bold text-sm">¿Tu negocio no tiene local físico?</p>
+              <p className=" text-sm">¿Tu negocio no tiene local físico?</p>
               <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                 Si atiendes a domicilio, de forma virtual o no tienes locales, puedes configurarlo como servicio independiente para omitir este paso del checklist.
               </p>
@@ -221,7 +221,7 @@ export function LocationsPage() {
                   <div className="space-y-2 min-w-0">
                     <div className="flex items-center gap-2">
                       <MapPin className="size-4 text-[#10b981] shrink-0" />
-                      <p className="font-bold text-sm text-foreground truncate">{loc.name}</p>
+                      <p className=" text-sm text-foreground truncate">{loc.name}</p>
                     </div>
 
                     <div className="space-y-1 pl-6">

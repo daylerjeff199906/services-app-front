@@ -143,7 +143,7 @@ export function SignupForm({
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </div>
-          <h1 className="text-2xl font-bold font-sans">¡Registro Exitoso!</h1>
+          <h1 className="text-2xl  font-sans">¡Registro Exitoso!</h1>
           <p className="text-sm text-balance text-muted-foreground font-sans mt-2 leading-relaxed">
             {formSuccess}
           </p>
@@ -167,7 +167,7 @@ export function SignupForm({
     <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold font-sans">Crear una Cuenta</h1>
+          <h1 className="text-2xl  font-sans">Crear una Cuenta</h1>
           <p className="text-sm text-balance text-muted-foreground font-sans">
             Completa los siguientes campos para registrarte
           </p>

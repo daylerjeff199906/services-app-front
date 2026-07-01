@@ -35,7 +35,7 @@ export function TeamSwitcher() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-sm">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-emerald-600 text-white  text-sm">
                 {selectedService.name.charAt(0).toUpperCase()}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
@@ -60,7 +60,7 @@ export function TeamSwitcher() {
                 onClick={() => selectService(biz)}
                 className="gap-2 p-2 focus:bg-accent cursor-pointer"
               >
-                <div className="flex size-6 items-center justify-center rounded-md border border-border bg-muted text-xs font-bold">
+                <div className="flex size-6 items-center justify-center rounded-md border border-border bg-muted text-xs ">
                   {biz.name.charAt(0).toUpperCase()}
                 </div>
                 <span className="flex-1 truncate text-sm font-medium">{biz.name}</span>
@@ -68,7 +68,7 @@ export function TeamSwitcher() {
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
+            <DropdownMenuItem
               className="gap-2 p-2 cursor-pointer focus:bg-accent text-muted-foreground hover:text-foreground"
               onClick={() => navigate("/intranet/businesses")}
             >

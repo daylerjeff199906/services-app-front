@@ -207,9 +207,9 @@ export function ServiceDetailPage() {
   if (!currentService) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center p-8 space-y-6 font-sans">
-        <h2 className="text-2xl font-bold">Servicio no encontrado</h2>
+        <h2 className="text-2xl ">Servicio no encontrado</h2>
         <p className="text-muted-foreground text-sm">El enlace ingresado es inválido o el servicio ya no está disponible.</p>
-        <Link to="/" className="py-2 px-6 bg-primary text-primary-foreground font-bold rounded-lg shadow hover:bg-primary/95 transition-all">
+        <Link to="/" className="py-2 px-6 bg-primary text-primary-foreground  rounded-lg shadow hover:bg-primary/95 transition-all">
           Regresar a Inicio
         </Link>
       </div>
@@ -265,7 +265,7 @@ export function ServiceDetailPage() {
 
         {/* Title, rating and action badges */}
         <div className="space-y-3">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground leading-tight">
+          <h1 className="text-3xl  tracking-tight text-foreground leading-tight">
             {currentService.title}
           </h1>
 
@@ -282,11 +282,11 @@ export function ServiceDetailPage() {
             </div>
 
             <div className="flex items-center gap-4 text-foreground">
-              <button className="flex items-center gap-1.5 py-1 px-3 border border-border hover:bg-muted rounded-full bg-transparent cursor-pointer font-bold transition-all">
+              <button className="flex items-center gap-1.5 py-1 px-3 border border-border hover:bg-muted rounded-full bg-transparent cursor-pointer  transition-all">
                 <Share2 className="size-3.5" />
                 Compartir
               </button>
-              <button className="flex items-center gap-1.5 py-1 px-3 border border-border hover:bg-muted rounded-full bg-transparent cursor-pointer font-bold transition-all text-red-500 hover:text-red-600">
+              <button className="flex items-center gap-1.5 py-1 px-3 border border-border hover:bg-muted rounded-full bg-transparent cursor-pointer  transition-all text-red-500 hover:text-red-600">
                 <Heart className="size-3.5" />
                 Guardar
               </button>
@@ -304,7 +304,7 @@ export function ServiceDetailPage() {
                 alt={currentService.title}
                 className="w-full h-full object-cover"
               />
-              <span className="absolute left-6 bottom-6 px-3 py-1 bg-background/90 text-foreground font-bold text-[10px] tracking-wider uppercase rounded-lg shadow border border-border">
+              <span className="absolute left-6 bottom-6 px-3 py-1 bg-background/90 text-foreground  text-[10px] tracking-wider uppercase rounded-lg shadow border border-border">
                 {currentService.badge}
               </span>
             </div>
@@ -313,7 +313,7 @@ export function ServiceDetailPage() {
               <div className="p-8 rounded-full bg-background/90 shadow-lg scale-125 border border-border/40">
                 {currentService.icon}
               </div>
-              <span className="absolute left-6 bottom-6 px-3 py-1 bg-background/90 text-foreground font-bold text-[10px] tracking-wider uppercase rounded-lg shadow border border-border">
+              <span className="absolute left-6 bottom-6 px-3 py-1 bg-background/90 text-foreground  text-[10px] tracking-wider uppercase rounded-lg shadow border border-border">
                 {currentService.badge}
               </span>
             </div>
@@ -339,14 +339,14 @@ export function ServiceDetailPage() {
             {/* Provider Meta Section */}
             <div className="flex items-center justify-between pb-6">
               <div className="space-y-1">
-                <h2 className="text-xl font-bold text-foreground">
+                <h2 className="text-xl  text-foreground">
                   Servicio ofrecido por {currentService.provider}
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   Profesional verificado de la categoría {currentService.category} • Certificación Gesti
                 </p>
               </div>
-              <div className="size-12 rounded-full bg-[#059669]/10 text-[#059669] flex items-center justify-center font-bold text-sm border border-[#059669]/20 shadow-sm flex-shrink-0">
+              <div className="size-12 rounded-full bg-[#059669]/10 text-[#059669] flex items-center justify-center  text-sm border border-[#059669]/20 shadow-sm flex-shrink-0">
                 <User className="size-5" />
               </div>
             </div>
@@ -358,7 +358,7 @@ export function ServiceDetailPage() {
                   <Sparkles className="size-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm">Destacado del servicio</h4>
+                  <h4 className=" text-sm">Destacado del servicio</h4>
                   <p className="text-xs text-muted-foreground">{currentService.highlight}</p>
                 </div>
               </div>
@@ -367,7 +367,7 @@ export function ServiceDetailPage() {
                   <ShieldCheck className="size-5" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-sm">Garantía Gesti Protegido</h4>
+                  <h4 className=" text-sm">Garantía Gesti Protegido</h4>
                   <p className="text-xs text-muted-foreground">El cobro se retiene de forma segura y solo se libera cuando confirmes la entrega satisfactoria.</p>
                 </div>
               </div>
@@ -375,7 +375,7 @@ export function ServiceDetailPage() {
 
             {/* Full Description */}
             <div className="py-6 space-y-3">
-              <h3 className="font-bold text-lg">Acerca del Servicio</h3>
+              <h3 className=" text-lg">Acerca del Servicio</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {currentService.desc}
               </p>
@@ -383,7 +383,7 @@ export function ServiceDetailPage() {
 
             {/* Mock Reviews Section */}
             <div className="py-6 space-y-6">
-              <h3 className="font-bold text-lg flex items-center gap-2">
+              <h3 className=" text-lg flex items-center gap-2">
                 <MessageSquare className="size-5 text-[#059669]" />
                 Opiniones de Clientes
               </h3>
@@ -391,7 +391,7 @@ export function ServiceDetailPage() {
                 <div className="p-4 bg-card border border-border rounded-xl space-y-3 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-xs">Andrés Silva</p>
+                      <p className=" text-xs">Andrés Silva</p>
                       <p className="text-[10px] text-muted-foreground">Mayo de 2026</p>
                     </div>
                     <div className="flex items-center gap-0.5 text-xs font-semibold">
@@ -407,7 +407,7 @@ export function ServiceDetailPage() {
                 <div className="p-4 bg-card border border-border rounded-xl space-y-3 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-bold text-xs">Mariana Costa</p>
+                      <p className=" text-xs">Mariana Costa</p>
                       <p className="text-[10px] text-muted-foreground">Junio de 2026</p>
                     </div>
                     <div className="flex items-center gap-0.5 text-xs font-semibold">
@@ -426,8 +426,8 @@ export function ServiceDetailPage() {
           {/* Right Column: Floating Booking Card Simulator */}
           <div className="lg:col-span-4 sticky top-28 bg-card border border-border rounded-2xl p-6 shadow-lg space-y-6">
             <div className="flex justify-between items-baseline">
-              <span className="text-2xl font-bold text-foreground">{currentService.price} <span className="text-xs text-muted-foreground font-normal">USD</span></span>
-              <div className="flex items-center gap-1 text-xs font-bold text-foreground">
+              <span className="text-2xl  text-foreground">{currentService.price} <span className="text-xs text-muted-foreground font-normal">USD</span></span>
+              <div className="flex items-center gap-1 text-xs  text-foreground">
                 <Star className="size-3.5 fill-yellow-500 text-yellow-500" />
                 <span>{currentService.rating.toFixed(1)}</span>
                 <span className="text-muted-foreground font-normal">• 12 evaluations</span>
@@ -437,13 +437,13 @@ export function ServiceDetailPage() {
             {isBooked ? (
               <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 rounded-xl space-y-3 text-center">
                 <CheckCircle className="size-8 mx-auto text-emerald-500" />
-                <h4 className="font-bold text-sm">¡Cita Solicitada con Éxito!</h4>
+                <h4 className=" text-sm">¡Cita Solicitada con Éxito!</h4>
                 <p className="text-xs">
                   Tu reserva para el **{bookingDate}** a las **{bookingTime}** ha sido procesada de forma segura. El proveedor confirmará a la brevedad.
                 </p>
                 <button
                   onClick={() => setIsBooked(false)}
-                  className="w-full mt-2 py-1.5 px-3 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold rounded-lg cursor-pointer"
+                  className="w-full mt-2 py-1.5 px-3 bg-[#059669] hover:bg-[#047857] text-white text-xs  rounded-lg cursor-pointer"
                 >
                   Agendar otra cita
                 </button>
@@ -452,7 +452,7 @@ export function ServiceDetailPage() {
               <form onSubmit={handleBooking} className="space-y-4">
                 {/* Date Selection */}
                 <div className="space-y-1 text-left">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Fecha de Reserva</label>
+                  <label className="text-[10px]  uppercase tracking-wider text-muted-foreground">Fecha de Reserva</label>
                   <input
                     type="date"
                     required
@@ -464,7 +464,7 @@ export function ServiceDetailPage() {
 
                 {/* Time Selection */}
                 <div className="space-y-1 text-left">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Hora Disponible</label>
+                  <label className="text-[10px]  uppercase tracking-wider text-muted-foreground">Hora Disponible</label>
                   <select
                     value={bookingTime}
                     onChange={(e) => setBookingTime(e.target.value)}
@@ -480,7 +480,7 @@ export function ServiceDetailPage() {
                 {/* Reservation Action Button */}
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-[#059669] hover:bg-[#047857] text-white font-bold rounded-xl transition-all shadow-md cursor-pointer text-sm"
+                  className="w-full py-3 px-4 bg-[#059669] hover:bg-[#047857] text-white  rounded-xl transition-all shadow-md cursor-pointer text-sm"
                 >
                   Solicitar Reserva
                 </button>
@@ -499,9 +499,9 @@ export function ServiceDetailPage() {
               </div>
               <div className="flex justify-between">
                 <span className="underline">Comisión de Servicio (0% Promo)</span>
-                <span className="text-emerald-500 font-bold">$0 USD</span>
+                <span className="text-emerald-500 ">$0 USD</span>
               </div>
-              <div className="flex justify-between border-t border-border pt-3 text-sm font-bold text-foreground">
+              <div className="flex justify-between border-t border-border pt-3 text-sm  text-foreground">
                 <span>Total estimado</span>
                 <span>{currentService.price} USD</span>
               </div>
@@ -511,7 +511,7 @@ export function ServiceDetailPage() {
 
         {/* BOTTOM SECTION: Recommended Services (General recommendations based on similar tags/category) */}
         <section className="space-y-6 pt-12 border-t border-border">
-          <h2 className="text-xl font-bold tracking-tight text-foreground">
+          <h2 className="text-xl  tracking-tight text-foreground">
             Otros servicios recomendados
           </h2>
 
@@ -545,7 +545,7 @@ export function ServiceDetailPage() {
       {/* Footer */}
       <footer className="bg-muted/40 border-t border-border py-8 text-xs text-muted-foreground transition-colors mt-12">
         <div className="container mx-auto px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <span className="font-bold text-foreground">Gesti Marketplace</span>
+          <span className=" text-foreground">Gesti Marketplace</span>
           <div className="flex gap-6 font-semibold">
             <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>
             <Link to="/ofrecer" className="hover:text-foreground transition-colors">Ofrecer Servicios</Link>

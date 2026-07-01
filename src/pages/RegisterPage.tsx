@@ -21,7 +21,7 @@ export function RegisterPage() {
       <div className="flex-1 flex flex-col justify-between p-8 md:p-12 lg:p-16 max-w-xl mx-auto w-full">
         {/* Top Header Branding */}
         <div>
-          <Link to="/" className="font-bold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
+          <Link to="/" className=" text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
             Gesti
           </Link>
         </div>

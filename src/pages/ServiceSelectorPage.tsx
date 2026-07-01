@@ -2,14 +2,14 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthStore } from "../store/auth.store"
 import type { TenantService } from "../types/auth.types"
-import { 
-  Search, 
-  ChevronDown, 
-  ArrowUpDown, 
-  Grid, 
-  List, 
-  Plus, 
-  MoreVertical 
+import {
+  Search,
+  ChevronDown,
+  ArrowUpDown,
+  Grid,
+  List,
+  Plus,
+  MoreVertical
 } from "lucide-react"
 import { ThemeSwitch } from "@/components/ui/theme-switch"
 
@@ -39,7 +39,7 @@ export function ServiceSelectorPage() {
       <header className="flex items-center justify-between pb-6 border-b border-border">
         <div className="flex items-center gap-2">
           <span className="w-3.5 h-3.5 rounded-full bg-emerald-500" />
-          <span className="font-bold text-lg text-foreground tracking-wider">SaaS Portal</span>
+          <span className=" text-lg text-foreground tracking-wider">SaaS Portal</span>
         </div>
         <div className="flex items-center gap-6">
           <ThemeSwitch />
@@ -58,7 +58,7 @@ export function ServiceSelectorPage() {
       {/* Main Content Area */}
       <main className="flex-1 container mx-auto mt-10 space-y-6">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">Proyectos</h1>
+          <h1 className="text-3xl  text-foreground tracking-tight">Proyectos</h1>
         </div>
 
         {/* Filter bar exactly matching the design */}
@@ -101,7 +101,7 @@ export function ServiceSelectorPage() {
             </div>
 
             {/* New Project Button */}
-            <button 
+            <button
               onClick={() => {
                 const demoService = {
                   id: `srv_${Date.now()}`,
@@ -134,11 +134,11 @@ export function ServiceSelectorPage() {
               >
                 <div>
                   <div className="flex items-start justify-between">
-                    <h3 className="font-bold text-lg text-foreground group-hover:text-emerald-500 transition-colors truncate pr-8">
+                    <h3 className=" text-lg text-foreground group-hover:text-emerald-500 transition-colors truncate pr-8">
                       {service.name}
                     </h3>
                     {/* Ellipsis menu button */}
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation()
                         alert("Acciones adicionales de proyecto")
@@ -155,7 +155,7 @@ export function ServiceSelectorPage() {
 
                 <div className="mt-4 flex flex-col gap-3">
                   <div className="flex">
-                    <span className="px-2 py-0.5 border border-border rounded text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <span className="px-2 py-0.5 border border-border rounded text-[10px]  text-muted-foreground uppercase tracking-wider">
                       NANO
                     </span>
                   </div>

@@ -275,7 +275,7 @@ export function EditLocationPage() {
           <div className="md:w-2/3 max-w-md w-full space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground font-sans">Latitud</span>
+                <span className="text-[10px] uppercase  text-muted-foreground font-sans">Latitud</span>
                 <Input
                   type="number"
                   step="any"
@@ -288,7 +288,7 @@ export function EditLocationPage() {
                 />
               </div>
               <div className="space-y-1">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground font-sans">Longitud</span>
+                <span className="text-[10px] uppercase  text-muted-foreground font-sans">Longitud</span>
                 <Input
                   type="number"
                   step="any"
@@ -301,7 +301,7 @@ export function EditLocationPage() {
                 />
               </div>
             </div>
-            
+
             <MapPicker
               lat={latitude}
               lng={longitude}
@@ -323,7 +323,7 @@ export function EditLocationPage() {
           <div className="md:w-2/3 max-w-md w-full space-y-6">
             {/* General business phones checkboxes */}
             <div className="space-y-2">
-              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide block">Teléfonos generales del negocio</span>
+              <span className="text-[11px]  text-muted-foreground uppercase tracking-wide block">Teléfonos generales del negocio</span>
               {bizPhones.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">No hay teléfonos generales registrados en el negocio.</p>
               ) : (
@@ -348,8 +348,8 @@ export function EditLocationPage() {
 
             {/* Custom local phones tags */}
             <div className="space-y-3 pt-2 border-t border-border/60">
-              <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide block">Teléfonos específicos de esta sede</span>
-              
+              <span className="text-[11px]  text-muted-foreground uppercase tracking-wide block">Teléfonos específicos de esta sede</span>
+
               <div className="flex items-center gap-2">
                 <Input
                   type="tel"

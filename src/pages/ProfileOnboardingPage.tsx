@@ -174,7 +174,7 @@ export function ProfileOnboardingPage() {
 
         {/* Brand Header */}
         <div>
-          <div className="font-bold text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
+          <div className=" text-2xl text-[#059669] tracking-tighter flex items-center gap-1.5 w-fit">
             Gesti
           </div>
         </div>
@@ -194,7 +194,7 @@ export function ProfileOnboardingPage() {
 
           {currentStep === 1 ? (
             <div className="animate-fade-in">
-              <h1 className="text-3xl font-bold tracking-tight mb-2">Ayúdanos a conocerte</h1>
+              <h1 className="text-3xl  tracking-tight mb-2">Ayúdanos a conocerte</h1>
               <p className="text-sm text-muted-foreground mb-8">
                 Ingresa tu nombre completo y teléfono de contacto para configurar tu perfil.
               </p>
@@ -247,7 +247,7 @@ export function ProfileOnboardingPage() {
             </div>
           ) : (
             <div className="animate-fade-in">
-              <h1 className="text-3xl font-bold tracking-tight mb-2">Cuéntanos sobre tu negocio</h1>
+              <h1 className="text-3xl  tracking-tight mb-2">Cuéntanos sobre tu negocio</h1>
               <p className="text-sm text-muted-foreground mb-8">
                 Define tu especialidad y agrega una breve descripción profesional para tus clientes.
               </p>
@@ -376,7 +376,7 @@ export function ProfileOnboardingPage() {
             <line x1="65" y1="135" x2="150" y2="135" stroke="var(--border)" strokeWidth="2" strokeLinecap="round" />
           </svg>
 
-          <h2 className="text-2xl font-bold tracking-tight text-foreground mb-3">
+          <h2 className="text-2xl  tracking-tight text-foreground mb-3">
             Gestiona todo en un solo lugar
           </h2>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">

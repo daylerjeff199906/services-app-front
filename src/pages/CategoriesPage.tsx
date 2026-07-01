@@ -311,20 +311,18 @@ export function CategoriesPage() {
                     onDragOver={(e) => handleDragOver(e, index)}
                     onDragEnd={handleDragEnd}
                     onDrop={(e) => handleDrop(e, index)}
-                    className={`transition-all duration-150 ${
-                      isDragging
+                    className={`transition-all duration-150 ${isDragging
                         ? "opacity-30 bg-muted/40 cursor-grabbing"
                         : "hover:bg-muted/5 cursor-grab active:cursor-grabbing"
-                    } ${
-                      isOver ? "bg-emerald-500/5 ring-1 ring-emerald-500/20" : ""
-                    }`}
+                      } ${isOver ? "bg-emerald-500/5 ring-1 ring-emerald-500/20" : ""
+                      }`}
                   >
                     <td className="p-4 text-center text-muted-foreground hover:text-foreground transition-colors">
                       <GripVertical className="size-4 inline-block" />
                     </td>
                     <td className="p-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
-                        <span className="font-bold text-foreground text-sm">{cat.display_order}</span>
+                        <span className=" text-foreground text-sm">{cat.display_order}</span>
                         <div className="flex flex-col">
                           <button
                             type="button"
@@ -408,7 +406,7 @@ export function CategoriesPage() {
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent className="w-full sm:max-w-md bg-card border-l border-border p-6 flex flex-col gap-6">
           <SheetHeader className="p-0">
-            <SheetTitle className="text-xl font-bold">
+            <SheetTitle className="text-xl ">
               {sheetMode === "create" ? "Nueva Categoría" : "Editar Categoría"}
             </SheetTitle>
             <SheetDescription className="text-xs text-muted-foreground">
@@ -480,7 +478,7 @@ export function CategoriesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="bg-card border border-border rounded-xl shadow-lg max-w-md w-full overflow-hidden p-6 space-y-6">
             <div className="space-y-2">
-              <h3 className="text-lg font-bold text-foreground">¿Eliminar categoría?</h3>
+              <h3 className="text-lg  text-foreground">¿Eliminar categoría?</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 ¿Estás seguro de que deseas eliminar permanentemente la categoría <strong>"{deleteConfirmName}"</strong>?
                 Los servicios asociados no se eliminarán, pero se quedarán sin categoría vinculada.

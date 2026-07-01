@@ -8,7 +8,7 @@ export function LoginForm() {
   const navigate = useNavigate()
   const location = useLocation()
   const login = useAuthStore((state) => state.login)
-  
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [errors, setErrors] = useState<Partial<Record<keyof LoginInput, string>>>({})
@@ -49,7 +49,7 @@ export function LoginForm() {
         phone: null,
         bio: null,
         specialty: null,
-        role: "SAAS_ADMIN" as const, 
+        role: "SAAS_ADMIN" as const,
       }
 
       const dummyServices = [
@@ -69,7 +69,7 @@ export function LoginForm() {
   return (
     <div className="w-[400px] p-8 bg-card border border-border rounded-xl shadow-lg">
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold tracking-tight">Iniciar Sesión</h2>
+        <h2 className="text-2xl  tracking-tight">Iniciar Sesión</h2>
         <p className="text-sm text-muted-foreground mt-1">Ingresa tus credenciales para administrar tus servicios</p>
       </div>
 
@@ -84,9 +84,8 @@ export function LoginForm() {
             placeholder="ejemplo@correo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md outline-none bg-background text-foreground focus:ring-2 focus:ring-ring/50 ${
-              errors.email ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-ring"
-            }`}
+            className={`w-full px-3 py-2 border rounded-md outline-none bg-background text-foreground focus:ring-2 focus:ring-ring/50 ${errors.email ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-ring"
+              }`}
           />
           {errors.email && <p className="text-xs text-destructive mt-1 font-medium">{errors.email}</p>}
         </div>
@@ -101,9 +100,8 @@ export function LoginForm() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md outline-none bg-background text-foreground focus:ring-2 focus:ring-ring/50 ${
-              errors.password ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-ring"
-            }`}
+            className={`w-full px-3 py-2 border rounded-md outline-none bg-background text-foreground focus:ring-2 focus:ring-ring/50 ${errors.password ? "border-destructive focus:ring-destructive/30" : "border-input focus:ring-ring"
+              }`}
           />
           {errors.password && <p className="text-xs text-destructive mt-1 font-medium">{errors.password}</p>}
         </div>

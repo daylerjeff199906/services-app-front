@@ -341,7 +341,7 @@ export function HoursPage() {
       {/* Tabs View Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
         <div className="space-y-0.5">
-          <h3 className="font-bold text-sm text-foreground">Visualización del Horario</h3>
+          <h3 className=" text-sm text-foreground">Visualización del Horario</h3>
           <p className="text-xs text-muted-foreground">Alterna entre vista de tarjetas o de agenda semanal.</p>
         </div>
 
@@ -394,7 +394,7 @@ export function HoursPage() {
                     {/* Card Header: Day and Toggle */}
                     <div className="flex items-start justify-between gap-2 border-b border-border pb-3">
                       <div className="flex flex-col">
-                        <span className="font-bold text-sm text-foreground">{day.label}</span>
+                        <span className=" text-sm text-foreground">{day.label}</span>
                         {!daySched.is_closed && (
                           <span className="text-[11px] text-muted-foreground font-medium mt-0.5 animate-fade-in">
                             {calculateDayDuration(daySched.intervals)}
@@ -415,7 +415,7 @@ export function HoursPage() {
                               }`}
                           />
                         </button>
-                        <span className="text-[10px] font-bold select-none w-10 text-muted-foreground">
+                        <span className="text-[10px]  select-none w-10 text-muted-foreground">
                           {!daySched.is_closed ? "Abierto" : "Cerrado"}
                         </span>
                       </div>
@@ -471,7 +471,7 @@ export function HoursPage() {
                           <button
                             type="button"
                             onClick={() => handleAddInterval(day.value)}
-                            className="flex items-center gap-1 text-[10px] text-[#10b981] hover:underline font-bold bg-transparent border-0 outline-none cursor-pointer pt-1"
+                            className="flex items-center gap-1 text-[10px] text-[#10b981] hover:underline  bg-transparent border-0 outline-none cursor-pointer pt-1"
                           >
                             <Plus className="size-3" />
                             Agregar turno
@@ -498,14 +498,14 @@ export function HoursPage() {
                   <div key={day.value} className={`flex flex-col h-full ${daySched.is_closed ? "bg-muted/10 opacity-75" : ""}`}>
                     {/* Day Column Header */}
                     <div className="p-3 border-b border-border bg-muted/20 flex flex-col justify-between items-center gap-1 shrink-0 text-center select-none">
-                      <span className="font-bold text-xs text-foreground">{day.label}</span>
+                      <span className=" text-xs text-foreground">{day.label}</span>
                       <span className="text-[10px] text-muted-foreground font-semibold">
                         {daySched.is_closed ? "Cerrado" : calculateDayDuration(daySched.intervals).split(" (")[0]}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleToggleClosed(day.value)}
-                        className="text-[9px] text-[#10b981] hover:text-[#059669] font-bold hover:underline mt-1 bg-transparent border-0 cursor-pointer outline-none"
+                        className="text-[9px] text-[#10b981] hover:text-[#059669]  hover:underline mt-1 bg-transparent border-0 cursor-pointer outline-none"
                       >
                         {daySched.is_closed ? "Abrir día" : "Cerrar día"}
                       </button>
@@ -521,17 +521,17 @@ export function HoursPage() {
                               onClick={() => setEditingInterval({ dayVal: day.value, index: idx })}
                               className="p-3 bg-card border border-border rounded-lg hover:border-[#10b981] transition-all cursor-pointer shadow-2xs space-y-1 relative group hover:shadow-xs"
                             >
-                              <div className="text-[9px] text-muted-foreground font-bold font-mono tracking-wider">
+                              <div className="text-[9px] text-muted-foreground  font-mono tracking-wider">
                                 TURNO {idx + 1}
                               </div>
-                              <div className="text-xs font-bold text-foreground font-mono">
+                              <div className="text-xs  text-foreground font-mono">
                                 {interval.open_time} - {interval.close_time}
                               </div>
                               <div className="text-[9px] text-muted-foreground font-semibold mt-1">
                                 Total: {calculateDayDuration([interval]).split(" (")[0]}
                               </div>
 
-                              <span className="absolute bottom-1 right-2 text-[8px] text-[#10b981] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="absolute bottom-1 right-2 text-[8px] text-[#10b981]  opacity-0 group-hover:opacity-100 transition-opacity">
                                 Editar
                               </span>
                             </div>
@@ -548,7 +548,7 @@ export function HoursPage() {
                         </>
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center py-20 text-center select-none">
-                          <span className="text-[9px] text-muted-foreground/30 uppercase font-bold tracking-wider">
+                          <span className="text-[9px] text-muted-foreground/30 uppercase  tracking-wider">
                             Sin atención
                           </span>
                         </div>
@@ -580,7 +580,7 @@ export function HoursPage() {
       {editingInterval && (
         <div className="fixed inset-0 bg-background/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
           <div className="bg-card border border-border rounded-xl p-5 max-w-xs w-full space-y-4 shadow-xl relative animate-scale-in">
-            <h4 className="font-bold text-sm text-foreground">
+            <h4 className=" text-sm text-foreground">
               Turno {editingInterval.index + 1} - {DAYS_OF_WEEK.find(d => d.value === editingInterval.dayVal)?.label}
             </h4>
 

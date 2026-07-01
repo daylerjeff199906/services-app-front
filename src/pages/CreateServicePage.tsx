@@ -357,7 +357,7 @@ export function CreateServicePage() {
                 </div>
               ) : (
                 <div className="space-y-2 border border-border p-3 rounded-lg bg-muted/10">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <p className="text-[10px]  uppercase tracking-wider text-muted-foreground">
                     Nueva Categoría Inline
                   </p>
                   <Input

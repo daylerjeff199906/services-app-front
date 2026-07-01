@@ -133,7 +133,7 @@ export function ProfileSettingsPage() {
             <ArrowLeft className="size-3.5" />
             Volver
           </button>
-          <span className="font-bold text-xl text-[#059669] tracking-tighter ml-2">
+          <span className=" text-xl text-[#059669] tracking-tighter ml-2">
             Gesti
           </span>
         </div>

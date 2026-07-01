@@ -18,7 +18,7 @@ export function TodosPage() {
 
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4 text-foreground">Todos (Supabase Integration)</h1>
+      <h1 className="text-2xl  mb-4 text-foreground">Todos (Supabase Integration)</h1>
       <ul className="list-disc pl-5 text-foreground space-y-2">
         {todos.length === 0 ? (
           <li className="text-muted-foreground">No todos found or loading...</li>
